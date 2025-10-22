@@ -25,92 +25,154 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblBinaries = new javax.swing.JLabel();
         lblYtDlp = new javax.swing.JLabel();
         txtYtDlpPath = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
-        lblYtDlp1 = new javax.swing.JLabel();
-        txtYtDlpPath1 = new javax.swing.JTextField();
-        jButton2 = new javax.swing.JButton();
-        lblYtDlp2 = new javax.swing.JLabel();
-        txtYtDlpPath2 = new javax.swing.JTextField();
-        jButton3 = new javax.swing.JButton();
+        btnYtDplBrowse = new javax.swing.JButton();
+        lblFfpmeg = new javax.swing.JLabel();
+        txtFfpmegDir = new javax.swing.JTextField();
+        btnFfpmegBrowse = new javax.swing.JButton();
+        lblFfprobe = new javax.swing.JLabel();
+        txtFfprobeDir = new javax.swing.JTextField();
+        btnFfprobeBrowse = new javax.swing.JButton();
+        lblRoutes = new javax.swing.JLabel();
+        lblTemp = new javax.swing.JLabel();
+        txtTempDir = new javax.swing.JTextField();
+        btnTempBrowse = new javax.swing.JButton();
+        lblDownloads = new javax.swing.JLabel();
+        txtDownloadsDir = new javax.swing.JTextField();
+        btnDownloadsBrowse = new javax.swing.JButton();
+        lblBehaviour = new javax.swing.JLabel();
 
         setLayout(null);
 
-        lblBinaries.setText("Binaries");
+        lblBinaries.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
+        lblBinaries.setText("Binaries:");
         add(lblBinaries);
-        lblBinaries.setBounds(40, 10, 47, 18);
+        lblBinaries.setBounds(30, 30, 70, 23);
 
-        lblYtDlp.setFont(new java.awt.Font("sansserif", 0, 14)); // NOI18N
         lblYtDlp.setText("yt-dlp:");
         add(lblYtDlp);
-        lblYtDlp.setBounds(40, 40, 70, 20);
+        lblYtDlp.setBounds(40, 60, 70, 18);
         add(txtYtDlpPath);
-        txtYtDlpPath.setBounds(110, 40, 310, 24);
+        txtYtDlpPath.setBounds(110, 60, 310, 24);
 
-        jButton1.setText("Browse...");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnYtDplBrowse.setText("Browse...");
+        btnYtDplBrowse.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnYtDplBrowseActionPerformed(evt);
             }
         });
-        add(jButton1);
-        jButton1.setBounds(430, 40, 90, 24);
+        add(btnYtDplBrowse);
+        btnYtDplBrowse.setBounds(430, 60, 90, 24);
 
-        lblYtDlp1.setFont(new java.awt.Font("sansserif", 0, 14)); // NOI18N
-        lblYtDlp1.setText("ffmeg:");
-        add(lblYtDlp1);
-        lblYtDlp1.setBounds(40, 80, 70, 20);
-        add(txtYtDlpPath1);
-        txtYtDlpPath1.setBounds(110, 80, 310, 24);
+        lblFfpmeg.setText("ffpmeg:");
+        add(lblFfpmeg);
+        lblFfpmeg.setBounds(40, 100, 70, 18);
+        add(txtFfpmegDir);
+        txtFfpmegDir.setBounds(110, 100, 310, 24);
 
-        jButton2.setText("Browse...");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        btnFfpmegBrowse.setText("Browse...");
+        btnFfpmegBrowse.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                btnFfpmegBrowseActionPerformed(evt);
             }
         });
-        add(jButton2);
-        jButton2.setBounds(430, 80, 90, 24);
+        add(btnFfpmegBrowse);
+        btnFfpmegBrowse.setBounds(430, 100, 90, 24);
 
-        lblYtDlp2.setFont(new java.awt.Font("sansserif", 0, 14)); // NOI18N
-        lblYtDlp2.setText("ffprobe:");
-        add(lblYtDlp2);
-        lblYtDlp2.setBounds(40, 120, 70, 20);
-        add(txtYtDlpPath2);
-        txtYtDlpPath2.setBounds(110, 120, 310, 24);
+        lblFfprobe.setText("ffprobe:");
+        add(lblFfprobe);
+        lblFfprobe.setBounds(40, 140, 70, 18);
+        add(txtFfprobeDir);
+        txtFfprobeDir.setBounds(110, 140, 310, 24);
 
-        jButton3.setText("Browse...");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        btnFfprobeBrowse.setText("Browse...");
+        btnFfprobeBrowse.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                btnFfprobeBrowseActionPerformed(evt);
             }
         });
-        add(jButton3);
-        jButton3.setBounds(430, 120, 90, 24);
+        add(btnFfprobeBrowse);
+        btnFfprobeBrowse.setBounds(430, 140, 90, 24);
+
+        lblRoutes.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
+        lblRoutes.setText("Routes:");
+        add(lblRoutes);
+        lblRoutes.setBounds(30, 210, 70, 23);
+
+        lblTemp.setText("Temp:");
+        add(lblTemp);
+        lblTemp.setBounds(40, 250, 70, 18);
+        add(txtTempDir);
+        txtTempDir.setBounds(110, 250, 310, 24);
+
+        btnTempBrowse.setText("Browse...");
+        btnTempBrowse.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnTempBrowseActionPerformed(evt);
+            }
+        });
+        add(btnTempBrowse);
+        btnTempBrowse.setBounds(430, 250, 90, 24);
+
+        lblDownloads.setText("ffprobe:");
+        add(lblDownloads);
+        lblDownloads.setBounds(40, 290, 70, 18);
+        add(txtDownloadsDir);
+        txtDownloadsDir.setBounds(110, 290, 310, 24);
+
+        btnDownloadsBrowse.setText("Browse...");
+        btnDownloadsBrowse.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDownloadsBrowseActionPerformed(evt);
+            }
+        });
+        add(btnDownloadsBrowse);
+        btnDownloadsBrowse.setBounds(430, 290, 90, 24);
+
+        lblBehaviour.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
+        lblBehaviour.setText("Behaving:");
+        add(lblBehaviour);
+        lblBehaviour.setBounds(30, 360, 110, 23);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_btnYtDplBrowseActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void btnFfpmegBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFfpmegBrowseActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_btnFfpmegBrowseActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+    private void btnFfprobeBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFfprobeBrowseActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_btnFfprobeBrowseActionPerformed
+
+    private void btnTempBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTempBrowseActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnTempBrowseActionPerformed
+
+    private void btnDownloadsBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadsBrowseActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnDownloadsBrowseActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
+    private javax.swing.JButton btnDownloadsBrowse;
+    private javax.swing.JButton btnFfpmegBrowse;
+    private javax.swing.JButton btnFfprobeBrowse;
+    private javax.swing.JButton btnTempBrowse;
+    private javax.swing.JButton btnYtDplBrowse;
+    private javax.swing.JLabel lblBehaviour;
     private javax.swing.JLabel lblBinaries;
+    private javax.swing.JLabel lblDownloads;
+    private javax.swing.JLabel lblFfpmeg;
+    private javax.swing.JLabel lblFfprobe;
+    private javax.swing.JLabel lblRoutes;
+    private javax.swing.JLabel lblTemp;
     private javax.swing.JLabel lblYtDlp;
-    private javax.swing.JLabel lblYtDlp1;
-    private javax.swing.JLabel lblYtDlp2;
+    private javax.swing.JTextField txtDownloadsDir;
+    private javax.swing.JTextField txtFfpmegDir;
+    private javax.swing.JTextField txtFfprobeDir;
+    private javax.swing.JTextField txtTempDir;
     private javax.swing.JTextField txtYtDlpPath;
-    private javax.swing.JTextField txtYtDlpPath1;
-    private javax.swing.JTextField txtYtDlpPath2;
     // End of variables declaration//GEN-END:variables
 }
