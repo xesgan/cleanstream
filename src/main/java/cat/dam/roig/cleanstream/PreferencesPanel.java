@@ -5,11 +5,15 @@ package cat.dam.roig.cleanstream;
  * @author metku
  */
 public class PreferencesPanel extends javax.swing.JPanel {
+    
+    private MainFrame mainFrame;
 
     /**
      * Creates new form MainPanel
+     * @param mainFrame
      */
-    public PreferencesPanel() {
+    public PreferencesPanel(MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
         initComponents();
     }
 
@@ -186,17 +190,22 @@ public class PreferencesPanel extends javax.swing.JPanel {
         btnSave.setText("Save");
         bgQuality.add(btnSave);
         add(btnSave);
-        btnSave.setBounds(30, 590, 72, 24);
+        btnSave.setBounds(50, 590, 72, 24);
 
         btnCancel.setText("Cancel");
         bgQuality.add(btnCancel);
+        btnCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCancelActionPerformed(evt);
+            }
+        });
         add(btnCancel);
-        btnCancel.setBounds(120, 590, 72, 24);
+        btnCancel.setBounds(450, 590, 72, 24);
 
         btnReset.setText("Reset");
         bgQuality.add(btnReset);
         add(btnReset);
-        btnReset.setBounds(210, 590, 72, 24);
+        btnReset.setBounds(130, 590, 72, 24);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
@@ -218,6 +227,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private void btnDownloadsBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadsBrowseActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_btnDownloadsBrowseActionPerformed
+
+    private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
+        // TODO add your handling code here:
+        mainFrame.showMain();
+    }//GEN-LAST:event_btnCancelActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

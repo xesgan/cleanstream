@@ -5,7 +5,7 @@ package cat.dam.roig.cleanstream;
  * @author metku
  */
 public class MainFrame extends javax.swing.JFrame {
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
     private PreferencesPanel pnlPreferencesPanel;
 
@@ -14,24 +14,33 @@ public class MainFrame extends javax.swing.JFrame {
      */
     public MainFrame() {
         initComponents();
-        
-        pnlPreferencesPanel = new PreferencesPanel();
-        
+
+        pnlPreferencesPanel = new PreferencesPanel(this);
+
         setResizable(false);
         setLocationRelativeTo(null);
-        
+
+        // Same size and position
         pnlMainPanel.setBounds(0, 0, getWidth(), getHeight());
         pnlPreferencesPanel.setBounds(0, 0, getWidth(), getHeight());
-        
-        pnlContent.setVisible(true);
+
+        getContentPane().add(pnlPreferencesPanel);
         pnlPreferencesPanel.setVisible(false);
-        
-//        getContentPane().setComponentZOrder(pnlMainPanel, 0);
-//        getContentPane().setComponentZOrder(pnlPreferencesPanel, 1);
-        
-//        pnlPreferencesPanel.setBounds(pnlMainPanel.getBounds());
-//        getContentPane().add(pnlPreferencesPanel);
-//        pnlPreferencesPanel.setVisible(false);
+        pnlContent.setVisible(true);
+    }
+    
+    // Navigation Methods
+    public void showPreferecnes() {
+        pnlContent.setVisible(false);
+        pnlPreferencesPanel.setVisible(true);
+        // Ordering the layers
+        getContentPane().setComponentZOrder(pnlPreferencesPanel, 0);
+    }
+    
+    public void showMain() {
+        pnlPreferencesPanel.setVisible(false);
+        pnlContent.setVisible(true);
+        getContentPane().setComponentZOrder(pnlContent, 0);
     }
 
     /**
@@ -311,14 +320,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void mniPreferencesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniPreferencesActionPerformed
         // TODO add your handling code here:
-        pnlContent.setVisible(false);
-        pnlPreferencesPanel.setVisible(true);
-//        mniPreferences.addActionListener((e) -> {
-//            getContentPane().remove(pnlMainPanel);
-//            getContentPane().add(pnlPreferencesPanel);
-//            revalidate();
-//            repaint();
-//        });
+        showPreferecnes();
     }//GEN-LAST:event_mniPreferencesActionPerformed
 
     /**
