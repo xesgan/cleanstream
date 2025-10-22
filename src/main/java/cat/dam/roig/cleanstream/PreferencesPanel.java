@@ -22,6 +22,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        bgQuality = new javax.swing.ButtonGroup();
         lblBinaries = new javax.swing.JLabel();
         lblYtDlp = new javax.swing.JLabel();
         txtYtDlpPath = new javax.swing.JTextField();
@@ -40,6 +41,18 @@ public class PreferencesPanel extends javax.swing.JPanel {
         txtDownloadsDir = new javax.swing.JTextField();
         btnDownloadsBrowse = new javax.swing.JButton();
         lblBehaviour = new javax.swing.JLabel();
+        chkDeleteIntermediates = new javax.swing.JCheckBox();
+        chkKeepName = new javax.swing.JCheckBox();
+        chkAutoplay = new javax.swing.JCheckBox();
+        chkOverwrite = new javax.swing.JCheckBox();
+        lblQuality = new javax.swing.JLabel();
+        rbBest = new javax.swing.JRadioButton();
+        rb1080 = new javax.swing.JRadioButton();
+        rb720 = new javax.swing.JRadioButton();
+        rbAudioOnly = new javax.swing.JRadioButton();
+        btnSave = new javax.swing.JButton();
+        btnCancel = new javax.swing.JButton();
+        btnReset = new javax.swing.JButton();
 
         setLayout(null);
 
@@ -132,6 +145,58 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblBehaviour.setText("Behaving:");
         add(lblBehaviour);
         lblBehaviour.setBounds(30, 360, 110, 23);
+
+        chkDeleteIntermediates.setText("Delete intermediates files");
+        add(chkDeleteIntermediates);
+        chkDeleteIntermediates.setBounds(120, 400, 190, 22);
+
+        chkKeepName.setText("Keep original name");
+        add(chkKeepName);
+        chkKeepName.setBounds(120, 430, 150, 22);
+
+        chkAutoplay.setText("Autoplay on finish");
+        add(chkAutoplay);
+        chkAutoplay.setBounds(330, 400, 170, 22);
+
+        chkOverwrite.setText("Overwrite if exists");
+        add(chkOverwrite);
+        chkOverwrite.setBounds(330, 430, 170, 22);
+
+        lblQuality.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
+        lblQuality.setText("Quality:");
+        add(lblQuality);
+        lblQuality.setBounds(30, 480, 110, 23);
+
+        rbBest.setText("Best Available");
+        add(rbBest);
+        rbBest.setBounds(110, 520, 105, 22);
+
+        rb1080.setText("1080p");
+        add(rb1080);
+        rb1080.setBounds(240, 520, 59, 22);
+
+        rb720.setText("720p");
+        add(rb720);
+        rb720.setBounds(320, 520, 60, 22);
+
+        rbAudioOnly.setText("Only Audio");
+        add(rbAudioOnly);
+        rbAudioOnly.setBounds(390, 520, 89, 22);
+
+        btnSave.setText("Save");
+        bgQuality.add(btnSave);
+        add(btnSave);
+        btnSave.setBounds(30, 590, 72, 24);
+
+        btnCancel.setText("Cancel");
+        bgQuality.add(btnCancel);
+        add(btnCancel);
+        btnCancel.setBounds(120, 590, 72, 24);
+
+        btnReset.setText("Reset");
+        bgQuality.add(btnReset);
+        add(btnReset);
+        btnReset.setBounds(210, 590, 72, 24);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
@@ -156,19 +221,32 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup bgQuality;
+    private javax.swing.JButton btnCancel;
     private javax.swing.JButton btnDownloadsBrowse;
     private javax.swing.JButton btnFfpmegBrowse;
     private javax.swing.JButton btnFfprobeBrowse;
+    private javax.swing.JButton btnReset;
+    private javax.swing.JButton btnSave;
     private javax.swing.JButton btnTempBrowse;
     private javax.swing.JButton btnYtDplBrowse;
+    private javax.swing.JCheckBox chkAutoplay;
+    private javax.swing.JCheckBox chkDeleteIntermediates;
+    private javax.swing.JCheckBox chkKeepName;
+    private javax.swing.JCheckBox chkOverwrite;
     private javax.swing.JLabel lblBehaviour;
     private javax.swing.JLabel lblBinaries;
     private javax.swing.JLabel lblDownloads;
     private javax.swing.JLabel lblFfpmeg;
     private javax.swing.JLabel lblFfprobe;
+    private javax.swing.JLabel lblQuality;
     private javax.swing.JLabel lblRoutes;
     private javax.swing.JLabel lblTemp;
     private javax.swing.JLabel lblYtDlp;
+    private javax.swing.JRadioButton rb1080;
+    private javax.swing.JRadioButton rb720;
+    private javax.swing.JRadioButton rbAudioOnly;
+    private javax.swing.JRadioButton rbBest;
     private javax.swing.JTextField txtDownloadsDir;
     private javax.swing.JTextField txtFfpmegDir;
     private javax.swing.JTextField txtFfprobeDir;
