@@ -7,12 +7,31 @@ package cat.dam.roig.cleanstream;
 public class MainFrame extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
+    private PreferencesPanel pnlPreferencesPanel;
 
     /**
      * Creates new form MainFrame
      */
     public MainFrame() {
         initComponents();
+        
+        pnlPreferencesPanel = new PreferencesPanel();
+        
+        setResizable(false);
+        setLocationRelativeTo(null);
+        
+        pnlMainPanel.setBounds(0, 0, getWidth(), getHeight());
+        pnlPreferencesPanel.setBounds(0, 0, getWidth(), getHeight());
+        
+        pnlContent.setVisible(true);
+        pnlPreferencesPanel.setVisible(false);
+        
+//        getContentPane().setComponentZOrder(pnlMainPanel, 0);
+//        getContentPane().setComponentZOrder(pnlPreferencesPanel, 1);
+        
+//        pnlPreferencesPanel.setBounds(pnlMainPanel.getBounds());
+//        getContentPane().add(pnlPreferencesPanel);
+//        pnlPreferencesPanel.setVisible(false);
     }
 
     /**
@@ -26,14 +45,14 @@ public class MainFrame extends javax.swing.JFrame {
 
         bgFormat = new javax.swing.ButtonGroup();
         pnlContent = new javax.swing.JPanel();
-        pnlMainPanel = new cat.dam.roig.cleanstream.PreferencesPanel() ;
+        pnlMainPanel = new javax.swing.JPanel();
         lblUrl = new javax.swing.JLabel();
         txtUrl = new javax.swing.JTextField();
         btnPaste = new java.awt.Button();
         btnClear = new java.awt.Button();
         lblFormat = new javax.swing.JLabel();
-        jRadioButton1 = new javax.swing.JRadioButton();
-        jRadioButton2 = new javax.swing.JRadioButton();
+        rbVideo = new javax.swing.JRadioButton();
+        rbAudio = new javax.swing.JRadioButton();
         lblOutDir = new javax.swing.JLabel();
         txtOutDir = new javax.swing.JTextField();
         btnBrowseOut = new javax.swing.JButton();
@@ -47,15 +66,17 @@ public class MainFrame extends javax.swing.JFrame {
         lblControls = new javax.swing.JLabel();
         btnDownload = new javax.swing.JButton();
         btnStop = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
+        btnOpenLast = new javax.swing.JButton();
         lblOutput = new javax.swing.JLabel();
         scrLogArea = new javax.swing.JScrollPane();
         txaLogArea = new javax.swing.JTextArea();
         lblStatus = new javax.swing.JLabel();
         lblActualDir = new javax.swing.JLabel();
-        mnuBar = new javax.swing.JMenuBar();
+        mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
+        mniExit = new javax.swing.JMenuItem();
         mnuEdit = new javax.swing.JMenu();
+        mniPreferences = new javax.swing.JMenuItem();
         mnuHelp = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -80,16 +101,16 @@ public class MainFrame extends javax.swing.JFrame {
 
         lblFormat.setText("Format:");
 
-        bgFormat.add(jRadioButton1);
-        jRadioButton1.setText("Video");
-        jRadioButton1.addActionListener(new java.awt.event.ActionListener() {
+        bgFormat.add(rbVideo);
+        rbVideo.setText("Video");
+        rbVideo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jRadioButton1ActionPerformed(evt);
+                rbVideoActionPerformed(evt);
             }
         });
 
-        bgFormat.add(jRadioButton2);
-        jRadioButton2.setText("Audio");
+        bgFormat.add(rbAudio);
+        rbAudio.setText("Audio");
 
         lblOutDir.setText("Output folder:");
 
@@ -111,7 +132,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         btnStop.setText("Stop");
 
-        jButton3.setText("Open last");
+        btnOpenLast.setText("Open last");
 
         lblOutput.setText("Output");
 
@@ -131,7 +152,7 @@ public class MainFrame extends javax.swing.JFrame {
                             .addGroup(pnlMainPanelLayout.createSequentialGroup()
                                 .addComponent(lblFormat)
                                 .addGap(134, 134, 134)
-                                .addComponent(jRadioButton2))
+                                .addComponent(rbAudio))
                             .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlMainPanelLayout.createSequentialGroup()
                                     .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -146,7 +167,7 @@ public class MainFrame extends javax.swing.JFrame {
                                             .addGap(18, 18, 18)
                                             .addComponent(btnStop, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)
                                             .addGap(18, 18, 18)
-                                            .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                            .addComponent(btnOpenLast, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                     .addComponent(lblOutput)
                                     .addComponent(lblControls)
                                     .addComponent(lblOptions)))
@@ -176,7 +197,7 @@ public class MainFrame extends javax.swing.JFrame {
                         .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(txtUrl)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(jRadioButton1)
+                                .addComponent(rbVideo)
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(txtOutDir, javax.swing.GroupLayout.Alignment.LEADING))
                         .addGap(18, 18, 18)
@@ -201,8 +222,8 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGap(55, 55, 55)
                 .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblFormat)
-                    .addComponent(jRadioButton1)
-                    .addComponent(jRadioButton2))
+                    .addComponent(rbVideo)
+                    .addComponent(rbAudio))
                 .addGap(24, 24, 24)
                 .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblOutDir)
@@ -226,7 +247,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnStop)
-                    .addComponent(jButton3)
+                    .addComponent(btnOpenLast)
                     .addComponent(btnDownload))
                 .addGap(26, 26, 26)
                 .addComponent(lblOutput)
@@ -245,15 +266,33 @@ public class MainFrame extends javax.swing.JFrame {
         pnlContent.setBounds(0, 0, 590, 630);
 
         mnuFile.setText("File");
-        mnuBar.add(mnuFile);
+
+        mniExit.setText("Exit");
+        mniExit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mniExitActionPerformed(evt);
+            }
+        });
+        mnuFile.add(mniExit);
+
+        mnbBar.add(mnuFile);
 
         mnuEdit.setText("Edit");
-        mnuBar.add(mnuEdit);
+
+        mniPreferences.setText("Preferences");
+        mniPreferences.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mniPreferencesActionPerformed(evt);
+            }
+        });
+        mnuEdit.add(mniPreferences);
+
+        mnbBar.add(mnuEdit);
 
         mnuHelp.setText("Help");
-        mnuBar.add(mnuHelp);
+        mnbBar.add(mnuHelp);
 
-        setJMenuBar(mnuBar);
+        setJMenuBar(mnbBar);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -262,9 +301,25 @@ public class MainFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtUrlActionPerformed
 
-    private void jRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton1ActionPerformed
+    private void rbVideoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbVideoActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jRadioButton1ActionPerformed
+    }//GEN-LAST:event_rbVideoActionPerformed
+
+    private void mniExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniExitActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_mniExitActionPerformed
+
+    private void mniPreferencesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniPreferencesActionPerformed
+        // TODO add your handling code here:
+        pnlContent.setVisible(false);
+        pnlPreferencesPanel.setVisible(true);
+//        mniPreferences.addActionListener((e) -> {
+//            getContentPane().remove(pnlMainPanel);
+//            getContentPane().add(pnlPreferencesPanel);
+//            revalidate();
+//            repaint();
+//        });
+    }//GEN-LAST:event_mniPreferencesActionPerformed
 
     /**
      * @param args the command line arguments
@@ -296,15 +351,13 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnBrowseOut;
     private java.awt.Button btnClear;
     private javax.swing.JButton btnDownload;
+    private javax.swing.JButton btnOpenLast;
     private java.awt.Button btnPaste;
     private javax.swing.JButton btnStop;
     private javax.swing.JCheckBox chkKbps;
     private javax.swing.JCheckBox chkLimit;
     private javax.swing.JCheckBox chkM3U;
     private javax.swing.JCheckBox chkOpen;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JRadioButton jRadioButton1;
-    private javax.swing.JRadioButton jRadioButton2;
     private javax.swing.JLabel lblActualDir;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;
@@ -314,12 +367,16 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblOutput;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblUrl;
-    private javax.swing.JMenuBar mnuBar;
+    private javax.swing.JMenuBar mnbBar;
+    private javax.swing.JMenuItem mniExit;
+    private javax.swing.JMenuItem mniPreferences;
     private javax.swing.JMenu mnuEdit;
     private javax.swing.JMenu mnuFile;
     private javax.swing.JMenu mnuHelp;
     private javax.swing.JPanel pnlContent;
     private javax.swing.JPanel pnlMainPanel;
+    private javax.swing.JRadioButton rbAudio;
+    private javax.swing.JRadioButton rbVideo;
     private javax.swing.JScrollPane scrLogArea;
     private javax.swing.JTextArea txaLogArea;
     private javax.swing.JTextField txtKbps;
