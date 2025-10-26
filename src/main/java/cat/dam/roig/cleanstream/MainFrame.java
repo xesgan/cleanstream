@@ -59,6 +59,33 @@ public class MainFrame extends javax.swing.JFrame {
         return txaLogArea;
     }
 
+    // ------- HELPERS --------
+    private static void setExtractorClient(java.util.List<String> cmd, String client) {
+        int idx = cmd.indexOf("--extractor-args");
+        if (idx >= 0 && idx + 1 < cmd.size()) {
+            cmd.set(idx + 1, "youtube:player_client=" + client);
+        } else {
+            cmd.add("--extractor-args");
+            cmd.add("youtube:player_client=" + client);
+        }
+    }
+
+    /**
+     * Elimina una opción y su valor inmediatamente siguiente. Solo la primera
+     * ocurrencia.
+     */
+    private static void removeOptionWithValue(java.util.List<String> cmd, String option) {
+        for (int i = 0; i < cmd.size(); i++) {
+            if (option.equals(cmd.get(i))) {
+                cmd.remove(i);                  // quita la opción
+                if (i < cmd.size()) {
+                    cmd.remove(i); // quita el valor que ahora ocupa ese índice
+                }
+                break;
+            }
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -111,20 +138,32 @@ public class MainFrame extends javax.swing.JFrame {
 
         pnlContent.setLayout(new java.awt.CardLayout());
 
+        pnlMainPanel.setLayout(null);
+
         lblUrl.setFont(new java.awt.Font("sansserif", 0, 15)); // NOI18N
         lblUrl.setText("URL:");
+        pnlMainPanel.add(lblUrl);
+        lblUrl.setBounds(45, 10, 46, 29);
 
         txtUrl.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtUrlActionPerformed(evt);
             }
         });
+        pnlMainPanel.add(txtUrl);
+        txtUrl.setBounds(109, 13, 350, 24);
 
         btnPaste.setLabel("Paste");
+        pnlMainPanel.add(btnPaste);
+        btnPaste.setBounds(477, 14, 47, 25);
 
         btnClear.setLabel("Clear");
+        pnlMainPanel.add(btnClear);
+        btnClear.setBounds(534, 14, 46, 25);
 
         lblFormat.setText("Format:");
+        pnlMainPanel.add(lblFormat);
+        lblFormat.setBounds(45, 70, 47, 18);
 
         bgFormat.add(rbVideo);
         rbVideo.setText("Video");
@@ -133,25 +172,51 @@ public class MainFrame extends javax.swing.JFrame {
                 rbVideoActionPerformed(evt);
             }
         });
+        pnlMainPanel.add(rbVideo);
+        rbVideo.setBounds(97, 68, 57, 22);
 
         bgFormat.add(rbAudio);
         rbAudio.setText("Audio");
+        pnlMainPanel.add(rbAudio);
+        rbAudio.setBounds(181, 68, 58, 22);
 
         lblOutDir.setText("Output folder:");
+        pnlMainPanel.add(lblOutDir);
+        lblOutDir.setBounds(43, 143, 85, 18);
+        pnlMainPanel.add(txtOutDir);
+        txtOutDir.setBounds(146, 140, 313, 24);
 
         btnBrowseOut.setText("Browse");
+        pnlMainPanel.add(btnBrowseOut);
+        btnBrowseOut.setBounds(477, 140, 74, 24);
 
         lblOptions.setText("Options:");
+        pnlMainPanel.add(lblOptions);
+        lblOptions.setBounds(43, 196, 51, 18);
 
         chkM3U.setText("Create .m3u");
+        pnlMainPanel.add(chkM3U);
+        chkM3U.setBounds(97, 227, 95, 22);
 
         chkOpenWhenDone.setText("Open when done");
+        pnlMainPanel.add(chkOpenWhenDone);
+        chkOpenWhenDone.setBounds(275, 227, 126, 22);
 
         chkLimit.setText("Limit Speed");
+        pnlMainPanel.add(chkLimit);
+        chkLimit.setBounds(97, 267, 93, 22);
+        pnlMainPanel.add(chkKbps);
+        chkKbps.setBounds(275, 267, 19, 19);
+        pnlMainPanel.add(txtKbps);
+        txtKbps.setBounds(300, 267, 34, 24);
 
         lblKbps.setText("Kbsp");
+        pnlMainPanel.add(lblKbps);
+        lblKbps.setBounds(340, 269, 30, 18);
 
         lblControls.setText("Controles:");
+        pnlMainPanel.add(lblControls);
+        lblControls.setBounds(43, 324, 61, 18);
 
         btnDownload.setText("Download");
         btnDownload.addActionListener(new java.awt.event.ActionListener() {
@@ -159,151 +224,31 @@ public class MainFrame extends javax.swing.JFrame {
                 btnDownloadActionPerformed(evt);
             }
         });
+        pnlMainPanel.add(btnDownload);
+        btnDownload.setBounds(24, 360, 158, 24);
 
         btnStop.setText("Stop");
+        pnlMainPanel.add(btnStop);
+        btnStop.setBounds(205, 360, 169, 24);
 
         btnOpenLast.setText("Open last");
+        pnlMainPanel.add(btnOpenLast);
+        btnOpenLast.setBounds(404, 360, 158, 24);
 
         lblOutput.setText("Output:");
+        pnlMainPanel.add(lblOutput);
+        lblOutput.setBounds(43, 419, 47, 18);
 
         txaLogArea.setColumns(20);
         txaLogArea.setRows(5);
         scrLogArea.setViewportView(txaLogArea);
 
-        javax.swing.GroupLayout pnlMainPanelLayout = new javax.swing.GroupLayout(pnlMainPanel);
-        pnlMainPanel.setLayout(pnlMainPanelLayout);
-        pnlMainPanelLayout.setHorizontalGroup(
-            pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlMainPanelLayout.createSequentialGroup()
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                        .addGap(45, 45, 45)
-                        .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(lblFormat)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(lblUrl, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(txtUrl))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlMainPanelLayout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblOptions)
-                            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(lblOutDir)
-                                .addGap(18, 18, 18)
-                                .addComponent(txtOutDir, javax.swing.GroupLayout.PREFERRED_SIZE, 313, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(lblControls))))
-                .addGap(18, 18, 18)
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                        .addComponent(btnPaste, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnClear, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(btnBrowseOut))
-                .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlMainPanelLayout.createSequentialGroup()
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                        .addGap(24, 24, 24)
-                        .addComponent(btnDownload, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(23, 23, 23)
-                        .addComponent(btnStop, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnOpenLast, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                        .addContainerGap(26, Short.MAX_VALUE)
-                        .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(lblActualDir, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(scrLogArea, javax.swing.GroupLayout.PREFERRED_SIZE, 536, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                                .addGap(17, 17, 17)
-                                .addComponent(lblOutput)))))
-                .addGap(28, 28, 28))
-            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                .addGap(181, 181, 181)
-                .addComponent(rbAudio)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                .addGap(97, 97, 97)
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(rbVideo)
-                    .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                        .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(chkM3U)
-                                .addGap(83, 83, 83))
-                            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(chkLimit)
-                                .addGap(85, 85, 85)))
-                        .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkOpenWhenDone)
-                            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                                .addComponent(chkKbps)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtKbps, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblKbps)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        pnlMainPanelLayout.setVerticalGroup(
-            pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnPaste, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnClear, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblUrl, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtUrl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(29, 29, 29)
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblFormat)
-                    .addComponent(rbVideo)
-                    .addComponent(rbAudio))
-                .addGap(50, 50, 50)
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblOutDir)
-                    .addComponent(txtOutDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnBrowseOut))
-                .addGap(32, 32, 32)
-                .addComponent(lblOptions)
-                .addGap(13, 13, 13)
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkM3U)
-                    .addComponent(chkOpenWhenDone))
-                .addGap(18, 18, 18)
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chkKbps)
-                    .addComponent(txtKbps, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(chkLimit)
-                        .addComponent(lblKbps)))
-                .addGap(33, 33, 33)
-                .addComponent(lblControls)
-                .addGap(18, 18, 18)
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnStop)
-                    .addComponent(btnOpenLast)
-                    .addComponent(btnDownload))
-                .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlMainPanelLayout.createSequentialGroup()
-                        .addGap(35, 35, 35)
-                        .addComponent(lblOutput)
-                        .addGap(18, 18, 18)
-                        .addComponent(scrLogArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
-                        .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(27, 27, 27))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlMainPanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
-                        .addComponent(lblActualDir, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(15, 15, 15))))
-        );
+        pnlMainPanel.add(scrLogArea);
+        scrLogArea.setBounds(26, 455, 536, 96);
+        pnlMainPanel.add(lblStatus);
+        lblStatus.setBounds(26, 576, 115, 27);
+        pnlMainPanel.add(lblActualDir);
+        lblActualDir.setBounds(399, 588, 163, 27);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -418,12 +363,28 @@ public class MainFrame extends javax.swing.JFrame {
             @Override
             protected Integer doInBackground() {
                 try {
-                    // Mostrar versión
-                    CommandExecutor.runStreaming(verCmd, line -> publish("[yt-dlp --version] " + line));
+                    // 0) versión
+                    CommandExecutor.runStreaming(java.util.List.of(YT_DLP_PATH, "--version"),
+                            line -> publish("[yt-dlp --version] " + line));
 
-                    // Ejecutar el comando (detectando archivo y mostrando log)
-                    return CommandExecutor.runStreaming(command, this::publish);
+                    // === 1) INTENTO WEB (con cookies) ===
+                    java.util.List<String> cmdWeb = new java.util.ArrayList<>(command);
+                    setExtractorClient(cmdWeb, "web");
+                    publish("[try] web + cookies");
+                    int exitWeb = CommandExecutor.runStreaming(cmdWeb, this::publish);
+                    if (exitWeb == 0) {
+                        return 0; // ✅ no reintentes si ya fue bien
+                    }
+                    // === 2) FALLBACK ANDROID (sin cookies) ===
+                    java.util.List<String> cmdAndroid = new java.util.ArrayList<>(command);
+                    setExtractorClient(cmdAndroid, "android");
+                    // Android no soporta cookies → quitar opción y su valor
+                    removeOptionWithValue(cmdAndroid, "--cookies-from-browser");
+                    publish("[retry] android (sin cookies)");
+                    int exitAndroid = CommandExecutor.runStreaming(cmdAndroid, this::publish);
+                    return exitAndroid;
 
+                    // (Opcional) podrías probar iOS aquí, pero requiere PO token; mejor omitir.
                 } catch (Exception e) {
                     publish("ERROR: " + e.getMessage());
                     return -1;
