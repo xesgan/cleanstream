@@ -181,7 +181,7 @@
                                   </Group>
                               </Group>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="chkOpen" min="-2" max="-2" attributes="0"/>
+                                  <Component id="chkOpenWhenDone" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="chkKbps" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
@@ -225,7 +225,7 @@
                       <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="chkM3U" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="chkOpen" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkOpenWhenDone" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -334,7 +334,7 @@
                 <Property name="text" type="java.lang.String" value="Create .m3u"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JCheckBox" name="chkOpen">
+            <Component class="javax.swing.JCheckBox" name="chkOpenWhenDone">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Open when done"/>
               </Properties>

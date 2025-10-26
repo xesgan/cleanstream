@@ -14,9 +14,12 @@ import java.util.function.Consumer;
  */
 public class CommandExecutor {
 
-    private static MainFrame MFrame = new MainFrame();
-    private PreferencesPanel pnlPreferencesPanel = new PreferencesPanel(MFrame);
-
+    /** Ejecuta un comando y va enviando cada línea al consumer. Devuelve exit code.
+     * @param command
+     * @param onLine
+     * @return
+     * @throws java.io.IOException
+     * @throws java.lang.InterruptedException  */
     public static int runStreaming(List<String> command, Consumer<String> onLine)
             throws IOException, InterruptedException {
 
@@ -26,12 +29,12 @@ public class CommandExecutor {
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getInputStream()))) {
+
             String line;
             while ((line = reader.readLine()) != null) {
                 onLine.accept(line);
             }
         }
-
         return process.waitFor();
     }
 }

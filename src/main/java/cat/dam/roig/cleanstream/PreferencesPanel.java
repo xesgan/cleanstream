@@ -24,9 +24,31 @@ public class PreferencesPanel extends javax.swing.JPanel {
         initComponents();
     }
 
-    public JTextField getTxtYtDlpPath() {
-        return txtYtDlpPath;
+    
+    // ------- GETTERS --------
+    
+    public String getTxtYtDlpPath() {
+        return txtYtDlpPath.getText().trim();
     }
+
+    public String getTxtFfpmegDir() {
+        return txtFfpmegDir.getText().trim();
+    }
+
+    public String getTxtFfprobeDir() {
+        return txtFfprobeDir.getText().trim();
+    }
+
+    public String getTxtTempDir() {
+        return txtTempDir.getText().trim();
+    }
+
+    public String getTxtDownloadsDir() {
+        return txtDownloadsDir.getText().trim();
+    }
+    
+    
+    
 
     // Helpers Reusable
     /**
@@ -45,7 +67,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
                 fc.setSelectedFile(current);
             }
         }
-
+        
         // En Windows puedes filtrar .exe; en Linux/Mac no tiene sentido
         if (tryExeFilter && isWindows()) {
             fc.setAcceptAllFileFilterUsed(true);
@@ -221,11 +243,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(btnTempBrowse);
         btnTempBrowse.setBounds(430, 250, 90, 24);
 
-        lblDownloads.setText("ffprobe:");
+        lblDownloads.setText("Downloads:");
         add(lblDownloads);
         lblDownloads.setBounds(40, 290, 70, 18);
         add(txtDownloadsDir);
-        txtDownloadsDir.setBounds(110, 290, 310, 24);
+        txtDownloadsDir.setBounds(120, 290, 300, 24);
 
         btnDownloadsBrowse.setText("Browse...");
         btnDownloadsBrowse.addActionListener(new java.awt.event.ActionListener() {
@@ -301,23 +323,27 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
         // TODO add your handling code here:
-
+        browseFileInto(txtYtDlpPath, "Selecciona el ejecutable de yt-dlp", true);
     }//GEN-LAST:event_btnYtDplBrowseActionPerformed
 
     private void btnFfpmegBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFfpmegBrowseActionPerformed
         // TODO add your handling code here:
+        browseFileInto(txtFfpmegDir, "Selecciona el ejecutable de ffmpeg", true);
     }//GEN-LAST:event_btnFfpmegBrowseActionPerformed
 
     private void btnFfprobeBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFfprobeBrowseActionPerformed
         // TODO add your handling code here:
+        browseFileInto(txtFfprobeDir, "Selecciona el ejecutable de ffprobe", true);
     }//GEN-LAST:event_btnFfprobeBrowseActionPerformed
 
     private void btnTempBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTempBrowseActionPerformed
         // TODO add your handling code here:
+        browseDirectoryInto(txtTempDir, "Selecciona la carpeta de temporales");
     }//GEN-LAST:event_btnTempBrowseActionPerformed
 
     private void btnDownloadsBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadsBrowseActionPerformed
         // TODO add your handling code here:
+        browseDirectoryInto(txtDownloadsDir, "Selecciona la carpeta de descargas");
     }//GEN-LAST:event_btnDownloadsBrowseActionPerformed
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed

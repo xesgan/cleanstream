@@ -1,6 +1,7 @@
 package cat.dam.roig.cleanstream;
 
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
@@ -14,6 +15,11 @@ public class MainFrame extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
     private PreferencesPanel pnlPreferencesPanel;
+    private static final String YT_DLP_PATH = "/bin/yt-dlp";
+    private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
+    private static final String COOKIES_TXT = System.getProperty("user.home") + "/Downloads/youtube_cookies.txt"; // fallback
+    // En MainFrame.java (arriba, junto a otras variables)
+    private String lastDownloadedFile = null;
 
     /**
      * Creates new form MainFrame
@@ -77,7 +83,7 @@ public class MainFrame extends javax.swing.JFrame {
         btnBrowseOut = new javax.swing.JButton();
         lblOptions = new javax.swing.JLabel();
         chkM3U = new javax.swing.JCheckBox();
-        chkOpen = new javax.swing.JCheckBox();
+        chkOpenWhenDone = new javax.swing.JCheckBox();
         chkLimit = new javax.swing.JCheckBox();
         chkKbps = new javax.swing.JCheckBox();
         txtKbps = new javax.swing.JTextField();
@@ -139,7 +145,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         chkM3U.setText("Create .m3u");
 
-        chkOpen.setText("Open when done");
+        chkOpenWhenDone.setText("Open when done");
 
         chkLimit.setText("Limit Speed");
 
@@ -235,7 +241,7 @@ public class MainFrame extends javax.swing.JFrame {
                                 .addComponent(chkLimit)
                                 .addGap(85, 85, 85)))
                         .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkOpen)
+                            .addComponent(chkOpenWhenDone)
                             .addGroup(pnlMainPanelLayout.createSequentialGroup()
                                 .addComponent(chkKbps)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -269,7 +275,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGap(13, 13, 13)
                 .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkM3U)
-                    .addComponent(chkOpen))
+                    .addComponent(chkOpenWhenDone))
                 .addGap(18, 18, 18)
                 .addGroup(pnlMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(chkKbps)
@@ -355,39 +361,69 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
         // TODO add your handling code here:
-        String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath().getText();
-        String outputFolder = txtOutDir.getText();
-        String url = txtUrl.getText();
+//        String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath();
+        String ytDlpPath = YT_DLP_PATH; // Ruta fija como acordamos
+        String outputFolder = txtOutDir.getText().trim();
+        String url = txtUrl.getText().trim();
 
-        if (ytDlpPath.isBlank() || url.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Faltan campos (yt-dlp o URL).", "Aviso", JOptionPane.WARNING_MESSAGE);
+        if (url.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Falta la URL del vídeo.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 2️⃣ Construir comando
-        List<String> command = new java.util.ArrayList<>();
+        // Construcción del comando
+        java.util.List<String> command = new java.util.ArrayList<>();
         command.add(ytDlpPath);
         command.add("-f");
-        command.add("bestvideo+bestaudio/best");
+        command.add("bv*+ba/b/22/18"); // incluye fallback progresivo
         if (!outputFolder.isBlank()) {
             command.add("-o");
             command.add(outputFolder + "/%(title)s.%(ext)s");
         }
+        // Ruta fija a ffmpeg
+        command.add("--ffmpeg-location");
+        command.add(FFMPEG_PATH);
+
+        // Flags de estabilidad
+        command.add("--force-ipv4");
+        command.add("--http-chunk-size");
+        command.add("10M");
+        command.add("--user-agent");
+        command.add("Mozilla/5.0");
+        command.add("--add-header");
+        command.add("Referer:https://www.youtube.com/");
+        command.add("--add-header");
+        command.add("Accept-Language:es-ES,es;q=0.9");
+        command.add("--concurrent-fragments");
+        command.add("1");
+        command.add("--retries");
+        command.add("infinite");
+        command.add("--fragment-retries");
+        command.add("infinite");
+        command.add("--cookies-from-browser");
+        command.add("vivaldi:Default::" + System.getProperty("user.home") + "/.config/vivaldi");
+
+        // URL al final
         command.add(url);
 
+        // Mostrar comando y versión
+        java.util.List<String> verCmd = java.util.List.of(ytDlpPath, "--version");
         JTextArea log = getTxaLogArea();
-        log.setText(""); // Limpia el área antes de iniciar
-
-        // 3️⃣ Desactivar botón para evitar pulsaciones dobles
+        log.setText("");
+        log.append("CMD: " + String.join(" ", command) + "\n\n");
         btnDownload.setEnabled(false);
 
-        // 4️⃣ SwingWorker que ejecuta el comando
+        // SwingWorker
         SwingWorker<Integer, String> worker = new SwingWorker<>() {
             @Override
             protected Integer doInBackground() {
                 try {
-                    // Cada línea se publica al log
+                    // Mostrar versión
+                    CommandExecutor.runStreaming(verCmd, line -> publish("[yt-dlp --version] " + line));
+
+                    // Ejecutar el comando (detectando archivo y mostrando log)
                     return CommandExecutor.runStreaming(command, this::publish);
+
                 } catch (Exception e) {
                     publish("ERROR: " + e.getMessage());
                     return -1;
@@ -396,26 +432,43 @@ public class MainFrame extends javax.swing.JFrame {
 
             @Override
             protected void process(java.util.List<String> lines) {
-                // Se ejecuta en el hilo de Swing
                 for (String line : lines) {
                     log.append(line + "\n");
+
+                    // Detectar el archivo descargado
+                    if (line.contains("Destination:")) {
+                        String path = line.substring(line.indexOf("Destination:") + "Destination:".length()).trim();
+                        lastDownloadedFile = path;
+                    }
                 }
             }
 
             @Override
             protected void done() {
                 try {
-                    Integer exit = get();
+                    int exit = get();
                     log.append("\nProceso finalizado con código: " + exit + "\n");
+
+                    // Solo abrir si el checkbox está marcado y el proceso fue correcto
+                    if (exit == 0 && chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {
+                        java.io.File file = new java.io.File(lastDownloadedFile);
+                        if (file.exists()) {
+                            log.append("Reproduciendo: " + file.getName() + "\n");
+                            java.awt.Desktop.getDesktop().open(file);
+                        } else {
+                            log.append("No se encontró el archivo descargado.\n");
+                        }
+                    }
+
                 } catch (Exception ex) {
                     log.append("ERROR al finalizar: " + ex.getMessage() + "\n");
                 } finally {
-                    btnDownload.setEnabled(true); // Reactivar botón
+                    btnDownload.setEnabled(true);
                 }
             }
         };
 
-        worker.execute(); // 5️⃣ Ejecutar
+        worker.execute();
     }//GEN-LAST:event_btnDownloadActionPerformed
 
     /**
@@ -454,7 +507,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkKbps;
     private javax.swing.JCheckBox chkLimit;
     private javax.swing.JCheckBox chkM3U;
-    private javax.swing.JCheckBox chkOpen;
+    private javax.swing.JCheckBox chkOpenWhenDone;
     private javax.swing.JLabel lblActualDir;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;

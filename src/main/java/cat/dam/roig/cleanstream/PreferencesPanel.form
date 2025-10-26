@@ -173,7 +173,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblDownloads">
       <Properties>
-        <Property name="text" type="java.lang.String" value="ffprobe:"/>
+        <Property name="text" type="java.lang.String" value="Downloads:"/>
       </Properties>
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
@@ -184,7 +184,7 @@
     <Component class="javax.swing.JTextField" name="txtDownloadsDir">
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="110" y="290" width="310" height="-1"/>
+          <AbsoluteConstraints x="120" y="290" width="300" height="-1"/>
         </Constraint>
       </Constraints>
     </Component>
