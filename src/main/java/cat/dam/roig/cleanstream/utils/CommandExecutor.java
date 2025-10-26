@@ -6,37 +6,32 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  *
  * @author metku
  */
 public class CommandExecutor {
-    
+
     private static MainFrame MFrame = new MainFrame();
     private PreferencesPanel pnlPreferencesPanel = new PreferencesPanel(MFrame);
-    
-    public static void runCommand(List<String> command) {
-        try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-            pb.redirectErrorStream(true);
-            Process process = pb.start();
 
-            // Leer salida del proceso
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()))) {
+    public static int runStreaming(List<String> command, Consumer<String> onLine)
+            throws IOException, InterruptedException {
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    MFrame.getTxaLogArea().append(line + "\n");
-                }
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                onLine.accept(line);
             }
-
-            int exitCode = process.waitFor();
-            System.out.println("Proceso finalizado con código: " + exitCode);
-
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
         }
+
+        return process.waitFor();
     }
 }

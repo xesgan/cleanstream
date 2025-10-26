@@ -2,7 +2,9 @@ package cat.dam.roig.cleanstream;
 
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingWorker;
 
 /**
  *
@@ -354,18 +356,66 @@ public class MainFrame extends javax.swing.JFrame {
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
         // TODO add your handling code here:
         String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath().getText();
-        String url = txtUrl.getText();
         String outputFolder = txtOutDir.getText();
+        String url = txtUrl.getText();
 
-        // Por ejemplo:
-        List<String> command = List.of(
-                ytDlpPath,
-                "-f", "bestvideo+bestaudio/best",
-                "-o", outputFolder + "/%(title)s.%(ext)s",
-                url
-        );
+        if (ytDlpPath.isBlank() || url.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Faltan campos (yt-dlp o URL).", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-        CommandExecutor.runCommand(command);
+        // 2️⃣ Construir comando
+        List<String> command = new java.util.ArrayList<>();
+        command.add(ytDlpPath);
+        command.add("-f");
+        command.add("bestvideo+bestaudio/best");
+        if (!outputFolder.isBlank()) {
+            command.add("-o");
+            command.add(outputFolder + "/%(title)s.%(ext)s");
+        }
+        command.add(url);
+
+        JTextArea log = getTxaLogArea();
+        log.setText(""); // Limpia el área antes de iniciar
+
+        // 3️⃣ Desactivar botón para evitar pulsaciones dobles
+        btnDownload.setEnabled(false);
+
+        // 4️⃣ SwingWorker que ejecuta el comando
+        SwingWorker<Integer, String> worker = new SwingWorker<>() {
+            @Override
+            protected Integer doInBackground() {
+                try {
+                    // Cada línea se publica al log
+                    return CommandExecutor.runStreaming(command, this::publish);
+                } catch (Exception e) {
+                    publish("ERROR: " + e.getMessage());
+                    return -1;
+                }
+            }
+
+            @Override
+            protected void process(java.util.List<String> lines) {
+                // Se ejecuta en el hilo de Swing
+                for (String line : lines) {
+                    log.append(line + "\n");
+                }
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Integer exit = get();
+                    log.append("\nProceso finalizado con código: " + exit + "\n");
+                } catch (Exception ex) {
+                    log.append("ERROR al finalizar: " + ex.getMessage() + "\n");
+                } finally {
+                    btnDownload.setEnabled(true); // Reactivar botón
+                }
+            }
+        };
+
+        worker.execute(); // 5️⃣ Ejecutar
     }//GEN-LAST:event_btnDownloadActionPerformed
 
     /**

@@ -1,17 +1,22 @@
 package cat.dam.roig.cleanstream;
 
+import java.io.File;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
  * @author metku
  */
 public class PreferencesPanel extends javax.swing.JPanel {
-    
+
     private MainFrame mainFrame;
 
     /**
      * Creates new form MainPanel
+     *
      * @param mainFrame
      */
     public PreferencesPanel(MainFrame mainFrame) {
@@ -22,8 +27,80 @@ public class PreferencesPanel extends javax.swing.JPanel {
     public JTextField getTxtYtDlpPath() {
         return txtYtDlpPath;
     }
-    
-    
+
+    // Helpers Reusable
+    /**
+     * Diálogo para elegir ARCHIVO ejecutable (yt-dlp, ffmpeg, ffprobe)
+     */
+    private void browseFileInto(JTextField target, String title, boolean tryExeFilter) {
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle(title);
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        // Si hay valor previo, ábrelo ahí
+        File current = pathToExistingFileOrDir(target.getText());
+        if (current != null) {
+            fc.setCurrentDirectory(current.isDirectory() ? current : current.getParentFile());
+            if (current.isFile()) {
+                fc.setSelectedFile(current);
+            }
+        }
+
+        // En Windows puedes filtrar .exe; en Linux/Mac no tiene sentido
+        if (tryExeFilter && isWindows()) {
+            fc.setAcceptAllFileFilterUsed(true);
+            fc.setFileFilter(new FileNameExtensionFilter("Ejecutables (*.exe)", "exe"));
+        }
+
+        int result = fc.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File f = fc.getSelectedFile();
+            target.setText(f.getAbsolutePath());
+            // (opcional) validación rápida
+            if (!f.canExecute()) {
+                JOptionPane.showMessageDialog(this,
+                        "Aviso: el archivo seleccionado puede no ser ejecutable.\n" + f,
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    /**
+     * Diálogo para elegir CARPETA (descargas, temporales)
+     */
+    private void browseDirectoryInto(JTextField target, String title) {
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle(title);
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fc.setAcceptAllFileFilterUsed(false);
+
+        File current = pathToExistingFileOrDir(target.getText());
+        if (current != null) {
+            fc.setCurrentDirectory(current.isDirectory() ? current : current.getParentFile());
+            if (current.isDirectory()) {
+                fc.setSelectedFile(current);
+            }
+        }
+
+        int result = fc.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File dir = fc.getSelectedFile();
+            target.setText(dir.getAbsolutePath());
+        }
+    }
+
+    private static boolean isWindows() {
+        String os = System.getProperty("os.name", "").toLowerCase();
+        return os.contains("win");
+    }
+
+    private static File pathToExistingFileOrDir(String path) {
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        File f = new File(path.trim());
+        return f.exists() ? f : null;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -224,6 +301,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
         // TODO add your handling code here:
+
     }//GEN-LAST:event_btnYtDplBrowseActionPerformed
 
     private void btnFfpmegBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFfpmegBrowseActionPerformed
