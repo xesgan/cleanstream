@@ -130,6 +130,7 @@ public class MainFrame extends javax.swing.JFrame {
         mnuEdit = new javax.swing.JMenu();
         mniPreferences = new javax.swing.JMenuItem();
         mnuHelp = new javax.swing.JMenu();
+        mniAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(580, 650));
@@ -280,6 +281,15 @@ public class MainFrame extends javax.swing.JFrame {
         mnbBar.add(mnuEdit);
 
         mnuHelp.setText("Help");
+
+        mniAbout.setText("About");
+        mniAbout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mniAboutActionPerformed(evt);
+            }
+        });
+        mnuHelp.add(mniAbout);
+
         mnbBar.add(mnuHelp);
 
         setJMenuBar(mnbBar);
@@ -432,6 +442,12 @@ public class MainFrame extends javax.swing.JFrame {
         worker.execute();
     }//GEN-LAST:event_btnDownloadActionPerformed
 
+    private void mniAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniAboutActionPerformed
+        // TODO add your handling code here:
+        AboutDialog dlg = new AboutDialog(this, true); // modal
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mniAboutActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -479,6 +495,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblUrl;
     private javax.swing.JMenuBar mnbBar;
+    private javax.swing.JMenuItem mniAbout;
     private javax.swing.JMenuItem mniExit;
     private javax.swing.JMenuItem mniPreferences;
     private javax.swing.JMenu mnuEdit;
