@@ -1,5 +1,7 @@
 package cat.dam.roig.cleanstream;
 
+import javax.swing.JTextField;
+
 /**
  *
  * @author metku
@@ -16,6 +18,12 @@ public class PreferencesPanel extends javax.swing.JPanel {
         this.mainFrame = mainFrame;
         initComponents();
     }
+
+    public JTextField getTxtYtDlpPath() {
+        return txtYtDlpPath;
+    }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -68,6 +76,12 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblYtDlp.setText("yt-dlp:");
         add(lblYtDlp);
         lblYtDlp.setBounds(40, 60, 70, 18);
+
+        txtYtDlpPath.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtYtDlpPathActionPerformed(evt);
+            }
+        });
         add(txtYtDlpPath);
         txtYtDlpPath.setBounds(110, 60, 310, 24);
 
@@ -232,6 +246,10 @@ public class PreferencesPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
         mainFrame.showMain();
     }//GEN-LAST:event_btnCancelActionPerformed
+
+    private void txtYtDlpPathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtYtDlpPathActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtYtDlpPathActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
