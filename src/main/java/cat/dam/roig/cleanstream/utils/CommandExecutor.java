@@ -1,7 +1,5 @@
 package cat.dam.roig.cleanstream.utils;
 
-import cat.dam.roig.cleanstream.MainFrame;
-import cat.dam.roig.cleanstream.PreferencesPanel;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;

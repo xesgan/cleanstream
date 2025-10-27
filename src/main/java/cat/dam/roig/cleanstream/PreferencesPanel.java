@@ -284,29 +284,31 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(lblQuality);
         lblQuality.setBounds(30, 480, 110, 23);
 
+        bgQuality.add(rbBest);
         rbBest.setText("Best Available");
         add(rbBest);
         rbBest.setBounds(110, 520, 105, 22);
 
+        bgQuality.add(rb1080);
         rb1080.setText("1080p");
         add(rb1080);
         rb1080.setBounds(240, 520, 59, 22);
 
+        bgQuality.add(rb720);
         rb720.setText("720p");
         add(rb720);
         rb720.setBounds(320, 520, 60, 22);
 
+        bgQuality.add(rbAudioOnly);
         rbAudioOnly.setText("Only Audio");
         add(rbAudioOnly);
         rbAudioOnly.setBounds(390, 520, 89, 22);
 
         btnSave.setText("Save");
-        bgQuality.add(btnSave);
         add(btnSave);
         btnSave.setBounds(50, 590, 72, 24);
 
-        btnCancel.setText("Cancel");
-        bgQuality.add(btnCancel);
+        btnCancel.setText("Back");
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCancelActionPerformed(evt);
@@ -316,7 +318,6 @@ public class PreferencesPanel extends javax.swing.JPanel {
         btnCancel.setBounds(450, 590, 72, 24);
 
         btnReset.setText("Reset");
-        bgQuality.add(btnReset);
         add(btnReset);
         btnReset.setBounds(130, 590, 72, 24);
     }// </editor-fold>//GEN-END:initComponents

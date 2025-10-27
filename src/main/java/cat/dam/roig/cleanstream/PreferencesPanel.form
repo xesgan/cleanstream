@@ -269,6 +269,9 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="rbBest">
       <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="bgQuality"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Best Available"/>
       </Properties>
       <Constraints>
@@ -279,6 +282,9 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="rb1080">
       <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="bgQuality"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="1080p"/>
       </Properties>
       <Constraints>
@@ -289,6 +295,9 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="rb720">
       <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="bgQuality"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="720p"/>
       </Properties>
       <Constraints>
@@ -299,6 +308,9 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="rbAudioOnly">
       <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="bgQuality"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Only Audio"/>
       </Properties>
       <Constraints>
@@ -310,9 +322,6 @@
     <Component class="javax.swing.JButton" name="btnSave">
       <Properties>
         <Property name="text" type="java.lang.String" value="Save"/>
-        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-          <ComponentRef name="bgQuality"/>
-        </Property>
       </Properties>
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
@@ -322,10 +331,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="btnCancel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Cancel"/>
-        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-          <ComponentRef name="bgQuality"/>
-        </Property>
+        <Property name="text" type="java.lang.String" value="Back"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCancelActionPerformed"/>
@@ -339,9 +345,6 @@
     <Component class="javax.swing.JButton" name="btnReset">
       <Properties>
         <Property name="text" type="java.lang.String" value="Reset"/>
-        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-          <ComponentRef name="bgQuality"/>
-        </Property>
       </Properties>
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
