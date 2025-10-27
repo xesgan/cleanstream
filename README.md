@@ -81,12 +81,6 @@ CommandExecutor creaba nuevas ventanas ocultas	Inicializaba MainFrame dentro de 
 
 🚧 Pendiente para siguientes semanas:
 
-Cuadro About (JDialog) con información del autor.
-
-Reproductor del último archivo descargado.
-
-Guardado de preferencias del usuario (persistencia con java.util.prefs).
-
 Incorporar más opciones de descarga (audio, listas, subtítulos, etc.).
 
 🤖 Créditos y fuentes
