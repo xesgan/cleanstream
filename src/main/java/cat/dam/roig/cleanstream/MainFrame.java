@@ -18,7 +18,6 @@ public class MainFrame extends javax.swing.JFrame {
     private static final String YT_DLP_PATH = "/bin/yt-dlp";
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
     private static final String COOKIES_TXT = System.getProperty("user.home") + "/Downloads/youtube_cookies.txt"; // fallback
-    // En MainFrame.java (arriba, junto a otras variables)
     private String lastDownloadedFile = null;
 
     /**
@@ -322,7 +321,7 @@ public class MainFrame extends javax.swing.JFrame {
         String url = txtUrl.getText().trim();
 
         if (url.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Falta la URL del vídeo.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Video URL is missing.", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -424,15 +423,15 @@ public class MainFrame extends javax.swing.JFrame {
                     if (exit == 0 && chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {
                         java.io.File file = new java.io.File(lastDownloadedFile);
                         if (file.exists()) {
-                            log.append("Reproduciendo: " + file.getName() + "\n");
+                            log.append("Playing: " + file.getName() + "\n");
                             java.awt.Desktop.getDesktop().open(file);
                         } else {
-                            log.append("No se encontró el archivo descargado.\n");
+                            log.append("Couldn't find the downloaded file.\n");
                         }
                     }
 
                 } catch (Exception ex) {
-                    log.append("ERROR al finalizar: " + ex.getMessage() + "\n");
+                    log.append("ERROR when finished: " + ex.getMessage() + "\n");
                 } finally {
                     btnDownload.setEnabled(true);
                 }
