@@ -11,12 +11,15 @@ import java.nio.file.Paths;
  * @author metku
  */
 public class DetectOS {
+    
+    private DetectOS() {};
+    String dir;
 
     enum OS {
         WINDOWS, MAC, LINUX, OTHER
     }
 
-    private static OS detectOS() {
+    public static OS detectOS() {
         String os = System.getProperty("os.name", "generic").toLowerCase();
         if (os.contains("win")) {
             return OS.WINDOWS;
@@ -122,8 +125,9 @@ public class DetectOS {
 
     /**
      * Resuelve la ruta final (preferencias → default) y la crea si no existe.
+     * @param candidate
      */
-    private static String resolveDownloadDir(String candidate) {
+    public static String resolveDownloadDir(String candidate) {
         Path resolved;
         if (candidate == null || candidate.isBlank()) {
             resolved = DEFAULT_DOWNLOAD_DIR_PATH;

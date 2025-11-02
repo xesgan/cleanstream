@@ -223,13 +223,13 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblRoutes.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
         lblRoutes.setText("Routes:");
         add(lblRoutes);
-        lblRoutes.setBounds(30, 210, 70, 23);
+        lblRoutes.setBounds(30, 180, 70, 23);
 
         lblTemp.setText("Temp:");
         add(lblTemp);
-        lblTemp.setBounds(40, 250, 70, 18);
+        lblTemp.setBounds(40, 220, 70, 18);
         add(txtTempDir);
-        txtTempDir.setBounds(110, 250, 310, 24);
+        txtTempDir.setBounds(110, 220, 310, 24);
 
         btnTempBrowse.setText("Browse...");
         btnTempBrowse.addActionListener(new java.awt.event.ActionListener() {
@@ -238,13 +238,13 @@ public class PreferencesPanel extends javax.swing.JPanel {
             }
         });
         add(btnTempBrowse);
-        btnTempBrowse.setBounds(430, 250, 90, 24);
+        btnTempBrowse.setBounds(430, 220, 90, 24);
 
         lblDownloads.setText("Downloads:");
         add(lblDownloads);
-        lblDownloads.setBounds(40, 290, 70, 18);
+        lblDownloads.setBounds(40, 260, 70, 18);
         add(txtDownloadsDir);
-        txtDownloadsDir.setBounds(120, 290, 300, 24);
+        txtDownloadsDir.setBounds(120, 260, 300, 24);
 
         btnDownloadsBrowse.setText("Browse...");
         btnDownloadsBrowse.addActionListener(new java.awt.event.ActionListener() {
@@ -253,57 +253,57 @@ public class PreferencesPanel extends javax.swing.JPanel {
             }
         });
         add(btnDownloadsBrowse);
-        btnDownloadsBrowse.setBounds(430, 290, 90, 24);
+        btnDownloadsBrowse.setBounds(430, 260, 90, 24);
 
         lblBehaviour.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
         lblBehaviour.setText("Behaving:");
         add(lblBehaviour);
-        lblBehaviour.setBounds(30, 360, 110, 23);
+        lblBehaviour.setBounds(30, 310, 110, 23);
 
         chkDeleteIntermediates.setText("Delete intermediates files");
         add(chkDeleteIntermediates);
-        chkDeleteIntermediates.setBounds(120, 400, 190, 22);
+        chkDeleteIntermediates.setBounds(120, 320, 190, 22);
 
         chkKeepName.setText("Keep original name");
         add(chkKeepName);
-        chkKeepName.setBounds(120, 430, 150, 22);
+        chkKeepName.setBounds(120, 350, 150, 22);
 
         chkAutoplay.setText("Autoplay on finish");
         add(chkAutoplay);
-        chkAutoplay.setBounds(330, 400, 170, 22);
+        chkAutoplay.setBounds(330, 320, 170, 22);
 
         chkOverwrite.setText("Overwrite if exists");
         add(chkOverwrite);
-        chkOverwrite.setBounds(330, 430, 170, 22);
+        chkOverwrite.setBounds(330, 350, 170, 22);
 
         lblQuality.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
         lblQuality.setText("Quality:");
         add(lblQuality);
-        lblQuality.setBounds(30, 480, 110, 23);
+        lblQuality.setBounds(30, 400, 110, 23);
 
         bgQuality.add(rbBest);
         rbBest.setText("Best Available");
         add(rbBest);
-        rbBest.setBounds(110, 520, 105, 22);
+        rbBest.setBounds(110, 400, 105, 22);
 
         bgQuality.add(rb1080);
         rb1080.setText("1080p");
         add(rb1080);
-        rb1080.setBounds(240, 520, 59, 22);
+        rb1080.setBounds(240, 400, 59, 22);
 
         bgQuality.add(rb720);
         rb720.setText("720p");
         add(rb720);
-        rb720.setBounds(320, 520, 60, 22);
+        rb720.setBounds(320, 400, 60, 22);
 
         bgQuality.add(rbAudioOnly);
         rbAudioOnly.setText("Only Audio");
         add(rbAudioOnly);
-        rbAudioOnly.setBounds(390, 520, 89, 22);
+        rbAudioOnly.setBounds(390, 400, 89, 22);
 
         btnSave.setText("Save");
         add(btnSave);
-        btnSave.setBounds(50, 590, 72, 24);
+        btnSave.setBounds(50, 460, 72, 24);
 
         btnCancel.setText("Back");
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -312,11 +312,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
             }
         });
         add(btnCancel);
-        btnCancel.setBounds(450, 590, 72, 24);
+        btnCancel.setBounds(450, 460, 72, 24);
 
         btnReset.setText("Reset");
         add(btnReset);
-        btnReset.setBounds(130, 590, 72, 24);
+        btnReset.setBounds(130, 460, 72, 24);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed

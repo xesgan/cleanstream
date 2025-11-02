@@ -1,6 +1,7 @@
 package cat.dam.roig.cleanstream;
 
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
+import cat.dam.roig.cleanstream.utils.DetectOS;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -15,6 +16,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
     private PreferencesPanel pnlPreferencesPanel;
+    private DetectOS scanOS;
     private static final String YT_DLP_PATH = "/bin/yt-dlp";
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
     private static final String COOKIES_TXT = System.getProperty("user.home") + "/Downloads/youtube_cookies.txt"; // fallback
@@ -104,9 +106,6 @@ public class MainFrame extends javax.swing.JFrame {
         lblFormat = new javax.swing.JLabel();
         rbVideo = new javax.swing.JRadioButton();
         rbAudio = new javax.swing.JRadioButton();
-        lblOutDir = new javax.swing.JLabel();
-        txtOutDir = new javax.swing.JTextField();
-        btnBrowseOut = new javax.swing.JButton();
         lblOptions = new javax.swing.JLabel();
         chkM3U = new javax.swing.JCheckBox();
         chkOpenWhenDone = new javax.swing.JCheckBox();
@@ -180,43 +179,33 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(rbAudio);
         rbAudio.setBounds(181, 68, 58, 22);
 
-        lblOutDir.setText("Output folder:");
-        pnlMainPanel.add(lblOutDir);
-        lblOutDir.setBounds(43, 143, 85, 18);
-        pnlMainPanel.add(txtOutDir);
-        txtOutDir.setBounds(146, 140, 313, 24);
-
-        btnBrowseOut.setText("Browse");
-        pnlMainPanel.add(btnBrowseOut);
-        btnBrowseOut.setBounds(477, 140, 74, 24);
-
         lblOptions.setText("Options:");
         pnlMainPanel.add(lblOptions);
-        lblOptions.setBounds(43, 196, 51, 18);
+        lblOptions.setBounds(40, 110, 51, 18);
 
         chkM3U.setText("Create .m3u");
         pnlMainPanel.add(chkM3U);
-        chkM3U.setBounds(97, 227, 95, 22);
+        chkM3U.setBounds(60, 140, 95, 22);
 
         chkOpenWhenDone.setText("Open when done");
         pnlMainPanel.add(chkOpenWhenDone);
-        chkOpenWhenDone.setBounds(275, 227, 126, 22);
+        chkOpenWhenDone.setBounds(170, 140, 126, 22);
 
         chkLimit.setText("Limit Speed");
         pnlMainPanel.add(chkLimit);
-        chkLimit.setBounds(97, 267, 93, 22);
+        chkLimit.setBounds(310, 140, 93, 22);
         pnlMainPanel.add(chkKbps);
-        chkKbps.setBounds(275, 267, 19, 19);
+        chkKbps.setBounds(420, 140, 19, 19);
         pnlMainPanel.add(txtKbps);
-        txtKbps.setBounds(300, 267, 34, 24);
+        txtKbps.setBounds(450, 140, 34, 24);
 
         lblKbps.setText("Kbsp");
         pnlMainPanel.add(lblKbps);
-        lblKbps.setBounds(340, 269, 30, 18);
+        lblKbps.setBounds(490, 140, 30, 18);
 
         lblControls.setText("Controles:");
         pnlMainPanel.add(lblControls);
-        lblControls.setBounds(43, 324, 61, 18);
+        lblControls.setBounds(40, 190, 61, 18);
 
         btnDownload.setText("Download");
         btnDownload.addActionListener(new java.awt.event.ActionListener() {
@@ -225,30 +214,30 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnDownload);
-        btnDownload.setBounds(24, 360, 158, 24);
+        btnDownload.setBounds(20, 230, 158, 24);
 
         btnStop.setText("Stop");
         pnlMainPanel.add(btnStop);
-        btnStop.setBounds(205, 360, 169, 24);
+        btnStop.setBounds(210, 230, 169, 24);
 
         btnOpenLast.setText("Open last");
         pnlMainPanel.add(btnOpenLast);
-        btnOpenLast.setBounds(404, 360, 158, 24);
+        btnOpenLast.setBounds(400, 230, 158, 24);
 
         lblOutput.setText("Output:");
         pnlMainPanel.add(lblOutput);
-        lblOutput.setBounds(43, 419, 47, 18);
+        lblOutput.setBounds(40, 290, 47, 18);
 
         txaLogArea.setColumns(20);
         txaLogArea.setRows(5);
         scrLogArea.setViewportView(txaLogArea);
 
         pnlMainPanel.add(scrLogArea);
-        scrLogArea.setBounds(26, 455, 536, 96);
+        scrLogArea.setBounds(30, 320, 536, 96);
         pnlMainPanel.add(lblStatus);
-        lblStatus.setBounds(26, 576, 115, 27);
+        lblStatus.setBounds(30, 450, 115, 27);
         pnlMainPanel.add(lblActualDir);
-        lblActualDir.setBounds(399, 588, 163, 27);
+        lblActualDir.setBounds(400, 460, 163, 27);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -315,9 +304,9 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
         // TODO add your handling code here:
-//        String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath();
-        String ytDlpPath = YT_DLP_PATH; // Ruta fija como acordamos
-        String outputFolder = txtOutDir.getText().trim();
+        String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath();
+//        String ytDlpPath = YT_DLP_PATH; // Ruta fija como acordamos
+        final String downloadDir = scanOS.resolveDownloadDir(pnlPreferencesPanel.getTxtDownloadsDir().trim());
         String url = txtUrl.getText().trim();
 
         if (url.isBlank()) {
@@ -330,9 +319,11 @@ public class MainFrame extends javax.swing.JFrame {
         command.add(ytDlpPath);
         command.add("-f");
         command.add("bv*+ba/b/22/18"); // incluye fallback progresivo
-        if (!outputFolder.isBlank()) {
+        if (!downloadDir.isBlank()) {
+            command.add("-P");
+            command.add(downloadDir);
             command.add("-o");
-            command.add(outputFolder + "/%(title)s.%(ext)s");
+            command.add("%(title)s.%(ext)s");
         }
         // Ruta fija a ffmpeg
         command.add("--ffmpeg-location");
@@ -418,6 +409,8 @@ public class MainFrame extends javax.swing.JFrame {
                 try {
                     int exit = get();
                     log.append("\nProceso finalizado con código: " + exit + "\n");
+                    log.append("OS Detected: " + DetectOS.detectOS());
+                    log.append("Download dir (final): " + downloadDir);
 
                     // Solo abrir si el checkbox está marcado y el proceso fue correcto
                     if (exit == 0 && chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {
@@ -474,7 +467,6 @@ public class MainFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgFormat;
-    private javax.swing.JButton btnBrowseOut;
     private java.awt.Button btnClear;
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnOpenLast;
@@ -489,7 +481,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblFormat;
     private javax.swing.JLabel lblKbps;
     private javax.swing.JLabel lblOptions;
-    private javax.swing.JLabel lblOutDir;
     private javax.swing.JLabel lblOutput;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblUrl;
@@ -507,7 +498,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane scrLogArea;
     private javax.swing.JTextArea txaLogArea;
     private javax.swing.JTextField txtKbps;
-    private javax.swing.JTextField txtOutDir;
     private javax.swing.JTextField txtUrl;
     // End of variables declaration//GEN-END:variables
 }
