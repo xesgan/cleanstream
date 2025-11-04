@@ -131,7 +131,7 @@ public class MainFrame extends javax.swing.JFrame {
         mniAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(580, 650));
+        setPreferredSize(new java.awt.Dimension(1200, 540));
         setResizable(false);
         getContentPane().setLayout(null);
 
@@ -410,7 +410,7 @@ public class MainFrame extends javax.swing.JFrame {
                     int exit = get();
                     log.append("\nProceso finalizado con código: " + exit + "\n");
                     log.append("OS Detected: " + DetectOS.detectOS());
-                    log.append("Download dir (final): " + downloadDir);
+                    log.append("\nDownload dir (final): " + downloadDir);
 
                     // Solo abrir si el checkbox está marcado y el proceso fue correcto
                     if (exit == 0 && chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {

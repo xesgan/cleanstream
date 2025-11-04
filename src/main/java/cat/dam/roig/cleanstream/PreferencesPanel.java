@@ -162,6 +162,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
         btnCancel = new javax.swing.JButton();
         btnReset = new javax.swing.JButton();
 
+        setPreferredSize(new java.awt.Dimension(590, 518));
         setLayout(null);
 
         lblBinaries.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
@@ -258,48 +259,48 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblBehaviour.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
         lblBehaviour.setText("Behaving:");
         add(lblBehaviour);
-        lblBehaviour.setBounds(30, 310, 110, 23);
+        lblBehaviour.setBounds(590, 30, 110, 23);
 
         chkDeleteIntermediates.setText("Delete intermediates files");
         add(chkDeleteIntermediates);
-        chkDeleteIntermediates.setBounds(120, 320, 190, 22);
+        chkDeleteIntermediates.setBounds(680, 40, 190, 22);
 
         chkKeepName.setText("Keep original name");
         add(chkKeepName);
-        chkKeepName.setBounds(120, 350, 150, 22);
+        chkKeepName.setBounds(680, 70, 150, 22);
 
         chkAutoplay.setText("Autoplay on finish");
         add(chkAutoplay);
-        chkAutoplay.setBounds(330, 320, 170, 22);
+        chkAutoplay.setBounds(890, 40, 170, 22);
 
         chkOverwrite.setText("Overwrite if exists");
         add(chkOverwrite);
-        chkOverwrite.setBounds(330, 350, 170, 22);
+        chkOverwrite.setBounds(890, 70, 170, 22);
 
         lblQuality.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
         lblQuality.setText("Quality:");
         add(lblQuality);
-        lblQuality.setBounds(30, 400, 110, 23);
+        lblQuality.setBounds(590, 120, 110, 23);
 
         bgQuality.add(rbBest);
         rbBest.setText("Best Available");
         add(rbBest);
-        rbBest.setBounds(110, 400, 105, 22);
+        rbBest.setBounds(670, 120, 105, 22);
 
         bgQuality.add(rb1080);
         rb1080.setText("1080p");
         add(rb1080);
-        rb1080.setBounds(240, 400, 59, 22);
+        rb1080.setBounds(800, 120, 59, 22);
 
         bgQuality.add(rb720);
         rb720.setText("720p");
         add(rb720);
-        rb720.setBounds(320, 400, 60, 22);
+        rb720.setBounds(880, 120, 60, 22);
 
         bgQuality.add(rbAudioOnly);
         rbAudioOnly.setText("Only Audio");
         add(rbAudioOnly);
-        rbAudioOnly.setBounds(390, 400, 89, 22);
+        rbAudioOnly.setBounds(950, 120, 89, 22);
 
         btnSave.setText("Save");
         add(btnSave);
