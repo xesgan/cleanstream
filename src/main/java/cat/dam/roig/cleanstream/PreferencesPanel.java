@@ -378,6 +378,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     private void btnScanDownloadsFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanDownloadsFolderActionPerformed
         // TODO add your handling code here:
+        browseDirectoryInto(txtScanDownloadsFolder, "Select the downloads folder");
     }//GEN-LAST:event_btnScanDownloadsFolderActionPerformed
 
 

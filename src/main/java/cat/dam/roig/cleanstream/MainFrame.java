@@ -6,8 +6,8 @@ import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
@@ -25,6 +25,7 @@ public class MainFrame extends javax.swing.JFrame {
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
     private static final String COOKIES_TXT = System.getProperty("user.home") + "/Downloads/youtube_cookies.txt"; // fallback
     private String lastDownloadedFile = null;
+    private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
 
     /**
      * Creates new form MainFrame
@@ -128,7 +129,7 @@ public class MainFrame extends javax.swing.JFrame {
         lblActualDir = new javax.swing.JLabel();
         scpScanListPane = new javax.swing.JScrollPane();
         lstDownloadScanList = new javax.swing.JList<>();
-        btnScanButton = new javax.swing.JButton();
+        btnScanDownloadFolder = new javax.swing.JButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniExit = new javax.swing.JMenuItem();
@@ -261,14 +262,14 @@ public class MainFrame extends javax.swing.JFrame {
         getContentPane().add(scpScanListPane);
         scpScanListPane.setBounds(600, 70, 560, 350);
 
-        btnScanButton.setText("jButton1");
-        btnScanButton.addActionListener(new java.awt.event.ActionListener() {
+        btnScanDownloadFolder.setText("Scan");
+        btnScanDownloadFolder.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnScanButtonActionPerformed(evt);
+                btnScanDownloadFolderActionPerformed(evt);
             }
         });
-        getContentPane().add(btnScanButton);
-        btnScanButton.setBounds(1060, 30, 82, 24);
+        getContentPane().add(btnScanDownloadFolder);
+        btnScanDownloadFolder.setBounds(1060, 30, 72, 24);
 
         mnuFile.setText("File");
 
@@ -466,17 +467,70 @@ public class MainFrame extends javax.swing.JFrame {
         dlg.setVisible(true);
     }//GEN-LAST:event_mniAboutActionPerformed
 
-    private void btnScanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanButtonActionPerformed
+    private void btnScanDownloadFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanDownloadFolderActionPerformed
         // 1) Leer texto del panel de preferencias
         String input = pnlPreferencesPanel.getTxtScanDownloadsFolder().getText();
-        
+
         // 2) Resolver SIEMPRE una ruta válida (con fallback a Descargas/yt)
         String finalDirStr = DetectOS.resolveDownloadDir(input);
         Path downloads = Paths.get(finalDirStr);
-        
+
         // 3) Ejecutar el escaneo en background (no bloquear EDT)
-        
-    }//GEN-LAST:event_btnScanButtonActionPerformed
+        btnScanDownloadFolder.setEnabled(false);
+        SwingWorker<List<ResourceDownloaded>, Void> worker
+                = new SwingWorker<>() {
+            @Override
+            protected List<ResourceDownloaded> doInBackground() {
+                try {
+                    DownloadsScanner scanner = new DownloadsScanner();
+                    // false = no recursivo. Cambia a true si quieres subcarpetas.
+                    return scanner.scan(downloads, false);
+                } catch (java.io.IOException e) {
+                    // Log opcional
+                    System.err.println("Scan error: " + e.getMessage());
+                    return java.util.Collections.emptyList();
+                }
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    List<ResourceDownloaded> lista = get();
+
+                    if (lista == null) {
+                        System.err.println("Scan devolvió null");
+                        downloadsModel.clear();
+                        return;
+                    }
+
+                    // (Opcional) log a consola
+                    System.out.println("Scan OK. Items: " + lista.size());
+                    // (Opcional) log a consola
+                    lista.forEach(r -> System.out.printf(
+                            "%s | %s | %d bytes | %s | %s | %s%n",
+                            r.getName(), r.getRoute(), r.getSize(), r.getMimeType(),
+                            r.getExtension(), r.getDownloadDate()
+                    ));
+
+                    downloadsModel.clear();
+                    
+                    for (ResourceDownloaded r : lista) {
+                        downloadsModel.addElement(r);
+                    }
+
+                    lstDownloadScanList.setModel(downloadsModel);
+                    // TODO: aquí actualiza tu JTable/Model con 'lista'
+                    // e.g. tableModel.setData(lista);
+                } catch (Exception ex) {
+                    System.err.println("Finished with error: " + ex.getMessage());
+                } finally {
+                    btnScanDownloadFolder.setEnabled(true);
+                }
+            }
+        };
+
+        worker.execute();
+    }//GEN-LAST:event_btnScanDownloadFolderActionPerformed
 
     /**
      * @param args the command line arguments
@@ -509,7 +563,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnOpenLast;
     private java.awt.Button btnPaste;
-    private javax.swing.JButton btnScanButton;
+    private javax.swing.JButton btnScanDownloadFolder;
     private javax.swing.JButton btnStop;
     private javax.swing.JCheckBox chkKbps;
     private javax.swing.JCheckBox chkLimit;
