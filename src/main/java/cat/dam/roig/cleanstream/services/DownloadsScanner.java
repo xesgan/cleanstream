@@ -1,5 +1,6 @@
 package cat.dam.roig.cleanstream.services;
 
+import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -62,7 +63,7 @@ public class DownloadsScanner {
      * @param dir Carpeta a recorrer.
      * @param recursive true para recorrer subdirectorios (cuidado con rendimiento).
      */
-    public List<RecursoDescargado> scan(Path dir, boolean recursive) throws IOException {
+    public List<ResourceDownloaded> scan(Path dir, boolean recursive) throws IOException {
         if (dir == null) throw new IllegalArgumentException("dir is null");
         if (!Files.exists(dir)) return List.of();
         if (!Files.isDirectory(dir)) return List.of();
@@ -76,13 +77,13 @@ public class DownloadsScanner {
                     .filter(this::notTempFile)
                     .map(this::toRecurso)
                     .filter(Objects::nonNull)
-                    .sorted(Comparator.comparing(RecursoDescargado::getDownloadDate).reversed())
+                    .sorted(Comparator.comparing(ResourceDownloaded::getDownloadDate).reversed())
                     .collect(Collectors.toUnmodifiableList());
         }
     }
 
     /** Conversión de Path -> RecursoDescargado con metadatos. */
-    private RecursoDescargado toRecurso(Path p) {
+    private ResourceDownloaded toRecurso(Path p) {
         try {
             BasicFileAttributes attrs = Files.readAttributes(p, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
@@ -97,7 +98,7 @@ public class DownloadsScanner {
             String ext = getExtension(fileName);
             String mime = detectMime(p, ext);
 
-            RecursoDescargado r = new RecursoDescargado();
+            ResourceDownloaded r = new ResourceDownloaded();
             r.setName(fileName);
             r.setRoute(p.toAbsolutePath().toString());
             r.setSize(size);

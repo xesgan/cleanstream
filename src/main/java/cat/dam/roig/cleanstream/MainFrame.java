@@ -1,7 +1,11 @@
 package cat.dam.roig.cleanstream;
 
+import cat.dam.roig.cleanstream.models.ResourceDownloaded;
+import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -122,6 +126,9 @@ public class MainFrame extends javax.swing.JFrame {
         txaLogArea = new javax.swing.JTextArea();
         lblStatus = new javax.swing.JLabel();
         lblActualDir = new javax.swing.JLabel();
+        scpScanListPane = new javax.swing.JScrollPane();
+        lstDownloadScanList = new javax.swing.JList<>();
+        btnScanButton = new javax.swing.JButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniExit = new javax.swing.JMenuItem();
@@ -243,6 +250,25 @@ public class MainFrame extends javax.swing.JFrame {
 
         getContentPane().add(pnlContent);
         pnlContent.setBounds(0, 0, 590, 630);
+
+        lstDownloadScanList.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        scpScanListPane.setViewportView(lstDownloadScanList);
+
+        getContentPane().add(scpScanListPane);
+        scpScanListPane.setBounds(600, 70, 560, 350);
+
+        btnScanButton.setText("jButton1");
+        btnScanButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnScanButtonActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnScanButton);
+        btnScanButton.setBounds(1060, 30, 82, 24);
 
         mnuFile.setText("File");
 
@@ -440,6 +466,18 @@ public class MainFrame extends javax.swing.JFrame {
         dlg.setVisible(true);
     }//GEN-LAST:event_mniAboutActionPerformed
 
+    private void btnScanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanButtonActionPerformed
+        // 1) Leer texto del panel de preferencias
+        String input = pnlPreferencesPanel.getTxtScanDownloadsFolder().getText();
+        
+        // 2) Resolver SIEMPRE una ruta válida (con fallback a Descargas/yt)
+        String finalDirStr = DetectOS.resolveDownloadDir(input);
+        Path downloads = Paths.get(finalDirStr);
+        
+        // 3) Ejecutar el escaneo en background (no bloquear EDT)
+        
+    }//GEN-LAST:event_btnScanButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -471,6 +509,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnOpenLast;
     private java.awt.Button btnPaste;
+    private javax.swing.JButton btnScanButton;
     private javax.swing.JButton btnStop;
     private javax.swing.JCheckBox chkKbps;
     private javax.swing.JCheckBox chkLimit;
@@ -484,6 +523,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblOutput;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblUrl;
+    private javax.swing.JList<String> lstDownloadScanList;
     private javax.swing.JMenuBar mnbBar;
     private javax.swing.JMenuItem mniAbout;
     private javax.swing.JMenuItem mniExit;
@@ -495,6 +535,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel pnlMainPanel;
     private javax.swing.JRadioButton rbAudio;
     private javax.swing.JRadioButton rbVideo;
+    private javax.swing.JScrollPane scpScanListPane;
     private javax.swing.JScrollPane scrLogArea;
     private javax.swing.JTextArea txaLogArea;
     private javax.swing.JTextField txtKbps;

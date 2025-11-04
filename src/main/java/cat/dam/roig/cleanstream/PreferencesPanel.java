@@ -46,6 +46,10 @@ public class PreferencesPanel extends javax.swing.JPanel {
     public String getTxtDownloadsDir() {
         return txtDownloadsDir.getText().trim();
     }
+
+    public JTextField getTxtScanDownloadsFolder() {
+        return txtScanDownloadsFolder;
+    }
     
     // Helpers Reusable
     /**
@@ -161,6 +165,9 @@ public class PreferencesPanel extends javax.swing.JPanel {
         btnSave = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
         btnReset = new javax.swing.JButton();
+        lblScanDownloads = new javax.swing.JLabel();
+        txtScanDownloadsFolder = new javax.swing.JTextField();
+        btnScanDownloadsFolder = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(590, 518));
         setLayout(null);
@@ -318,6 +325,21 @@ public class PreferencesPanel extends javax.swing.JPanel {
         btnReset.setText("Reset");
         add(btnReset);
         btnReset.setBounds(130, 460, 72, 24);
+
+        lblScanDownloads.setText("Scan Files:");
+        add(lblScanDownloads);
+        lblScanDownloads.setBounds(40, 300, 70, 18);
+        add(txtScanDownloadsFolder);
+        txtScanDownloadsFolder.setBounds(120, 300, 300, 24);
+
+        btnScanDownloadsFolder.setText("Browse...");
+        btnScanDownloadsFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnScanDownloadsFolderActionPerformed(evt);
+            }
+        });
+        add(btnScanDownloadsFolder);
+        btnScanDownloadsFolder.setBounds(430, 300, 90, 24);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
@@ -354,6 +376,10 @@ public class PreferencesPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtYtDlpPathActionPerformed
 
+    private void btnScanDownloadsFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanDownloadsFolderActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnScanDownloadsFolderActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgQuality;
@@ -363,6 +389,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JButton btnFfprobeBrowse;
     private javax.swing.JButton btnReset;
     private javax.swing.JButton btnSave;
+    private javax.swing.JButton btnScanDownloadsFolder;
     private javax.swing.JButton btnTempBrowse;
     private javax.swing.JButton btnYtDplBrowse;
     private javax.swing.JCheckBox chkAutoplay;
@@ -376,6 +403,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblFfprobe;
     private javax.swing.JLabel lblQuality;
     private javax.swing.JLabel lblRoutes;
+    private javax.swing.JLabel lblScanDownloads;
     private javax.swing.JLabel lblTemp;
     private javax.swing.JLabel lblYtDlp;
     private javax.swing.JRadioButton rb1080;
@@ -385,6 +413,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JTextField txtDownloadsDir;
     private javax.swing.JTextField txtFfpmegDir;
     private javax.swing.JTextField txtFfprobeDir;
+    private javax.swing.JTextField txtScanDownloadsFolder;
     private javax.swing.JTextField txtTempDir;
     private javax.swing.JTextField txtYtDlpPath;
     // End of variables declaration//GEN-END:variables

@@ -15,6 +15,9 @@ public class ResourceDownloaded {
     private LocalDateTime downloadDate;
     private String extension;
 
+    public ResourceDownloaded() {
+    }
+
     public ResourceDownloaded(String name, String route, long size, String mimeType, LocalDateTime downloadDate, String extension) {
         this.name = name;
         this.route = route;
