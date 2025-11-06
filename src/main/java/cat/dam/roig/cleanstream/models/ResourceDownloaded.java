@@ -77,7 +77,7 @@ public class ResourceDownloaded {
 
     @Override
     public String toString() {
-        return "RecursoDescargado{" + "name=" + name + ", route=" + route + ", size=" + size + ", mimeType=" + mimeType + ", downloadDate=" + downloadDate + ", extension=" + extension + '}';
+        return name + " || Size=" + size + ", mimeType=" + mimeType + ", downloadDate=" + downloadDate + ", extension=" + extension + '}';
     }
     
 }

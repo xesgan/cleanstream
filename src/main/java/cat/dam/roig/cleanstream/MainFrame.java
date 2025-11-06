@@ -252,11 +252,6 @@ public class MainFrame extends javax.swing.JFrame {
         getContentPane().add(pnlContent);
         pnlContent.setBounds(0, 0, 590, 630);
 
-        lstDownloadScanList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         scpScanListPane.setViewportView(lstDownloadScanList);
 
         getContentPane().add(scpScanListPane);
@@ -577,7 +572,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblOutput;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblUrl;
-    private javax.swing.JList<String> lstDownloadScanList;
+    private javax.swing.JList<ResourceDownloaded> lstDownloadScanList;
     private javax.swing.JMenuBar mnbBar;
     private javax.swing.JMenuItem mniAbout;
     private javax.swing.JMenuItem mniExit;
