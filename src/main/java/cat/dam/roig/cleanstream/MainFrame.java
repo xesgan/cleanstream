@@ -4,6 +4,7 @@ import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
+import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -26,6 +27,7 @@ public class MainFrame extends javax.swing.JFrame {
     private static final String COOKIES_TXT = System.getProperty("user.home") + "/Downloads/youtube_cookies.txt"; // fallback
     private String lastDownloadedFile = null;
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
+    private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
 
     /**
      * Creates new form MainFrame
@@ -508,6 +510,8 @@ public class MainFrame extends javax.swing.JFrame {
                     ));
 
                     downloadsModel.clear();
+                    
+                    lstDownloadScanList.setCellRenderer(new ResourceDownloadedRenderer());
                     
                     for (ResourceDownloaded r : lista) {
                         downloadsModel.addElement(r);
