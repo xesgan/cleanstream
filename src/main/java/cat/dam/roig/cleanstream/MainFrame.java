@@ -12,6 +12,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
@@ -33,7 +34,9 @@ public class MainFrame extends javax.swing.JFrame {
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
     private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
     private final List<ResourceDownloaded> master = new ArrayList<>();
-
+    private MetadataTableModel metaModel; // para la tabla de metadata
+    private boolean hasScanned = false;
+    private boolean isScanning = false;
 
     /**
      * Creates new form MainFrame
@@ -54,6 +57,12 @@ public class MainFrame extends javax.swing.JFrame {
         pnlPreferencesPanel.setVisible(false);
         pnlContent.setVisible(true);
 
+        // JList (renderer + model solo una vez)
+        lstDownloadScanList.setModel(downloadsModel);
+        lstDownloadScanList.setCellRenderer(new ResourceDownloadedRenderer());
+        lstDownloadScanList.setFixedCellHeight(56);
+
+        // Selección -> metadata
         MetadataTableModel metaModel = new MetadataTableModel();
         tblMetaData.setModel(metaModel);
 
@@ -69,9 +78,10 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        cmbTipo.addActionListener(e -> reloadListFiltered());
-        chk100MB.addActionListener(e -> reloadListFiltered());
-        chkSemana.addActionListener(e -> reloadListFiltered());
+        cmbTipo.addActionListener(e -> applyFiltersIfReady());
+        chkSemana.addActionListener(e -> applyFiltersIfReady());
+        // arranque con "Todo"
+        cmbTipo.setSelectedItem("Todo");
     }
 
     // Navigation Methods
@@ -129,8 +139,6 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         bgFormat = new javax.swing.ButtonGroup();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
         pnlContent = new javax.swing.JPanel();
         pnlMainPanel = new javax.swing.JPanel();
         lblUrl = new javax.swing.JLabel();
@@ -162,6 +170,7 @@ public class MainFrame extends javax.swing.JFrame {
         scpMetaDataTable = new javax.swing.JScrollPane();
         tblMetaData = new javax.swing.JTable();
         cmbTipo = new javax.swing.JComboBox<>();
+        chkSemana = new javax.swing.JCheckBox();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniExit = new javax.swing.JMenuItem();
@@ -170,21 +179,8 @@ public class MainFrame extends javax.swing.JFrame {
         mnuHelp = new javax.swing.JMenu();
         mniAbout = new javax.swing.JMenuItem();
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane1.setViewportView(jTable1);
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(1200, 540));
+        setPreferredSize(new java.awt.Dimension(1200, 630));
         setResizable(false);
         getContentPane().setLayout(null);
 
@@ -195,7 +191,7 @@ public class MainFrame extends javax.swing.JFrame {
         lblUrl.setFont(new java.awt.Font("sansserif", 0, 15)); // NOI18N
         lblUrl.setText("URL:");
         pnlMainPanel.add(lblUrl);
-        lblUrl.setBounds(45, 10, 46, 29);
+        lblUrl.setBounds(40, 100, 46, 29);
 
         txtUrl.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -203,19 +199,19 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(txtUrl);
-        txtUrl.setBounds(109, 13, 350, 24);
+        txtUrl.setBounds(110, 100, 320, 24);
 
         btnPaste.setLabel("Paste");
         pnlMainPanel.add(btnPaste);
-        btnPaste.setBounds(477, 14, 47, 25);
+        btnPaste.setBounds(460, 100, 47, 25);
 
         btnClear.setLabel("Clear");
         pnlMainPanel.add(btnClear);
-        btnClear.setBounds(534, 14, 46, 25);
+        btnClear.setBounds(520, 100, 46, 25);
 
         lblFormat.setText("Format:");
         pnlMainPanel.add(lblFormat);
-        lblFormat.setBounds(45, 70, 47, 18);
+        lblFormat.setBounds(40, 160, 47, 18);
 
         bgFormat.add(rbVideo);
         rbVideo.setText("Video");
@@ -225,40 +221,40 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(rbVideo);
-        rbVideo.setBounds(97, 68, 57, 22);
+        rbVideo.setBounds(90, 160, 57, 22);
 
         bgFormat.add(rbAudio);
         rbAudio.setText("Audio");
         pnlMainPanel.add(rbAudio);
-        rbAudio.setBounds(181, 68, 58, 22);
+        rbAudio.setBounds(180, 160, 58, 22);
 
         lblOptions.setText("Options:");
         pnlMainPanel.add(lblOptions);
-        lblOptions.setBounds(40, 110, 51, 18);
+        lblOptions.setBounds(40, 200, 51, 18);
 
         chkM3U.setText("Create .m3u");
         pnlMainPanel.add(chkM3U);
-        chkM3U.setBounds(60, 140, 95, 22);
+        chkM3U.setBounds(60, 230, 95, 22);
 
         chkOpenWhenDone.setText("Open when done");
         pnlMainPanel.add(chkOpenWhenDone);
-        chkOpenWhenDone.setBounds(170, 140, 126, 22);
+        chkOpenWhenDone.setBounds(170, 230, 126, 22);
 
         chkLimit.setText("Limit Speed");
         pnlMainPanel.add(chkLimit);
-        chkLimit.setBounds(310, 140, 93, 22);
+        chkLimit.setBounds(310, 230, 93, 22);
         pnlMainPanel.add(chkKbps);
-        chkKbps.setBounds(420, 140, 19, 19);
+        chkKbps.setBounds(420, 230, 19, 19);
         pnlMainPanel.add(txtKbps);
-        txtKbps.setBounds(450, 140, 34, 24);
+        txtKbps.setBounds(450, 230, 34, 24);
 
         lblKbps.setText("Kbsp");
         pnlMainPanel.add(lblKbps);
-        lblKbps.setBounds(490, 140, 30, 18);
+        lblKbps.setBounds(490, 230, 30, 18);
 
         lblControls.setText("Controles:");
         pnlMainPanel.add(lblControls);
-        lblControls.setBounds(40, 190, 61, 18);
+        lblControls.setBounds(40, 280, 61, 18);
 
         btnDownload.setText("Download");
         btnDownload.addActionListener(new java.awt.event.ActionListener() {
@@ -267,40 +263,35 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnDownload);
-        btnDownload.setBounds(20, 230, 158, 24);
+        btnDownload.setBounds(30, 310, 140, 24);
 
         btnStop.setText("Stop");
         pnlMainPanel.add(btnStop);
-        btnStop.setBounds(210, 230, 169, 24);
+        btnStop.setBounds(230, 310, 140, 24);
 
         btnOpenLast.setText("Open last");
         pnlMainPanel.add(btnOpenLast);
-        btnOpenLast.setBounds(400, 230, 158, 24);
+        btnOpenLast.setBounds(430, 310, 140, 24);
 
         lblOutput.setText("Output:");
         pnlMainPanel.add(lblOutput);
-        lblOutput.setBounds(40, 290, 47, 18);
+        lblOutput.setBounds(40, 350, 47, 18);
 
         txaLogArea.setColumns(20);
         txaLogArea.setRows(5);
         scrLogArea.setViewportView(txaLogArea);
 
         pnlMainPanel.add(scrLogArea);
-        scrLogArea.setBounds(30, 320, 536, 96);
+        scrLogArea.setBounds(30, 380, 550, 170);
         pnlMainPanel.add(lblStatus);
-        lblStatus.setBounds(30, 450, 115, 27);
+        lblStatus.setBounds(30, 560, 115, 27);
         pnlMainPanel.add(lblActualDir);
-        lblActualDir.setBounds(400, 460, 163, 27);
-
-        pnlContent.add(pnlMainPanel, "card3");
-
-        getContentPane().add(pnlContent);
-        pnlContent.setBounds(0, 0, 590, 630);
+        lblActualDir.setBounds(400, 560, 163, 27);
 
         scpScanListPane.setViewportView(lstDownloadScanList);
 
-        getContentPane().add(scpScanListPane);
-        scpScanListPane.setBounds(600, 70, 560, 260);
+        pnlMainPanel.add(scpScanListPane);
+        scpScanListPane.setBounds(600, 100, 560, 270);
 
         btnScanDownloadFolder.setText("Scan");
         btnScanDownloadFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -308,8 +299,8 @@ public class MainFrame extends javax.swing.JFrame {
                 btnScanDownloadFolderActionPerformed(evt);
             }
         });
-        getContentPane().add(btnScanDownloadFolder);
-        btnScanDownloadFolder.setBounds(1060, 30, 72, 24);
+        pnlMainPanel.add(btnScanDownloadFolder);
+        btnScanDownloadFolder.setBounds(1060, 60, 72, 24);
 
         tblMetaData.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -324,17 +315,26 @@ public class MainFrame extends javax.swing.JFrame {
         ));
         scpMetaDataTable.setViewportView(tblMetaData);
 
-        getContentPane().add(scpMetaDataTable);
-        scpMetaDataTable.setBounds(600, 340, 560, 80);
+        pnlMainPanel.add(scpMetaDataTable);
+        scpMetaDataTable.setBounds(600, 380, 560, 170);
 
-        cmbTipo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Solo vídeo", "Solo audio" }));
+        cmbTipo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Todo", "Solo vídeo", "Solo audio" }));
         cmbTipo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbTipoActionPerformed(evt);
             }
         });
-        getContentPane().add(cmbTipo);
-        cmbTipo.setBounds(660, 30, 110, 24);
+        pnlMainPanel.add(cmbTipo);
+        cmbTipo.setBounds(830, 60, 110, 24);
+
+        chkSemana.setText("Esta Semana");
+        pnlMainPanel.add(chkSemana);
+        chkSemana.setBounds(950, 60, 100, 22);
+
+        pnlContent.add(pnlMainPanel, "card3");
+
+        getContentPane().add(pnlContent);
+        pnlContent.setBounds(0, 0, 1200, 610);
 
         mnuFile.setText("File");
 
@@ -533,25 +533,20 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_mniAboutActionPerformed
 
     private void btnScanDownloadFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScanDownloadFolderActionPerformed
-        // 1) Leer texto del panel de preferencias
+        // 1) Leer ruta desde preferencias
         String input = pnlPreferencesPanel.getTxtScanDownloadsFolder().getText();
-
-        // 2) Resolver SIEMPRE una ruta válida (con fallback a Descargas/yt)
         String finalDirStr = DetectOS.resolveDownloadDir(input);
-        Path downloads = Paths.get(finalDirStr);
+        Path downloads = java.nio.file.Paths.get(finalDirStr);
 
-        // 3) Ejecutar el escaneo en background (no bloquear EDT)
         btnScanDownloadFolder.setEnabled(false);
-        SwingWorker<List<ResourceDownloaded>, Void> worker
-                = new SwingWorker<>() {
+
+        SwingWorker<java.util.List<ResourceDownloaded>, Void> worker = new SwingWorker<>() {
             @Override
-            protected List<ResourceDownloaded> doInBackground() {
+            protected java.util.List<ResourceDownloaded> doInBackground() {
                 try {
                     DownloadsScanner scanner = new DownloadsScanner();
-                    // false = no recursivo. Cambia a true si quieres subcarpetas.
-                    return scanner.scan(downloads, false);
+                    return scanner.scan(downloads, false); // no recursivo
                 } catch (java.io.IOException e) {
-                    // Log opcional
                     System.err.println("Scan error: " + e.getMessage());
                     return java.util.Collections.emptyList();
                 }
@@ -561,43 +556,25 @@ public class MainFrame extends javax.swing.JFrame {
             protected void done() {
                 try {
                     List<ResourceDownloaded> lista = get();
-
-                    if (lista == null) {
-                        System.err.println("Scan devolvió null");
-                        downloadsModel.clear();
-                        return;
-                    }
-
-                    // (Opcional) log a consola
-                    System.out.println("Scan OK. Items: " + lista.size());
-                    // (Opcional) log a consola
-                    lista.forEach(r -> System.out.printf(
-                            "%s | %s | %d bytes | %s | %s | %s%n",
-                            r.getName(), r.getRoute(), r.getSize(), r.getMimeType(),
-                            r.getExtension(), r.getDownloadDate()
-                    ));
-
-                    downloadsModel.clear();
-
-                    lstDownloadScanList.setCellRenderer(new ResourceDownloadedRenderer());
-                    lstDownloadScanList.setFixedCellHeight(56);
-
-                    for (ResourceDownloaded r : lista) {
-                        downloadsModel.addElement(r);
-                    }
-
-                    lstDownloadScanList.setModel(downloadsModel);
-
-                    // TODO: aquí actualiza tu JTable/Model con 'lista'
-                    // e.g. tableModel.setData(lista);
-                } catch (Exception ex) {
-                    System.err.println("Finished with error: " + ex.getMessage());
+                    master.clear();
+                    master.addAll(lista);
+                    hasScanned = true;
+                    applyFilters(); // ahora sí aplico filtros con datos nuevos
+                } catch (InterruptedException ie) {
+                    // Vuelves a marcar el hilo como interrumpido
+                    Thread.currentThread().interrupt();
+                    System.err.println("Scan interrumpido.");
+                } catch (ExecutionException ee) {
+                    // El fallo real está en ee.getCause()
+                    Throwable cause = ee.getCause();
+                    System.err.println("Scan falló: " + (cause != null ? cause.getMessage() : ee.getMessage()));
+                    cause.printStackTrace();
                 } finally {
+                    isScanning = false;          // <- si usas el flag
                     btnScanDownloadFolder.setEnabled(true);
                 }
             }
         };
-
         worker.execute();
     }//GEN-LAST:event_btnScanDownloadFolderActionPerformed
 
@@ -605,24 +582,73 @@ public class MainFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_cmbTipoActionPerformed
 
-    private void reloadListFiltered() {
+    private void applyFiltersIfReady() {
+        if (!hasScanned || isScanning) {
+            return;  // no hay datos o estoy escaneando
+        }
+        applyFilters(); // tu antiguo reloadListFiltered()
+    }
+
+    private void applyFilters() {
         downloadsModel.clear();
         for (ResourceDownloaded r : master) {
-            if (matchTipo(r) && match100MB(r) && matchSemana(r)) {
+            if (matchTipo(r) && matchSemana(r)) {
                 downloadsModel.addElement(r);
             }
         }
     }
 
+    private void reloadListFiltered() {
+        if (master.isEmpty()) {
+            return; // <-- evita borrar lista vacía antes del primer scan
+        }
+
+        downloadsModel.clear();
+        for (ResourceDownloaded r : master) {
+            if (matchTipo(r) && matchSemana(r)) {
+                downloadsModel.addElement(r);
+            }
+        }
+    }
+
+    // ---- filtros ----
+    private static String norm(String s) {
+        return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).trim();
+    }
+
+    private static boolean esAudio(ResourceDownloaded r) {
+        String mt = norm(r.getMimeType());
+        String ex = norm(r.getExtension()).replace(".", "");
+        if (mt.startsWith("audio/")) {
+            return true;
+        }
+        if (mt.startsWith("video/")) {
+            return false;
+        }
+        return java.util.Set.of("mp3", "m4a", "aac", "wav", "flac", "ogg", "opus").contains(ex);
+    }
+
+    private static boolean esVideo(ResourceDownloaded r) {
+        String mt = norm(r.getMimeType());
+        String ex = norm(r.getExtension()).replace(".", "");
+        if (mt.startsWith("video/")) {
+            return true;
+        }
+        if (mt.startsWith("audio/")) {
+            return false;
+        }
+        return java.util.Set.of("mp4", "mkv", "avi", "mov", "webm", "flv").contains(ex);
+    }
+
     private boolean matchTipo(ResourceDownloaded r) {
-        String tipo = (String) cmbTipo.getSelectedItem();
-        if ("Solo vídeo".equals(tipo)) {
-            return r.getMimeType() != null && r.getMimeType().startsWith("video/");
+        String tipo = norm(String.valueOf(cmbTipo.getSelectedItem()));
+        if (tipo.contains("video")) {
+            return esVideo(r) && !esAudio(r);
         }
-        if ("Solo audio".equals(tipo)) {
-            return r.getMimeType() != null && r.getMimeType().startsWith("audio/");
+        if (tipo.contains("audio")) {
+            return esAudio(r) && !esVideo(r);
         }
-        return true;
+        return true; // Todo/Todos
     }
 
     private boolean matchSemana(ResourceDownloaded r) {
@@ -676,9 +702,8 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkLimit;
     private javax.swing.JCheckBox chkM3U;
     private javax.swing.JCheckBox chkOpenWhenDone;
+    private javax.swing.JCheckBox chkSemana;
     private javax.swing.JComboBox<String> cmbTipo;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblActualDir;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;
