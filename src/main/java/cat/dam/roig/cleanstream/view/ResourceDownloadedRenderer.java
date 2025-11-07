@@ -3,114 +3,85 @@ package cat.dam.roig.cleanstream.view;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import javax.swing.*;
 import java.awt.*;
-import java.time.format.DateTimeFormatter;
 
 public class ResourceDownloadedRenderer extends JPanel implements ListCellRenderer<ResourceDownloaded> {
 
     private final JLabel lblIcon = new JLabel();
     private final JLabel lblTitle = new JLabel();
-    private final JLabel lblMeta  = new JLabel();
-    private final JPanel right    = new JPanel(new GridLayout(2,1));
-
-    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private final JLabel lblSub = new JLabel();
 
     public ResourceDownloadedRenderer() {
-        setLayout(new BorderLayout(8, 4));
-        setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
-
-        // Tipografías
+        setLayout(new BorderLayout(8, 0));
         lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD));
-        lblMeta.setFont(lblMeta.getFont().deriveFont(11f));
+        lblSub.setFont(lblSub.getFont().deriveFont(Font.PLAIN, 11f));
+        lblSub.setForeground(new Color(120, 120, 120));
 
-        // Composición
-        right.add(lblTitle);
-        right.add(lblMeta);
+        var textPanel = new JPanel(new GridLayout(0, 1));
+        textPanel.setOpaque(false);
+        textPanel.add(lblTitle);
+        textPanel.add(lblSub);
 
         add(lblIcon, BorderLayout.WEST);
-        add(right,   BorderLayout.CENTER);
+        add(textPanel, BorderLayout.CENTER);
 
+        setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         setOpaque(true);
-        right.setOpaque(false);
     }
 
     @Override
     public Component getListCellRendererComponent(
             JList<? extends ResourceDownloaded> list,
-            ResourceDownloaded value,
-            int index,
-            boolean isSelected,
-            boolean cellHasFocus) {
+            ResourceDownloaded value, int index,
+            boolean isSelected, boolean cellHasFocus) {
 
-        if (value == null) {
-            lblTitle.setText("");
-            lblMeta.setText("");
-            lblIcon.setIcon(null);
-            return this;
-        }
-
-        // 1) Título (nombre)
+        // Título
         lblTitle.setText(value.getName());
 
-        // 2) Línea de metadatos: extensión, tamaño, mime, fecha
-        String meta = String.format(".%s  —  %s  —  %s  —  %s",
-                safe(value.getExtension()),
-                humanSize(value.getSize()),
-                safe(value.getMimeType()),
-                value.getDownloadDate() != null ? dtf.format(value.getDownloadDate()) : "sin fecha");
-        lblMeta.setText(meta);
+        // Subtítulo (elige lo que más te sirva)
+        String sub = String.format(".%s   —   %s   —   %s",
+                value.getExtension(),
+                humanReadable(value.getSize()),
+                value.getDownloadDate() != null ? value.getDownloadDate().toLocalDate().toString() : "");
+        lblSub.setText(sub);
 
-        // 3) Icono simple según tipo (puedes mejorar con tus propios PNGs)
-        lblIcon.setIcon(iconFor(value));
+        // Miniatura (opcional): intenta cargarla; si no, icono por MIME
+        lblIcon.setIcon(loadThumbOrFallback(value));
 
-        // 4) Colores de selección/normal respetando L&F
-        if (isSelected) {
-            setBackground(list.getSelectionBackground());
-            setForeground(list.getSelectionForeground());
-            lblTitle.setForeground(list.getSelectionForeground());
-            lblMeta.setForeground(list.getSelectionForeground());
-        } else {
-            setBackground(list.getBackground());
-            setForeground(list.getForeground());
-            lblTitle.setForeground(list.getForeground());
-            // tono gris para meta
-            lblMeta.setForeground(UIManager.getColor("Label.disabledForeground"));
-            if (lblMeta.getForeground() == null) {
-                lblMeta.setForeground(new Color(120,120,120));
-            }
+        // Selección
+        setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+        lblTitle.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
+        lblSub.setForeground(isSelected ? list.getSelectionForeground().darker() : new Color(120, 120, 120));
+        return this;
+    }
+
+    private static String humanReadable(long bytes) {
+        String[] u = {"B", "KB", "MB", "GB"};
+        double v = bytes;
+        int i = 0;
+        while (v >= 1024 && i < u.length - 1) {
+            v /= 1024;
+            i++;
         }
-
-        return this; // IMPORTANTÍSIMO: devolver SIEMPRE el mismo componente
+        return String.format("%.1f %s", v, u[i]);
     }
 
-    private static String safe(String s) {
-        return s == null ? "" : s;
-    }
+    private Icon loadThumbOrFallback(ResourceDownloaded r) {
+        // Si en el futuro generas thumbnails (con ffmpeg), pon aquí la ruta:
+        // Path thumb = Paths.get(r.getRoute() + ".jpg"); // ejemplo
+        // if (Files.exists(thumb)) return scaledIcon(new ImageIcon(thumb.toString()), 36, 36);
 
-    private static String humanSize(long bytes) {
-        if (bytes < 1024) return bytes + " B";
-        int exp = (int) (Math.log(bytes) / Math.log(1024));
-        String pre = "KMGTPE".charAt(exp - 1) + "";
-        return String.format("%.1f %sB", bytes / Math.pow(1024, exp), pre);
-    }
-
-    private static Icon iconFor(ResourceDownloaded r) {
-        String ext = (r.getExtension() == null) ? "" : r.getExtension().toLowerCase();
-        String mime = (r.getMimeType() == null) ? "" : r.getMimeType().toLowerCase();
-
-        // Puedes mapear mejor por MIME/EXT (aquí unos ejemplos simples):
-        String key;
-        if (mime.startsWith("video/") || ext.matches("mp4|mkv|webm|mov|avi")) {
-            key = UIManager.getString("FileView.directoryIcon") != null ? "FileView.fileIcon" : null; // placeholder
-            return UIManager.getIcon("FileView.hardDriveIcon"); // reutilizo iconos swing por rapidez
-        } else if (mime.startsWith("audio/") || ext.matches("mp3|wav|flac|ogg|m4a")) {
-            return UIManager.getIcon("FileView.floppyDriveIcon");
-        } else if (mime.startsWith("image/") || ext.matches("png|jpg|jpeg|gif|webp|bmp")) {
-            return UIManager.getIcon("FileView.computerIcon");
-        } else if (ext.matches("pdf|docx?|xlsx?|pptx?")) {
-            return UIManager.getIcon("FileView.fileIcon");
-        } else {
+        // Fallback por MIME:
+        if (r.getMimeType() != null && r.getMimeType().startsWith("video/")) {
+            return UIManager.getIcon("FileView.hardDriveIcon"); // cámbialo por tu icono
+        }
+        if (r.getMimeType() != null && r.getMimeType().startsWith("audio/")) {
             return UIManager.getIcon("FileView.fileIcon");
         }
+        return UIManager.getIcon("FileView.directoryIcon");
+    }
+
+    private Icon scaledIcon(ImageIcon src, int w, int h) {
+        Image img = src.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+        return new ImageIcon(img);
     }
 }
-

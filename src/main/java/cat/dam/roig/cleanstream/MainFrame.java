@@ -1,5 +1,6 @@
 package cat.dam.roig.cleanstream;
 
+import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
@@ -7,6 +8,9 @@ import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
@@ -28,6 +32,8 @@ public class MainFrame extends javax.swing.JFrame {
     private String lastDownloadedFile = null;
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
     private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
+    private final List<ResourceDownloaded> master = new ArrayList<>();
+
 
     /**
      * Creates new form MainFrame
@@ -47,6 +53,25 @@ public class MainFrame extends javax.swing.JFrame {
         getContentPane().add(pnlPreferencesPanel);
         pnlPreferencesPanel.setVisible(false);
         pnlContent.setVisible(true);
+
+        MetadataTableModel metaModel = new MetadataTableModel();
+        tblMetaData.setModel(metaModel);
+
+        var col0 = tblMetaData.getColumnModel().getColumn(0);
+        col0.setPreferredWidth(120);
+        col0.setMinWidth(100);
+        col0.setMaxWidth(180);
+
+        lstDownloadScanList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                ResourceDownloaded sel = lstDownloadScanList.getSelectedValue();
+                metaModel.setResource(sel);
+            }
+        });
+
+        cmbTipo.addActionListener(e -> reloadListFiltered());
+        chk100MB.addActionListener(e -> reloadListFiltered());
+        chkSemana.addActionListener(e -> reloadListFiltered());
     }
 
     // Navigation Methods
@@ -104,6 +129,8 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         bgFormat = new javax.swing.ButtonGroup();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
         pnlContent = new javax.swing.JPanel();
         pnlMainPanel = new javax.swing.JPanel();
         lblUrl = new javax.swing.JLabel();
@@ -132,6 +159,9 @@ public class MainFrame extends javax.swing.JFrame {
         scpScanListPane = new javax.swing.JScrollPane();
         lstDownloadScanList = new javax.swing.JList<>();
         btnScanDownloadFolder = new javax.swing.JButton();
+        scpMetaDataTable = new javax.swing.JScrollPane();
+        tblMetaData = new javax.swing.JTable();
+        cmbTipo = new javax.swing.JComboBox<>();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniExit = new javax.swing.JMenuItem();
@@ -139,6 +169,19 @@ public class MainFrame extends javax.swing.JFrame {
         mniPreferences = new javax.swing.JMenuItem();
         mnuHelp = new javax.swing.JMenu();
         mniAbout = new javax.swing.JMenuItem();
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane1.setViewportView(jTable1);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(1200, 540));
@@ -257,7 +300,7 @@ public class MainFrame extends javax.swing.JFrame {
         scpScanListPane.setViewportView(lstDownloadScanList);
 
         getContentPane().add(scpScanListPane);
-        scpScanListPane.setBounds(600, 70, 560, 350);
+        scpScanListPane.setBounds(600, 70, 560, 260);
 
         btnScanDownloadFolder.setText("Scan");
         btnScanDownloadFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -267,6 +310,31 @@ public class MainFrame extends javax.swing.JFrame {
         });
         getContentPane().add(btnScanDownloadFolder);
         btnScanDownloadFolder.setBounds(1060, 30, 72, 24);
+
+        tblMetaData.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        scpMetaDataTable.setViewportView(tblMetaData);
+
+        getContentPane().add(scpMetaDataTable);
+        scpMetaDataTable.setBounds(600, 340, 560, 80);
+
+        cmbTipo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Solo vídeo", "Solo audio" }));
+        cmbTipo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTipoActionPerformed(evt);
+            }
+        });
+        getContentPane().add(cmbTipo);
+        cmbTipo.setBounds(660, 30, 110, 24);
 
         mnuFile.setText("File");
 
@@ -510,14 +578,16 @@ public class MainFrame extends javax.swing.JFrame {
                     ));
 
                     downloadsModel.clear();
-                    
+
                     lstDownloadScanList.setCellRenderer(new ResourceDownloadedRenderer());
-                    
+                    lstDownloadScanList.setFixedCellHeight(56);
+
                     for (ResourceDownloaded r : lista) {
                         downloadsModel.addElement(r);
                     }
 
                     lstDownloadScanList.setModel(downloadsModel);
+
                     // TODO: aquí actualiza tu JTable/Model con 'lista'
                     // e.g. tableModel.setData(lista);
                 } catch (Exception ex) {
@@ -530,6 +600,44 @@ public class MainFrame extends javax.swing.JFrame {
 
         worker.execute();
     }//GEN-LAST:event_btnScanDownloadFolderActionPerformed
+
+    private void cmbTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbTipoActionPerformed
+
+    private void reloadListFiltered() {
+        downloadsModel.clear();
+        for (ResourceDownloaded r : master) {
+            if (matchTipo(r) && match100MB(r) && matchSemana(r)) {
+                downloadsModel.addElement(r);
+            }
+        }
+    }
+
+    private boolean matchTipo(ResourceDownloaded r) {
+        String tipo = (String) cmbTipo.getSelectedItem();
+        if ("Solo vídeo".equals(tipo)) {
+            return r.getMimeType() != null && r.getMimeType().startsWith("video/");
+        }
+        if ("Solo audio".equals(tipo)) {
+            return r.getMimeType() != null && r.getMimeType().startsWith("audio/");
+        }
+        return true;
+    }
+
+    private boolean matchSemana(ResourceDownloaded r) {
+        if (!chkSemana.isSelected()) {
+            return true;
+        }
+        if (r.getDownloadDate() == null) {
+            return false;
+        }
+        LocalDate hoy = LocalDate.now();
+        LocalDate ini = hoy.with(DayOfWeek.MONDAY);
+        LocalDate fin = ini.plusDays(6);
+        LocalDate f = r.getDownloadDate().toLocalDate();
+        return !f.isBefore(ini) && !f.isAfter(fin);
+    }
 
     /**
      * @param args the command line arguments
@@ -568,6 +676,9 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkLimit;
     private javax.swing.JCheckBox chkM3U;
     private javax.swing.JCheckBox chkOpenWhenDone;
+    private javax.swing.JComboBox<String> cmbTipo;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblActualDir;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;
@@ -588,8 +699,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel pnlMainPanel;
     private javax.swing.JRadioButton rbAudio;
     private javax.swing.JRadioButton rbVideo;
+    private javax.swing.JScrollPane scpMetaDataTable;
     private javax.swing.JScrollPane scpScanListPane;
     private javax.swing.JScrollPane scrLogArea;
+    private javax.swing.JTable tblMetaData;
     private javax.swing.JTextArea txaLogArea;
     private javax.swing.JTextField txtKbps;
     private javax.swing.JTextField txtUrl;
