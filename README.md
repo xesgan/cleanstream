@@ -1,102 +1,119 @@
-🧩 CleanStream — Elias Roig
-
-Desarrollo de Interfaces — Semana 2
-
+🧩 CleanStream
+Desarrollo de Interfaces — Semanas 2 y 3 (DI01_1 + DI01_2)
 📋 Descripción general
+CleanStream es una aplicación de escritorio desarrollada en Java Swing con NetBeans 27 y JDK 24, que actúa como interfaz gráfica para la herramienta yt-dlp.
+Su objetivo es ofrecer una interfaz limpia y funcional para descargar vídeos o audios desde plataformas online, con configuración personalizable, ejecución en segundo plano y registro visual del proceso.
 
-CleanStream es una aplicación de escritorio creada en Java Swing con NetBeans 27 y JDK 24, que actúa como interfaz gráfica para la herramienta yt-dlp.
-El objetivo es facilitar la descarga de vídeos o audios desde plataformas online, con un diseño simple y un flujo de uso claro.
-
-Durante esta segunda semana, el foco ha estado en el diseño funcional de la interfaz, la navegación entre paneles, y la ejecución real de comandos yt-dlp mediante ProcessBuilder y SwingWorker.
+Semana 2 (DI01_1): Implementación de la estructura principal, la interfaz gráfica y la ejecución asíncrona de comandos.
+Semana 3 (DI01_2): Ampliación con funcionalidades de gestión de la biblioteca multimedia, utilizando JList, JComboBox y JTable con modelos personalizados.
 
 🧱 Estructura actual de la aplicación
 Ventanas y paneles
+🪟 MainFrame (ventana principal)
 
-MainFrame (ventana principal)
+Contiene el menú superior (File, Edit, Help)
+Desde Edit > Preferences se abre el panel de configuración
+Permite introducir una URL y ejecutar la descarga mediante yt-dlp
+Incluye un área de texto (txaLogArea) para mostrar los logs en tiempo real
+Incorpora una JList y un JTable que muestran los archivos descargados
 
-Contiene el menú superior (File, Edit, Help).
+⚙️ PreferencesPanel (panel de preferencias)
+Permite definir rutas de:
 
-Desde “Edit > Preferences” se abre el panel de configuración.
+yt-dlp
+ffmpeg
+Carpeta de salida
 
-Desde aquí se introduce la URL del vídeo y se ejecuta la descarga.
-
-Tiene un área de texto (txaLogArea) que muestra los logs en tiempo real.
-
-PreferencesPanel (panel de preferencias)
-
-Permite definir rutas para yt-dlp, ffmpeg, carpeta de salida y opciones como:
+Opciones adicionales:
 
 Límite de velocidad
+Creación de .m3u para playlists
 
-Crear .m3u para playlists
+Funcionalidades:
 
-Incluye botones Browse que abren un JFileChooser para seleccionar archivos o carpetas.
+Botones Browse que usan JFileChooser para seleccionar archivos o carpetas
+Botón Volver, que devuelve al panel principal sin crear nuevas instancias
 
-Tiene un botón Volver que devuelve al panel principal.
+💡 AboutDialog (pendiente de implementación)
+Modal JDialog que mostrará:
 
-AboutDialog (pendiente de implementar)
+Autor
+Curso
+Recursos utilizados
 
-Será el cuadro modal con información del autor, curso y recursos utilizados.
-
+🧩 Componentes añadidos (Semana 3)
+ComponenteUso principalModelo asociadoDescripciónJList<ResourceDownloaded>Listado rápido de recursos descargadosDefaultListModelPermite visualizar los archivos descargados y seleccionar unoJComboBox<String>Filtro o categoría de archivosDefaultComboBoxModelFiltra los resultados por tipo o extensiónJTableTabla principal de la bibliotecaAbstractTableModelMuestra los detalles: nombre, tamaño, fecha, tipo MIME y ruta
+Cada componente responde a eventos de selección (ListSelectionListener, ActionListener) que sincronizan la información entre la lista, la tabla y el área de detalles.
 ⚙️ Lógica implementada
+🔹 Ejecución de yt-dlp
 
-Ejecución de yt-dlp
+Construcción dinámica del comando con rutas y flags personalizados
+Ejecución asíncrona mediante SwingWorker y ProcessBuilder
+Lectura en tiempo real de la salida estándar, mostrando el progreso en el log
 
-Se construye el comando dinámicamente con las opciones básicas y rutas configuradas.
+🔹 CommandExecutor
+Clase utilitaria (cat.dam.roig.cleanstream.utils.CommandExecutor) encargada de:
 
-Se ejecuta en segundo plano usando SwingWorker, evitando que la interfaz se congele.
+Ejecutar el proceso externo
+Leer su salida línea a línea
+Pasar cada línea a la interfaz mediante un Consumer<String>
 
-Las líneas de salida se muestran en tiempo real en el área de log.
+🔹 Gestión de archivos descargados
+Nueva clase ResourceDownloaded con los campos:
+javaprivate String name;
+private String route;
+private long size;
+private String mimeType;
+private LocalDateTime downloadDate;
+private String extension;
 
-CommandExecutor
+Clase DownloadsScanner que recorre la carpeta configurada y devuelve una lista de objetos ResourceDownloaded
+Integración con los componentes de la interfaz (JList, JComboBox, JTable)
 
-Clase utilitaria (cat.dam.roig.cleanstream.utils.CommandExecutor) encargada de ejecutar el proceso y leer su salida.
-
-Implementa un Consumer<String> para procesar cada línea y mostrarla en la interfaz.
-
-Validación de campos
-
-Antes de ejecutar, se comprueba que haya ruta de yt-dlp y una URL válida.
-
-Navegación entre paneles
-
-Funcionalidad completa entre MainFrame y PreferencesPanel sin duplicar instancias.
-
-Uso de setVisible(true/false) para alternar vistas.
-
-🧩 Problemas encontrados y soluciones aplicadas
-Problema	Causa	Solución aplicada
-Al abrir la app se mostraban ambos paneles superpuestos	NetBeans añadía ambos paneles al contentPane desde el Designer	Se añadió control de visibilidad en el constructor del MainFrame
-La app se congelaba al ejecutar yt-dlp	El proceso se ejecutaba en el hilo principal	Se implementó SwingWorker con publish() para lectura asíncrona
-No se podía acceder al txtYtDlpPath desde el MainFrame	El campo estaba en otra clase (PreferencesPanel)	Se añadieron getters públicos para obtener los valores
-Error 403 al descargar vídeos de YouTube	Cambios recientes en la API de YouTube	Se añadieron flags como --compat-options youtube-disable-po-token, --force-ipv4, --user-agent Mozilla/5.0
-CommandExecutor creaba nuevas ventanas ocultas	Inicializaba MainFrame dentro de la clase	Se eliminó esa dependencia y se simplificó a una clase utilitaria pura
 🧠 Estado actual del proyecto
+✅ Completado
 
-✅ Interfaz gráfica funcional (JFrame + JPanel)
-✅ Menú con navegación y panel de preferencias
-✅ Ejecución de yt-dlp real desde Swing
-✅ Logs en tiempo real
-✅ Control de errores básicos
+Interfaz gráfica funcional (JFrame + JPanel)
+Menú con navegación y panel de preferencias
+Ejecución real de yt-dlp con logs en tiempo real
+Carga de archivos descargados y visualización en JList/JTable
+Validación de campos y control básico de errores
 
-🚧 Pendiente para siguientes semanas:
+🚧 Pendiente
 
-Incorporar más opciones de descarga (audio, listas, subtítulos, etc.).
+Implementar AboutDialog modal
+Agregar funciones extra (descarga de audio, subtítulos, gestión de eliminación)
+Refinar renderizado visual con ListCellRenderer y estilos coherentes
 
-🤖 Créditos y fuentes
+🪛 Problemas encontrados y soluciones
+ProblemaCausaSolución aplicadaPaneles superpuestos al iniciarAmbos añadidos al contentPane desde el DesignerSe controló la visibilidad en el constructor de MainFrameCongelamiento al ejecutar yt-dlpEjecución en el hilo principalImplementación de SwingWorker con publish()No se accedía a txtYtDlpPath desde MainFrameCampo en otra claseGetters públicos en PreferencesPanelError 403 al descargar de YouTubeCambios en la APISe añadieron flags: --compat-options youtube-disable-po-token, --force-ipv4, --user-agent Mozilla/5.0CommandExecutor creaba nuevas ventanas ocultasInicializaba MainFrame internamenteSe eliminó la dependencia, ahora es una clase utilitariaNo se mostraban datos en la JList/JTableFaltaba actualización de modelosSe implementaron métodos updateModel() y fireTableDataChanged()
+📚 Recursos y referencias
+Oficiales y docentes
 
-Autor: Elias Roig
-
-Asistencia técnica y documentación: ChatGPT (modelo GPT-5, OpenAI)
-
-Recursos consultados:
-
-yt-dlp GitHub
-
+Enunciado Tarea para DI01_1 25-26
+Enunciado Tarea para DI01_2 25-26
+DI01 Support Notes 25-26
+Documentación oficial de yt-dlp
 Documentación oficial de ffmpeg
 
-Apuntes “DI01 Support Notes 25-26”
+Consultas externas y soporte
 
-Enunciado oficial “Tarea para DI01_1 25-26”
+ChatGPT (modelo GPT-5, OpenAI): resolución de errores, documentación y guía de implementación
+StackOverflow: ejemplos sobre ProcessBuilder, SwingWorker y AbstractTableModel
+Pruebas realizadas en Linux Manjaro, ejecutando binarios locales de yt-dlp y ffmpeg
 
-Varias pruebas de consola y ejecución en Linux (Manjaro)
+👨‍💻 Créditos
+
+Autor: Elias Roig
+Asistencia técnica y documentación: ChatGPT (OpenAI GPT-5)
+Curso: Desarrollo de Interfaces — FP DAM 2025-26
+
+
+🚀 Instalación y uso
+bash# Clonar el repositorio
+git clone https://github.com/tu-usuario/cleanstream.git
+
+# Abrir el proyecto en NetBeans 27 con JDK 24
+# Compilar y ejecutar
+📝 Licencia
+Este proyecto es de uso educativo para el curso de Desarrollo de Interfaces.
