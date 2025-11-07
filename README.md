@@ -110,7 +110,6 @@ private String extension;
 | No se accedía a `txtYtDlpPath` desde MainFrame | Campo en otra clase | Getters públicos en PreferencesPanel |
 | Error 403 al descargar de YouTube | Cambios en la API | Se añadieron flags: `--compat-options youtube-disable-po-token`, `--force-ipv4`, `--user-agent Mozilla/5.0` |
 | CommandExecutor creaba nuevas ventanas ocultas | Inicializaba MainFrame internamente | Se eliminó la dependencia, ahora es una clase utilitaria |
-| No se mostraban datos en la JList/JTable | Faltaba actualización de modelos | Se implementaron métodos `updateModel()` y `fireTableDataChanged()` |
 
 ## 📚 Recursos y referencias
 
