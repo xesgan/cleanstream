@@ -206,49 +206,6 @@
         </Constraint>
       </Constraints>
     </Component>
-    <Component class="javax.swing.JLabel" name="lblBehaviour">
-      <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="sansserif" size="16" style="0"/>
-        </Property>
-        <Property name="text" type="java.lang.String" value="Behaving:"/>
-      </Properties>
-      <Constraints>
-        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="590" y="30" width="110" height="-1"/>
-        </Constraint>
-      </Constraints>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="chkDeleteIntermediates">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Delete intermediates files"/>
-      </Properties>
-      <Constraints>
-        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="680" y="40" width="190" height="-1"/>
-        </Constraint>
-      </Constraints>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="chkKeepName">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Keep original name"/>
-      </Properties>
-      <Constraints>
-        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="680" y="70" width="150" height="-1"/>
-        </Constraint>
-      </Constraints>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="chkOverwrite">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Overwrite if exists"/>
-      </Properties>
-      <Constraints>
-        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="890" y="70" width="170" height="-1"/>
-        </Constraint>
-      </Constraints>
-    </Component>
     <Component class="javax.swing.JLabel" name="lblQuality">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
@@ -258,7 +215,7 @@
       </Properties>
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="590" y="120" width="110" height="-1"/>
+          <AbsoluteConstraints x="590" y="30" width="110" height="-1"/>
         </Constraint>
       </Constraints>
     </Component>
@@ -327,7 +284,6 @@
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkOpenWhenDone">
       <Properties>
-        <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="Open when done"/>
       </Properties>
       <Events>
@@ -338,24 +294,63 @@
       </AuxValues>
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="680" y="160" width="150" height="-1"/>
+          <AbsoluteConstraints x="680" y="70" width="150" height="-1"/>
+        </Constraint>
+      </Constraints>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkLimitSpeed">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Limit Speed"/>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+      </AuxValues>
+      <Constraints>
+        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+          <AbsoluteConstraints x="680" y="110" width="120" height="-1"/>
         </Constraint>
       </Constraints>
     </Component>
     <Component class="javax.swing.JSlider" name="sldLimitSpeed">
-      <Constraints>
-        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="680" y="230" width="-1" height="-1"/>
-        </Constraint>
-      </Constraints>
-    </Component>
-    <Component class="javax.swing.JLabel" name="lblLimitSpeed">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Limit Speed:"/>
+        <Property name="majorTickSpacing" type="int" value="20"/>
+        <Property name="maximum" type="int" value="40"/>
+        <Property name="paintTicks" type="boolean" value="true"/>
+        <Property name="autoscrolls" type="boolean" value="true"/>
       </Properties>
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="690" y="200" width="80" height="-1"/>
+          <AbsoluteConstraints x="680" y="140" width="470" height="40"/>
+        </Constraint>
+      </Constraints>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl512K">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="512K"/>
+      </Properties>
+      <Constraints>
+        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+          <AbsoluteConstraints x="680" y="180" width="-1" height="-1"/>
+        </Constraint>
+      </Constraints>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl1M">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="1M"/>
+      </Properties>
+      <Constraints>
+        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+          <AbsoluteConstraints x="910" y="180" width="30" height="-1"/>
+        </Constraint>
+      </Constraints>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lbl2M">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="2M"/>
+      </Properties>
+      <Constraints>
+        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+          <AbsoluteConstraints x="1130" y="270" width="30" height="-1"/>
         </Constraint>
       </Constraints>
     </Component>

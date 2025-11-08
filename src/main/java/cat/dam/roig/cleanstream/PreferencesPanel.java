@@ -1,8 +1,10 @@
 package cat.dam.roig.cleanstream;
 
 import java.io.File;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -49,6 +51,15 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     public JTextField getTxtScanDownloadsFolder() {
         return txtScanDownloadsFolder;
+    }
+
+    public String getSldLimitSpeed() {
+
+        return switch (sldLimitSpeed.getValue()) {
+            case 0 -> "512K";
+            case 20 -> "1M";
+            default -> "2M";
+        };
     }
     
     // Helpers Reusable
@@ -152,10 +163,6 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblDownloads = new javax.swing.JLabel();
         txtDownloadsDir = new javax.swing.JTextField();
         btnDownloadsBrowse = new javax.swing.JButton();
-        lblBehaviour = new javax.swing.JLabel();
-        chkDeleteIntermediates = new javax.swing.JCheckBox();
-        chkKeepName = new javax.swing.JCheckBox();
-        chkOverwrite = new javax.swing.JCheckBox();
         lblQuality = new javax.swing.JLabel();
         btnSave = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
@@ -164,8 +171,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
         txtScanDownloadsFolder = new javax.swing.JTextField();
         btnScanDownloadsFolder = new javax.swing.JButton();
         chkOpenWhenDone = new javax.swing.JCheckBox();
+        chkLimitSpeed = new javax.swing.JCheckBox();
         sldLimitSpeed = new javax.swing.JSlider();
-        lblLimitSpeed = new javax.swing.JLabel();
+        lbl512K = new javax.swing.JLabel();
+        lbl1M = new javax.swing.JLabel();
+        lbl2M = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(590, 518));
         setLayout(null);
@@ -261,27 +271,10 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(btnDownloadsBrowse);
         btnDownloadsBrowse.setBounds(430, 260, 90, 24);
 
-        lblBehaviour.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
-        lblBehaviour.setText("Behaving:");
-        add(lblBehaviour);
-        lblBehaviour.setBounds(590, 30, 110, 23);
-
-        chkDeleteIntermediates.setText("Delete intermediates files");
-        add(chkDeleteIntermediates);
-        chkDeleteIntermediates.setBounds(680, 40, 190, 22);
-
-        chkKeepName.setText("Keep original name");
-        add(chkKeepName);
-        chkKeepName.setBounds(680, 70, 150, 22);
-
-        chkOverwrite.setText("Overwrite if exists");
-        add(chkOverwrite);
-        chkOverwrite.setBounds(890, 70, 170, 22);
-
         lblQuality.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
         lblQuality.setText("Options:");
         add(lblQuality);
-        lblQuality.setBounds(590, 120, 110, 23);
+        lblQuality.setBounds(590, 30, 110, 23);
 
         btnSave.setText("Save");
         add(btnSave);
@@ -315,7 +308,6 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(btnScanDownloadsFolder);
         btnScanDownloadsFolder.setBounds(430, 300, 90, 24);
 
-        chkOpenWhenDone.setSelected(true);
         chkOpenWhenDone.setText("Open when done");
         chkOpenWhenDone.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -323,13 +315,30 @@ public class PreferencesPanel extends javax.swing.JPanel {
             }
         });
         add(chkOpenWhenDone);
-        chkOpenWhenDone.setBounds(680, 160, 150, 22);
-        add(sldLimitSpeed);
-        sldLimitSpeed.setBounds(680, 230, 200, 20);
+        chkOpenWhenDone.setBounds(680, 70, 150, 22);
 
-        lblLimitSpeed.setText("Limit Speed:");
-        add(lblLimitSpeed);
-        lblLimitSpeed.setBounds(690, 200, 80, 18);
+        chkLimitSpeed.setText("Limit Speed");
+        add(chkLimitSpeed);
+        chkLimitSpeed.setBounds(680, 110, 120, 22);
+
+        sldLimitSpeed.setMajorTickSpacing(20);
+        sldLimitSpeed.setMaximum(40);
+        sldLimitSpeed.setPaintTicks(true);
+        sldLimitSpeed.setAutoscrolls(true);
+        add(sldLimitSpeed);
+        sldLimitSpeed.setBounds(680, 140, 470, 40);
+
+        lbl512K.setText("512K");
+        add(lbl512K);
+        lbl512K.setBounds(680, 180, 29, 18);
+
+        lbl1M.setText("1M");
+        add(lbl1M);
+        lbl1M.setBounds(910, 180, 30, 18);
+
+        lbl2M.setText("2M");
+        add(lbl2M);
+        lbl2M.setBounds(1130, 270, 30, 18);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
@@ -387,16 +396,15 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JButton btnScanDownloadsFolder;
     private javax.swing.JButton btnTempBrowse;
     private javax.swing.JButton btnYtDplBrowse;
-    private javax.swing.JCheckBox chkDeleteIntermediates;
-    private javax.swing.JCheckBox chkKeepName;
+    public javax.swing.JCheckBox chkLimitSpeed;
     public javax.swing.JCheckBox chkOpenWhenDone;
-    private javax.swing.JCheckBox chkOverwrite;
-    private javax.swing.JLabel lblBehaviour;
+    private javax.swing.JLabel lbl1M;
+    private javax.swing.JLabel lbl2M;
+    private javax.swing.JLabel lbl512K;
     private javax.swing.JLabel lblBinaries;
     private javax.swing.JLabel lblDownloads;
     private javax.swing.JLabel lblFfpmeg;
     private javax.swing.JLabel lblFfprobe;
-    private javax.swing.JLabel lblLimitSpeed;
     private javax.swing.JLabel lblQuality;
     private javax.swing.JLabel lblRoutes;
     private javax.swing.JLabel lblScanDownloads;

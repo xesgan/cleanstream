@@ -163,13 +163,14 @@ public class MainFrame extends javax.swing.JFrame {
         scpScanListPane = new javax.swing.JScrollPane();
         lstDownloadScanList = new javax.swing.JList<>();
         btnScanDownloadFolder = new javax.swing.JButton();
+        btnDeleteDownloadFileFolder = new javax.swing.JButton();
         scpMetaDataTable = new javax.swing.JScrollPane();
         tblMetaData = new javax.swing.JTable();
         cmbTipo = new javax.swing.JComboBox<>();
         chkSemana = new javax.swing.JCheckBox();
-        jRadioButton2 = new javax.swing.JRadioButton();
-        jRadioButton3 = new javax.swing.JRadioButton();
-        jRadioButton4 = new javax.swing.JRadioButton();
+        jrbBestAvailable = new javax.swing.JRadioButton();
+        jrb1080p = new javax.swing.JRadioButton();
+        jrb720p = new javax.swing.JRadioButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniExit = new javax.swing.JMenuItem();
@@ -179,7 +180,7 @@ public class MainFrame extends javax.swing.JFrame {
         mniAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(1200, 630));
+        setPreferredSize(new java.awt.Dimension(1200, 610));
         setResizable(false);
         getContentPane().setLayout(null);
 
@@ -225,6 +226,11 @@ public class MainFrame extends javax.swing.JFrame {
 
         bgFormat.add(rbAudio);
         rbAudio.setText("Audio");
+        rbAudio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbAudioActionPerformed(evt);
+            }
+        });
         pnlMainPanel.add(rbAudio);
         rbAudio.setBounds(200, 160, 58, 22);
 
@@ -257,6 +263,7 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(lblOutput);
         lblOutput.setBounds(40, 350, 47, 18);
 
+        txaLogArea.setEditable(false);
         txaLogArea.setColumns(20);
         txaLogArea.setRows(5);
         scrLogArea.setViewportView(txaLogArea);
@@ -271,7 +278,7 @@ public class MainFrame extends javax.swing.JFrame {
         scpScanListPane.setViewportView(lstDownloadScanList);
 
         pnlMainPanel.add(scpScanListPane);
-        scpScanListPane.setBounds(600, 100, 560, 270);
+        scpScanListPane.setBounds(600, 140, 560, 230);
 
         btnScanDownloadFolder.setText("Scan");
         btnScanDownloadFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -280,7 +287,16 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnScanDownloadFolder);
-        btnScanDownloadFolder.setBounds(1060, 60, 72, 24);
+        btnScanDownloadFolder.setBounds(990, 100, 72, 24);
+
+        btnDeleteDownloadFileFolder.setText("Delete");
+        btnDeleteDownloadFileFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeleteDownloadFileFolderActionPerformed(evt);
+            }
+        });
+        pnlMainPanel.add(btnDeleteDownloadFileFolder);
+        btnDeleteDownloadFileFolder.setBounds(1070, 100, 72, 24);
 
         tblMetaData.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -305,27 +321,27 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(cmbTipo);
-        cmbTipo.setBounds(830, 60, 110, 24);
+        cmbTipo.setBounds(760, 100, 110, 24);
 
         chkSemana.setText("This Week");
         pnlMainPanel.add(chkSemana);
-        chkSemana.setBounds(950, 60, 100, 22);
+        chkSemana.setBounds(890, 100, 100, 22);
 
-        bgQuality.add(jRadioButton2);
-        jRadioButton2.setSelected(true);
-        jRadioButton2.setText("Best Available");
-        pnlMainPanel.add(jRadioButton2);
-        jRadioButton2.setBounds(50, 230, 105, 22);
+        bgQuality.add(jrbBestAvailable);
+        jrbBestAvailable.setSelected(true);
+        jrbBestAvailable.setText("Best Available");
+        pnlMainPanel.add(jrbBestAvailable);
+        jrbBestAvailable.setBounds(50, 230, 105, 22);
 
-        bgQuality.add(jRadioButton3);
-        jRadioButton3.setText("1080p");
-        pnlMainPanel.add(jRadioButton3);
-        jRadioButton3.setBounds(170, 230, 60, 22);
+        bgQuality.add(jrb1080p);
+        jrb1080p.setText("1080p");
+        pnlMainPanel.add(jrb1080p);
+        jrb1080p.setBounds(170, 230, 60, 22);
 
-        bgQuality.add(jRadioButton4);
-        jRadioButton4.setText("720p");
-        pnlMainPanel.add(jRadioButton4);
-        jRadioButton4.setBounds(250, 230, 60, 22);
+        bgQuality.add(jrb720p);
+        jrb720p.setText("720p");
+        pnlMainPanel.add(jrb720p);
+        jrb720p.setBounds(250, 230, 60, 22);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -401,13 +417,13 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Video URL is missing.", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         // Aqui hacemos la validacion de que el usuario haya ingresado bien la ruta de su yt-dlp antes de empezar.
         if (ytDlpPath.isBlank()) {
             JOptionPane.showMessageDialog(this, "Yt-Dlp path is missing. Please configure it in Preferences.", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         File execFile = new File(ytDlpPath);
         if (!execFile.exists() || !execFile.canExecute()) {
             JOptionPane.showMessageDialog(this, "yt-dlp executable not found or not accessible. \n Check your Preferences path.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -447,8 +463,18 @@ public class MainFrame extends javax.swing.JFrame {
         command.add("--cookies-from-browser");
         command.add("vivaldi:Default::" + System.getProperty("user.home") + "/.config/vivaldi");
 
+        // Si el usuario activa el limit speed
+        System.out.println(pnlPreferencesPanel.chkLimitSpeed.isSelected() + " ESTA FUNCIONANDO");
+        if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
+            String rate = pnlPreferencesPanel.getSldLimitSpeed();
+            if (rate != null && !rate.isBlank()) {
+                command.add("--limit-rate");
+                command.add(rate);
+            }
+        }
+
         // URL al final
-        command.add(url);
+        command.add(url.trim());
 
         // Mostrar comando y versión
         java.util.List<String> verCmd = java.util.List.of(ytDlpPath, "--version");
@@ -507,9 +533,12 @@ public class MainFrame extends javax.swing.JFrame {
             protected void done() {
                 try {
                     int exit = get();
-                    log.append("\n Process ended with code: " + exit + "\n");
+                    log.append("\nProcess ended with code: " + exit + "\n");
                     log.append("OS Detected: " + DetectOS.detectOS());
                     log.append("\nDownload dir (final): " + downloadDir);
+                    if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
+                        log.append("\nLimit Speed Applied: " + pnlPreferencesPanel.getSldLimitSpeed());
+                    }
 
                     // Solo abrir si el checkbox está marcado y el proceso fue correcto
                     if (exit == 0 && pnlPreferencesPanel.chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {
@@ -588,6 +617,14 @@ public class MainFrame extends javax.swing.JFrame {
     private void cmbTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cmbTipoActionPerformed
+
+    private void btnDeleteDownloadFileFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteDownloadFileFolderActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnDeleteDownloadFileFolderActionPerformed
+
+    private void rbAudioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAudioActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_rbAudioActionPerformed
 
     private void applyFiltersIfReady() {
         if (!hasScanned || isScanning) {
@@ -701,6 +738,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.ButtonGroup bgFormat;
     private javax.swing.ButtonGroup bgQuality;
     private java.awt.Button btnClear;
+    private javax.swing.JButton btnDeleteDownloadFileFolder;
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnOpenLast;
     private java.awt.Button btnPaste;
@@ -708,9 +746,9 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnStop;
     private javax.swing.JCheckBox chkSemana;
     private javax.swing.JComboBox<String> cmbTipo;
-    private javax.swing.JRadioButton jRadioButton2;
-    private javax.swing.JRadioButton jRadioButton3;
-    private javax.swing.JRadioButton jRadioButton4;
+    private javax.swing.JRadioButton jrb1080p;
+    private javax.swing.JRadioButton jrb720p;
+    private javax.swing.JRadioButton jrbBestAvailable;
     private javax.swing.JLabel lblActualDir;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;
