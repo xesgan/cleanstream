@@ -6,6 +6,7 @@ import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.DayOfWeek;
@@ -401,9 +402,15 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
         
+        // Aqui hacemos la validacion de que el usuario haya ingresado bien la ruta de su yt-dlp antes de empezar.
         if (ytDlpPath.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Yt-Dlp route is missing.", "Warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Yt-Dlp path is missing. Please configure it in Preferences.", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
+        }
+        
+        File execFile = new File(ytDlpPath);
+        if (!execFile.exists() || !execFile.canExecute()) {
+            JOptionPane.showMessageDialog(this, "yt-dlp executable not found or not accessible. \n Check your Preferences path.", "Error", JOptionPane.ERROR_MESSAGE);
         }
 
         // Construcción del comando
