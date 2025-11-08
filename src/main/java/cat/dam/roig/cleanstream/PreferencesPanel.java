@@ -319,26 +319,26 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
         chkLimitSpeed.setText("Limit Speed");
         add(chkLimitSpeed);
-        chkLimitSpeed.setBounds(680, 110, 120, 22);
+        chkLimitSpeed.setBounds(680, 100, 120, 22);
 
         sldLimitSpeed.setMajorTickSpacing(20);
         sldLimitSpeed.setMaximum(40);
         sldLimitSpeed.setPaintTicks(true);
         sldLimitSpeed.setAutoscrolls(true);
         add(sldLimitSpeed);
-        sldLimitSpeed.setBounds(680, 140, 470, 40);
+        sldLimitSpeed.setBounds(680, 130, 470, 40);
 
         lbl512K.setText("512K");
         add(lbl512K);
-        lbl512K.setBounds(680, 180, 29, 18);
+        lbl512K.setBounds(680, 170, 29, 18);
 
         lbl1M.setText("1M");
         add(lbl1M);
-        lbl1M.setBounds(910, 180, 30, 18);
+        lbl1M.setBounds(910, 170, 30, 18);
 
         lbl2M.setText("2M");
         add(lbl2M);
-        lbl2M.setBounds(1130, 270, 30, 18);
+        lbl2M.setBounds(1130, 170, 30, 18);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
