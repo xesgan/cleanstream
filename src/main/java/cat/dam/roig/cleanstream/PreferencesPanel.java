@@ -155,19 +155,17 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblBehaviour = new javax.swing.JLabel();
         chkDeleteIntermediates = new javax.swing.JCheckBox();
         chkKeepName = new javax.swing.JCheckBox();
-        chkAutoplay = new javax.swing.JCheckBox();
         chkOverwrite = new javax.swing.JCheckBox();
         lblQuality = new javax.swing.JLabel();
-        rbBest = new javax.swing.JRadioButton();
-        rb1080 = new javax.swing.JRadioButton();
-        rb720 = new javax.swing.JRadioButton();
-        rbAudioOnly = new javax.swing.JRadioButton();
         btnSave = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
         btnReset = new javax.swing.JButton();
         lblScanDownloads = new javax.swing.JLabel();
         txtScanDownloadsFolder = new javax.swing.JTextField();
         btnScanDownloadsFolder = new javax.swing.JButton();
+        chkOpenWhenDone = new javax.swing.JCheckBox();
+        sldLimitSpeed = new javax.swing.JSlider();
+        lblLimitSpeed = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(590, 518));
         setLayout(null);
@@ -276,38 +274,14 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(chkKeepName);
         chkKeepName.setBounds(680, 70, 150, 22);
 
-        chkAutoplay.setText("Autoplay on finish");
-        add(chkAutoplay);
-        chkAutoplay.setBounds(890, 40, 170, 22);
-
         chkOverwrite.setText("Overwrite if exists");
         add(chkOverwrite);
         chkOverwrite.setBounds(890, 70, 170, 22);
 
         lblQuality.setFont(new java.awt.Font("sansserif", 0, 16)); // NOI18N
-        lblQuality.setText("Quality:");
+        lblQuality.setText("Options:");
         add(lblQuality);
         lblQuality.setBounds(590, 120, 110, 23);
-
-        bgQuality.add(rbBest);
-        rbBest.setText("Best Available");
-        add(rbBest);
-        rbBest.setBounds(670, 120, 105, 22);
-
-        bgQuality.add(rb1080);
-        rb1080.setText("1080p");
-        add(rb1080);
-        rb1080.setBounds(800, 120, 59, 22);
-
-        bgQuality.add(rb720);
-        rb720.setText("720p");
-        add(rb720);
-        rb720.setBounds(880, 120, 60, 22);
-
-        bgQuality.add(rbAudioOnly);
-        rbAudioOnly.setText("Only Audio");
-        add(rbAudioOnly);
-        rbAudioOnly.setBounds(950, 120, 89, 22);
 
         btnSave.setText("Save");
         add(btnSave);
@@ -340,6 +314,22 @@ public class PreferencesPanel extends javax.swing.JPanel {
         });
         add(btnScanDownloadsFolder);
         btnScanDownloadsFolder.setBounds(430, 300, 90, 24);
+
+        chkOpenWhenDone.setSelected(true);
+        chkOpenWhenDone.setText("Open when done");
+        chkOpenWhenDone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkOpenWhenDoneActionPerformed(evt);
+            }
+        });
+        add(chkOpenWhenDone);
+        chkOpenWhenDone.setBounds(680, 160, 150, 22);
+        add(sldLimitSpeed);
+        sldLimitSpeed.setBounds(680, 230, 200, 20);
+
+        lblLimitSpeed.setText("Limit Speed:");
+        add(lblLimitSpeed);
+        lblLimitSpeed.setBounds(690, 200, 80, 18);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
@@ -381,6 +371,10 @@ public class PreferencesPanel extends javax.swing.JPanel {
         browseDirectoryInto(txtScanDownloadsFolder, "Select the downloads folder");
     }//GEN-LAST:event_btnScanDownloadsFolderActionPerformed
 
+    private void chkOpenWhenDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOpenWhenDoneActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_chkOpenWhenDoneActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgQuality;
@@ -393,24 +387,22 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JButton btnScanDownloadsFolder;
     private javax.swing.JButton btnTempBrowse;
     private javax.swing.JButton btnYtDplBrowse;
-    private javax.swing.JCheckBox chkAutoplay;
     private javax.swing.JCheckBox chkDeleteIntermediates;
     private javax.swing.JCheckBox chkKeepName;
+    public javax.swing.JCheckBox chkOpenWhenDone;
     private javax.swing.JCheckBox chkOverwrite;
     private javax.swing.JLabel lblBehaviour;
     private javax.swing.JLabel lblBinaries;
     private javax.swing.JLabel lblDownloads;
     private javax.swing.JLabel lblFfpmeg;
     private javax.swing.JLabel lblFfprobe;
+    private javax.swing.JLabel lblLimitSpeed;
     private javax.swing.JLabel lblQuality;
     private javax.swing.JLabel lblRoutes;
     private javax.swing.JLabel lblScanDownloads;
     private javax.swing.JLabel lblTemp;
     private javax.swing.JLabel lblYtDlp;
-    private javax.swing.JRadioButton rb1080;
-    private javax.swing.JRadioButton rb720;
-    private javax.swing.JRadioButton rbAudioOnly;
-    private javax.swing.JRadioButton rbBest;
+    private javax.swing.JSlider sldLimitSpeed;
     private javax.swing.JTextField txtDownloadsDir;
     private javax.swing.JTextField txtFfpmegDir;
     private javax.swing.JTextField txtFfprobeDir;

@@ -139,6 +139,7 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         bgFormat = new javax.swing.ButtonGroup();
+        bgQuality = new javax.swing.ButtonGroup();
         pnlContent = new javax.swing.JPanel();
         pnlMainPanel = new javax.swing.JPanel();
         lblUrl = new javax.swing.JLabel();
@@ -149,12 +150,6 @@ public class MainFrame extends javax.swing.JFrame {
         rbVideo = new javax.swing.JRadioButton();
         rbAudio = new javax.swing.JRadioButton();
         lblOptions = new javax.swing.JLabel();
-        chkM3U = new javax.swing.JCheckBox();
-        chkOpenWhenDone = new javax.swing.JCheckBox();
-        chkLimit = new javax.swing.JCheckBox();
-        chkKbps = new javax.swing.JCheckBox();
-        txtKbps = new javax.swing.JTextField();
-        lblKbps = new javax.swing.JLabel();
         lblControls = new javax.swing.JLabel();
         btnDownload = new javax.swing.JButton();
         btnStop = new javax.swing.JButton();
@@ -171,6 +166,9 @@ public class MainFrame extends javax.swing.JFrame {
         tblMetaData = new javax.swing.JTable();
         cmbTipo = new javax.swing.JComboBox<>();
         chkSemana = new javax.swing.JCheckBox();
+        jRadioButton2 = new javax.swing.JRadioButton();
+        jRadioButton3 = new javax.swing.JRadioButton();
+        jRadioButton4 = new javax.swing.JRadioButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniExit = new javax.swing.JMenuItem();
@@ -214,6 +212,7 @@ public class MainFrame extends javax.swing.JFrame {
         lblFormat.setBounds(40, 160, 47, 18);
 
         bgFormat.add(rbVideo);
+        rbVideo.setSelected(true);
         rbVideo.setText("Video");
         rbVideo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -221,40 +220,20 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(rbVideo);
-        rbVideo.setBounds(90, 160, 57, 22);
+        rbVideo.setBounds(110, 160, 57, 22);
 
         bgFormat.add(rbAudio);
         rbAudio.setText("Audio");
         pnlMainPanel.add(rbAudio);
-        rbAudio.setBounds(180, 160, 58, 22);
+        rbAudio.setBounds(200, 160, 58, 22);
 
-        lblOptions.setText("Options:");
+        lblOptions.setText("Quality:");
         pnlMainPanel.add(lblOptions);
-        lblOptions.setBounds(40, 200, 51, 18);
+        lblOptions.setBounds(40, 200, 46, 18);
 
-        chkM3U.setText("Create .m3u");
-        pnlMainPanel.add(chkM3U);
-        chkM3U.setBounds(60, 230, 95, 22);
-
-        chkOpenWhenDone.setText("Open when done");
-        pnlMainPanel.add(chkOpenWhenDone);
-        chkOpenWhenDone.setBounds(170, 230, 126, 22);
-
-        chkLimit.setText("Limit Speed");
-        pnlMainPanel.add(chkLimit);
-        chkLimit.setBounds(310, 230, 93, 22);
-        pnlMainPanel.add(chkKbps);
-        chkKbps.setBounds(420, 230, 19, 19);
-        pnlMainPanel.add(txtKbps);
-        txtKbps.setBounds(450, 230, 34, 24);
-
-        lblKbps.setText("Kbsp");
-        pnlMainPanel.add(lblKbps);
-        lblKbps.setBounds(490, 230, 30, 18);
-
-        lblControls.setText("Controles:");
+        lblControls.setText("Controls:");
         pnlMainPanel.add(lblControls);
-        lblControls.setBounds(40, 280, 61, 18);
+        lblControls.setBounds(40, 280, 54, 18);
 
         btnDownload.setText("Download");
         btnDownload.addActionListener(new java.awt.event.ActionListener() {
@@ -318,7 +297,7 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(scpMetaDataTable);
         scpMetaDataTable.setBounds(600, 380, 560, 170);
 
-        cmbTipo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Todo", "Solo vídeo", "Solo audio" }));
+        cmbTipo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Only Video", "Only Audio" }));
         cmbTipo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbTipoActionPerformed(evt);
@@ -327,9 +306,25 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(cmbTipo);
         cmbTipo.setBounds(830, 60, 110, 24);
 
-        chkSemana.setText("Esta Semana");
+        chkSemana.setText("This Week");
         pnlMainPanel.add(chkSemana);
         chkSemana.setBounds(950, 60, 100, 22);
+
+        bgQuality.add(jRadioButton2);
+        jRadioButton2.setSelected(true);
+        jRadioButton2.setText("Best Available");
+        pnlMainPanel.add(jRadioButton2);
+        jRadioButton2.setBounds(50, 230, 105, 22);
+
+        bgQuality.add(jRadioButton3);
+        jRadioButton3.setText("1080p");
+        pnlMainPanel.add(jRadioButton3);
+        jRadioButton3.setBounds(170, 230, 60, 22);
+
+        bgQuality.add(jRadioButton4);
+        jRadioButton4.setText("720p");
+        pnlMainPanel.add(jRadioButton4);
+        jRadioButton4.setBounds(250, 230, 60, 22);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -405,6 +400,11 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Video URL is missing.", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        if (ytDlpPath.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Yt-Dlp route is missing.", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         // Construcción del comando
         java.util.List<String> command = new java.util.ArrayList<>();
@@ -472,7 +472,7 @@ public class MainFrame extends javax.swing.JFrame {
                     setExtractorClient(cmdAndroid, "android");
                     // Android no soporta cookies → quitar opción y su valor
                     removeOptionWithValue(cmdAndroid, "--cookies-from-browser");
-                    publish("[retry] android (sin cookies)");
+                    publish("[retry] android (without cookies)");
                     int exitAndroid = CommandExecutor.runStreaming(cmdAndroid, this::publish);
                     return exitAndroid;
 
@@ -500,12 +500,12 @@ public class MainFrame extends javax.swing.JFrame {
             protected void done() {
                 try {
                     int exit = get();
-                    log.append("\nProceso finalizado con código: " + exit + "\n");
+                    log.append("\n Process ended with code: " + exit + "\n");
                     log.append("OS Detected: " + DetectOS.detectOS());
                     log.append("\nDownload dir (final): " + downloadDir);
 
                     // Solo abrir si el checkbox está marcado y el proceso fue correcto
-                    if (exit == 0 && chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {
+                    if (exit == 0 && pnlPreferencesPanel.chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {
                         java.io.File file = new java.io.File(lastDownloadedFile);
                         if (file.exists()) {
                             log.append("Playing: " + file.getName() + "\n");
@@ -692,22 +692,21 @@ public class MainFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgFormat;
+    private javax.swing.ButtonGroup bgQuality;
     private java.awt.Button btnClear;
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnOpenLast;
     private java.awt.Button btnPaste;
     private javax.swing.JButton btnScanDownloadFolder;
     private javax.swing.JButton btnStop;
-    private javax.swing.JCheckBox chkKbps;
-    private javax.swing.JCheckBox chkLimit;
-    private javax.swing.JCheckBox chkM3U;
-    private javax.swing.JCheckBox chkOpenWhenDone;
     private javax.swing.JCheckBox chkSemana;
     private javax.swing.JComboBox<String> cmbTipo;
+    private javax.swing.JRadioButton jRadioButton2;
+    private javax.swing.JRadioButton jRadioButton3;
+    private javax.swing.JRadioButton jRadioButton4;
     private javax.swing.JLabel lblActualDir;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;
-    private javax.swing.JLabel lblKbps;
     private javax.swing.JLabel lblOptions;
     private javax.swing.JLabel lblOutput;
     private javax.swing.JLabel lblStatus;
@@ -729,7 +728,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane scrLogArea;
     private javax.swing.JTable tblMetaData;
     private javax.swing.JTextArea txaLogArea;
-    private javax.swing.JTextField txtKbps;
     private javax.swing.JTextField txtUrl;
     // End of variables declaration//GEN-END:variables
 }
