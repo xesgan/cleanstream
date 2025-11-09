@@ -61,6 +61,10 @@ public class PreferencesPanel extends javax.swing.JPanel {
             default -> "2M";
         };
     }
+
+    public boolean getChkCreateM3u() {
+        return chkCreateM3u.isSelected();
+    }
     
     // Helpers Reusable
     /**
@@ -172,6 +176,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
         btnScanDownloadsFolder = new javax.swing.JButton();
         chkOpenWhenDone = new javax.swing.JCheckBox();
         chkLimitSpeed = new javax.swing.JCheckBox();
+        chkCreateM3u = new javax.swing.JCheckBox();
         sldLimitSpeed = new javax.swing.JSlider();
         lbl512K = new javax.swing.JLabel();
         lbl1M = new javax.swing.JLabel();
@@ -321,6 +326,10 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(chkLimitSpeed);
         chkLimitSpeed.setBounds(680, 100, 120, 22);
 
+        chkCreateM3u.setText("Create .m3u");
+        add(chkCreateM3u);
+        chkCreateM3u.setBounds(680, 210, 100, 22);
+
         sldLimitSpeed.setMajorTickSpacing(20);
         sldLimitSpeed.setMaximum(40);
         sldLimitSpeed.setPaintTicks(true);
@@ -396,6 +405,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JButton btnScanDownloadsFolder;
     private javax.swing.JButton btnTempBrowse;
     private javax.swing.JButton btnYtDplBrowse;
+    private javax.swing.JCheckBox chkCreateM3u;
     public javax.swing.JCheckBox chkLimitSpeed;
     public javax.swing.JCheckBox chkOpenWhenDone;
     private javax.swing.JLabel lbl1M;

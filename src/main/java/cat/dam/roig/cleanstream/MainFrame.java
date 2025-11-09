@@ -7,10 +7,14 @@ import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -180,8 +184,9 @@ public class MainFrame extends javax.swing.JFrame {
         mniAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(1200, 610));
+        setPreferredSize(new java.awt.Dimension(1200, 700));
         setResizable(false);
+        setSize(new java.awt.Dimension(1200, 700));
         getContentPane().setLayout(null);
 
         pnlContent.setLayout(new java.awt.CardLayout());
@@ -407,10 +412,11 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_mniPreferencesActionPerformed
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
-        // TODO add your handling code here:
         String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath();
-//        String ytDlpPath = YT_DLP_PATH; // Ruta fija como acordamos
-        final String downloadDir = scanOS.resolveDownloadDir(pnlPreferencesPanel.getTxtDownloadsDir().trim());
+        String ffmpegPath = pnlPreferencesPanel.getTxtFfpmegDir();
+
+        final String downloadDir = DetectOS.resolveDownloadDir(pnlPreferencesPanel.getTxtDownloadsDir().trim());
+        final List<String> downloadedFiles = new ArrayList<>();
         String url = txtUrl.getText().trim();
 
         if (url.isBlank()) {
@@ -427,6 +433,7 @@ public class MainFrame extends javax.swing.JFrame {
         File execFile = new File(ytDlpPath);
         if (!execFile.exists() || !execFile.canExecute()) {
             JOptionPane.showMessageDialog(this, "yt-dlp executable not found or not accessible. \n Check your Preferences path.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // Construcción del comando
@@ -441,8 +448,10 @@ public class MainFrame extends javax.swing.JFrame {
             command.add("%(title)s.%(ext)s");
         }
         // Ruta fija a ffmpeg
-        command.add("--ffmpeg-location");
-        command.add(FFMPEG_PATH);
+        if (ffmpegPath != null && !ffmpegPath.isBlank() && new File(ffmpegPath).exists()) {
+            command.add("--ffmpeg-location");
+            command.add(ffmpegPath);
+        }
 
         // Flags de estabilidad
         command.add("--force-ipv4");
@@ -463,8 +472,11 @@ public class MainFrame extends javax.swing.JFrame {
         command.add("--cookies-from-browser");
         command.add("vivaldi:Default::" + System.getProperty("user.home") + "/.config/vivaldi");
 
+        // Imprime en stdout la ruta final de cada item descargado
+        command.add("--print");
+        command.add("after_move:filepath");
+
         // Si el usuario activa el limit speed
-        System.out.println(pnlPreferencesPanel.chkLimitSpeed.isSelected() + " ESTA FUNCIONANDO");
         if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
             String rate = pnlPreferencesPanel.getSldLimitSpeed();
             if (rate != null && !rate.isBlank()) {
@@ -489,7 +501,7 @@ public class MainFrame extends javax.swing.JFrame {
             protected Integer doInBackground() {
                 try {
                     // 0) versión
-                    CommandExecutor.runStreaming(java.util.List.of(YT_DLP_PATH, "--version"),
+                    CommandExecutor.runStreaming(java.util.List.of(ytDlpPath, "--version"),
                             line -> publish("[yt-dlp --version] " + line));
 
                     // === 1) INTENTO WEB (con cookies) ===
@@ -509,7 +521,6 @@ public class MainFrame extends javax.swing.JFrame {
                     int exitAndroid = CommandExecutor.runStreaming(cmdAndroid, this::publish);
                     return exitAndroid;
 
-                    // (Opcional) podrías probar iOS aquí, pero requiere PO token; mejor omitir.
                 } catch (Exception e) {
                     publish("ERROR: " + e.getMessage());
                     return -1;
@@ -521,10 +532,28 @@ public class MainFrame extends javax.swing.JFrame {
                 for (String line : lines) {
                     log.append(line + "\n");
 
-                    // Detectar el archivo descargado
+                    // Captura directa del ouput de --print after_move:filepath
+                    if (!line.isBlank() && new File(line).isAbsolute()) {
+                        downloadedFiles.add(line);
+                        lastDownloadedFile = line.trim();
+                        continue;
+                    }
+
+                    // Detectar el archivo descargado (fallback)
                     if (line.contains("Destination:")) {
                         String path = line.substring(line.indexOf("Destination:") + "Destination:".length()).trim();
+                        downloadedFiles.add(path);
                         lastDownloadedFile = path;
+                        continue;
+                    }
+                    if (line.contains("Merging formats into")) {
+                        int q = line.indexOf('"');
+                        int qq = line.lastIndexOf('"');
+                        if (q >= 0 && qq > q) {
+                            String path = line.substring(q + 1, qq).trim();
+                            downloadedFiles.add(path);
+                            lastDownloadedFile = path;
+                        }
                     }
                 }
             }
@@ -538,6 +567,13 @@ public class MainFrame extends javax.swing.JFrame {
                     log.append("\nDownload dir (final): " + downloadDir);
                     if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
                         log.append("\nLimit Speed Applied: " + pnlPreferencesPanel.getSldLimitSpeed());
+                    }
+
+                    // Crear .m3u si todo OK
+                    if (exit == 0 && pnlPreferencesPanel.getChkCreateM3u() && !downloadedFiles.isEmpty()) {
+                        String name = "playlist-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+                        writeM3u(downloadedFiles, downloadDir, name); //CREAR METODO
+                        log.append("\n[m3u] created: " + new File(downloadDir, name + ".m3u").getAbsolutePath());
                     }
 
                     // Solo abrir si el checkbox está marcado y el proceso fue correcto
@@ -561,6 +597,30 @@ public class MainFrame extends javax.swing.JFrame {
 
         worker.execute();
     }//GEN-LAST:event_btnDownloadActionPerformed
+
+    private void writeM3u(List<String> files, String outputDir, String playlistName) {
+        if (files == null || files.isEmpty() || outputDir == null || outputDir.isBlank()) {
+            return;
+        }
+        Path outDir = Paths.get(outputDir);
+        String safe = playlistName.replaceAll("[\\\\/:*?\"<>|]+", "_");
+        Path m3u = outDir.resolve(safe + ".m3u");
+
+        List<String> lines = new ArrayList<>();
+        for (String abs : files) {
+            try {
+                Path rel = outDir.relativize(Paths.get(abs));
+                lines.add(rel.toString());
+            } catch (Exception ex) {
+                lines.add(abs);
+            }
+        }
+        try {
+            Files.write(m3u, lines, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Couln't write m3u file... \n Check your Preferences options.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void mniAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniAboutActionPerformed
         // TODO add your handling code here:
