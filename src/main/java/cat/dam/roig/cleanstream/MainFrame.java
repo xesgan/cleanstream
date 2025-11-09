@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
@@ -45,6 +46,9 @@ public class MainFrame extends javax.swing.JFrame {
     private MetadataTableModel metaModel; // para la tabla de metadata
     private boolean hasScanned = false;
     private boolean isScanning = false;
+    private volatile Process currentProcess;
+    private SwingWorker<Integer, String> currentDownloadWorker;
+    private JTextArea log;
 
     /**
      * Creates new form MainFrame
@@ -261,6 +265,11 @@ public class MainFrame extends javax.swing.JFrame {
         btnDownload.setBounds(30, 310, 140, 24);
 
         btnStop.setText("Stop");
+        btnStop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnStopActionPerformed(evt);
+            }
+        });
         pnlMainPanel.add(btnStop);
         btnStop.setBounds(230, 310, 140, 24);
 
@@ -450,19 +459,22 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        // Construcción del comando
+        // Construcción del comando base
         java.util.List<String> command = new java.util.ArrayList<>();
         command.add(ytDlpPath);
-//        command.add("-f");
-//        command.add("bv*+ba/b/22/18"); // incluye fallback progresivo
+
+        // Insertamos calidad seleccionada
         VideoQuality q = getSelectedQuality();
         CommandExecutor.appendQualityArgs(command, q);
+
+        // Directorio de salida
         if (!downloadDir.isBlank()) {
             command.add("-P");
             command.add(downloadDir);
             command.add("-o");
             command.add("%(title)s.%(ext)s");
         }
+
         // Ruta fija a ffmpeg
         if (ffmpegPath != null && !ffmpegPath.isBlank() && new File(ffmpegPath).exists()) {
             command.add("--ffmpeg-location");
@@ -506,13 +518,15 @@ public class MainFrame extends javax.swing.JFrame {
 
         // Mostrar comando y versión
         java.util.List<String> verCmd = java.util.List.of(ytDlpPath, "--version");
-        JTextArea log = getTxaLogArea();
+        log = getTxaLogArea();
         log.setText("");
         log.append("CMD: " + String.join(" ", command) + "\n\n");
+
         btnDownload.setEnabled(false);
+        btnStop.setEnabled(true);
 
         // SwingWorker
-        SwingWorker<Integer, String> worker = new SwingWorker<>() {
+        currentDownloadWorker = new SwingWorker<>() {
             @Override
             protected Integer doInBackground() {
                 try {
@@ -520,26 +534,51 @@ public class MainFrame extends javax.swing.JFrame {
                     CommandExecutor.runStreaming(java.util.List.of(ytDlpPath, "--version"),
                             line -> publish("[yt-dlp --version] " + line));
 
+                    if (isCancelled()) {
+                        return -2;
+                    }
+
                     // === 1) INTENTO WEB (con cookies) ===
                     java.util.List<String> cmdWeb = new java.util.ArrayList<>(command);
                     setExtractorClient(cmdWeb, "web");
                     publish("[try] web + cookies");
-                    int exitWeb = CommandExecutor.runStreaming(cmdWeb, this::publish);
+                    int exitWeb = CommandExecutor.runStreaming(
+                            cmdWeb,
+                            this::publish,
+                            p -> currentProcess = p // <<-- CAPTURAMOS EL PROCESS
+                    );
+
+                    if (isCancelled()) {
+                        destroyProcessQuiet();
+                        return -2;
+                    }
+
                     if (exitWeb == 0) {
                         return 0; // ✅ no reintentes si ya fue bien
                     }
+
                     // === 2) FALLBACK ANDROID (sin cookies) ===
                     java.util.List<String> cmdAndroid = new java.util.ArrayList<>(command);
                     setExtractorClient(cmdAndroid, "android");
                     // Android no soporta cookies → quitar opción y su valor
                     removeOptionWithValue(cmdAndroid, "--cookies-from-browser");
                     publish("[retry] android (without cookies)");
-                    int exitAndroid = CommandExecutor.runStreaming(cmdAndroid, this::publish);
+                    int exitAndroid = CommandExecutor.runStreaming(cmdAndroid, this::publish, p -> currentProcess = p);
+
+                    if (isCancelled()) {
+                        destroyProcessQuiet();
+                        return -2;
+                    }
                     return exitAndroid;
 
                 } catch (Exception e) {
-                    publish("ERROR: " + e.getMessage());
+                    String msg = (e.getMessage() != null) ? e.getMessage() : e.toString();
+                    publish("ERROR: " + msg);
+                    e.printStackTrace(); // para ver el origen real en consola
                     return -1;
+                } finally {
+                    // ya no habria proceso asociado
+                    currentProcess = null;
                 }
             }
 
@@ -578,9 +617,14 @@ public class MainFrame extends javax.swing.JFrame {
             protected void done() {
                 try {
                     int exit = get();
-                    log.append("\nProcess ended with code: " + exit + "\n");
-                    log.append("OS Detected: " + DetectOS.detectOS());
-                    log.append("\nDownload dir (final): " + downloadDir);
+                    if (exit == -2) {
+                        log.append("\n[STOP] Download cancelled by the user.\n");
+                        return;
+                    } else {
+                        log.append("\nProcess ended with code: " + exit + "\n");
+                        log.append("OS Detected: " + DetectOS.detectOS());
+                        log.append("\nDownload dir (final): " + downloadDir);
+                    }
                     if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
                         log.append("\nLimit Speed Applied: " + pnlPreferencesPanel.getSldLimitSpeed());
                     }
@@ -602,17 +646,44 @@ public class MainFrame extends javax.swing.JFrame {
                         }
                     }
 
-                } catch (Exception ex) {
-                    log.append("ERROR when finished: " + ex.getMessage() + "\n");
+                } catch (CancellationException ce) {
+                    log.append("\n[STOP] Cancelled (CancellationException).\n");
+                } catch (ExecutionException ee) {
+                    Throwable cause = ee.getCause();
+                    log.append("ERROR when finished: " + (cause != null ? cause.toString() : ee.toString()) + "\n");
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.append("ERROR when finished: " + ie.toString() + "\n");
+                } catch (IOException ex) {
+                    System.getLogger(MainFrame.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                 } finally {
                     btnDownload.setEnabled(true);
+                    btnStop.setEnabled(false);
+                    currentProcess = null;
+                    currentDownloadWorker = null;
+                }
+            }
+
+            private void destroyProcessQuiet() {
+                try {
+                    Process p = currentProcess;
+                    if (p != null) {
+                        p.destroy();
+                        p.waitFor(800, java.util.concurrent.TimeUnit.MILLISECONDS);
+                        if (p.isAlive()) {
+                            publish("[STOP] Forcing kill...");
+                            p.destroyForcibly();
+                        }
+                    }
+                } catch (Exception ignore) {
                 }
             }
         };
 
-        worker.execute();
+        currentDownloadWorker.execute();
     }//GEN-LAST:event_btnDownloadActionPerformed
 
+    // Helper de btnDownload
     private void writeM3u(List<String> files, String outputDir) {
         if (files == null || files.isEmpty() || outputDir == null || outputDir.isBlank()) {
             return;
@@ -756,6 +827,28 @@ public class MainFrame extends javax.swing.JFrame {
 
     }//GEN-LAST:event_btnOpenLastActionPerformed
 
+    private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
+        // Cancelamos el worker
+        if (currentDownloadWorker != null && !currentDownloadWorker.isDone()) {
+            currentDownloadWorker.cancel(false);
+        }
+
+        // intenta parar el proceso (si aún no está asignado no pasa nada)
+        Process p = currentProcess;
+        if (p != null) {
+            getTxaLogArea().append("[STOP] Killing yt-dlp process...\n");
+            try {
+                p.destroy();
+                if (p.isAlive()) {
+                    p.destroyForcibly();
+                }
+            } catch (Exception ignore) {
+            }
+        }
+        btnStop.setEnabled(false);
+        btnDownload.setEnabled(true);
+    }//GEN-LAST:event_btnStopActionPerformed
+
     private void applyFiltersIfReady() {
         if (!hasScanned || isScanning) {
             return;  // no hay datos o estoy escaneando
@@ -871,11 +964,17 @@ public class MainFrame extends javax.swing.JFrame {
     public void setLastDownloadedFile(String lastDownloadedFile) {
         this.lastDownloadedFile = lastDownloadedFile;
     }
-    
+
     public VideoQuality getSelectedQuality() {
-        if (jrb1080p.isSelected()) return VideoQuality.P1080;
-        if (jrb720p.isSelected()) return VideoQuality.P720;
-        if (jrb480p.isSelected()) return VideoQuality.P480;
+        if (jrb1080p.isSelected()) {
+            return VideoQuality.P1080;
+        }
+        if (jrb720p.isSelected()) {
+            return VideoQuality.P720;
+        }
+        if (jrb480p.isSelected()) {
+            return VideoQuality.P480;
+        }
         return VideoQuality.BEST_AVAILABLE;
     }
 

@@ -19,25 +19,41 @@ public class CommandExecutor {
      *
      * @param command
      * @param onLine
+     * @param onProcessStart
      * @return
      * @throws java.io.IOException
      * @throws java.lang.InterruptedException
      */
     public static int runStreaming(List<String> command, Consumer<String> onLine)
             throws IOException, InterruptedException {
+        // Redirige internamente a la versión completa, sin capturar el proceso
+        return runStreaming(command, onLine, null);
+    }
+
+    public static int runStreaming(
+            List<String> command,
+            Consumer<String> onLine,
+            Consumer<Process> onProcessStart)
+            throws IOException, InterruptedException {
 
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.redirectErrorStream(true);
         Process process = pb.start();
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()))) {
+        // Si el caller necesita guardar el proceso (para Stop), lo notificamos
+        if (onProcessStart != null) {
+            onProcessStart.accept(process);
+        }
 
+        // Lectura de la salida en tiempo real
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 onLine.accept(line);
             }
         }
+
+        // Esperamos a que el proceso termine y devolvemos su código de salida
         return process.waitFor();
     }
 
