@@ -578,9 +578,8 @@ public class MainFrame extends javax.swing.JFrame {
 
                     // Crear .m3u si todo OK
                     if (exit == 0 && pnlPreferencesPanel.getChkCreateM3u() && !downloadedFiles.isEmpty()) {
-                        String name = "playlist-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-                        writeM3u(downloadedFiles, downloadDir, name); //CREAR METODO
-                        log.append("\n[m3u] created: " + new File(downloadDir, name + ".m3u").getAbsolutePath());
+                        writeM3u(downloadedFiles, downloadDir); // el nombre ya no se usa
+                        log.append("\n[m3u] playlist updated\n");
                     }
 
                     // Solo abrir si el checkbox está marcado y el proceso fue correcto
@@ -605,27 +604,52 @@ public class MainFrame extends javax.swing.JFrame {
         worker.execute();
     }//GEN-LAST:event_btnDownloadActionPerformed
 
-    private void writeM3u(List<String> files, String outputDir, String playlistName) {
+    private void writeM3u(List<String> files, String outputDir) {
         if (files == null || files.isEmpty() || outputDir == null || outputDir.isBlank()) {
             return;
         }
         Path outDir = Paths.get(outputDir);
-        String safe = playlistName.replaceAll("[\\\\/:*?\"<>|]+", "_");
-        Path m3u = outDir.resolve(safe + ".m3u");
+        Path m3u = outDir.resolve("CleanStreamPlayList.m3u");
 
-        List<String> lines = new ArrayList<>();
-        for (String abs : files) {
-            try {
-                Path rel = outDir.relativize(Paths.get(abs));
-                lines.add(rel.toString());
-            } catch (Exception ex) {
-                lines.add(abs);
-            }
-        }
         try {
-            Files.write(m3u, lines, StandardCharsets.UTF_8);
+            // Leer las líneas existentes (si ya hay playlist)
+            List<String> existing = Files.exists(m3u)
+                    ? Files.readAllLines(m3u, StandardCharsets.UTF_8)
+                    : new ArrayList<>();
+
+            // Convertir las rutas nuevas a formato de texto
+            for (String abs : files) {
+                if (abs == null || abs.isBlank()) {
+                    continue;
+                }
+                String pathToAdd;
+
+                try {
+                    Path rel = outDir.relativize(Paths.get(abs));
+                    pathToAdd = rel.toString();
+                } catch (Exception ex) {
+                    pathToAdd = abs;
+                }
+
+                // Evitar duplicados (compara por nombre del archivo)
+                boolean alreadyInList = existing.stream()
+                        .anyMatch(line -> line.trim().endsWith(Paths.get(abs).getFileName().toString()));
+
+                if (!alreadyInList) {
+                    existing.add(pathToAdd);
+                }
+            }
+
+            // Guardar el archivo actualizado (sobrescribe el antiguo)
+            Files.write(m3u, existing, StandardCharsets.UTF_8);
+            JOptionPane.showMessageDialog(this,
+                    "Playlist updated: " + m3u.toAbsolutePath(),
+                    "Playlist", JOptionPane.INFORMATION_MESSAGE);
+
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Couln't write m3u file... \n Check your Preferences options.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Couldn't update playlist:\n" + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -700,14 +724,14 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "No previous download found.", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         File f = new File(last);
         if (!f.exists()) {
             JOptionPane.showMessageDialog(this, "The last downloaded file cannot be found.", "Error", JOptionPane.ERROR_MESSAGE);
             btnOpenLast.setEnabled(false);
             return;
         }
-        
+
         try {
             if (f.getName().endsWith(".m3u") || f.getName().endsWith(".m3u8")) {
                 new ProcessBuilder("vlc", f.getAbsolutePath()).start();
