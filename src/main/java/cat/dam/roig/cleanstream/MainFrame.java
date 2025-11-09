@@ -2,6 +2,7 @@ package cat.dam.roig.cleanstream;
 
 import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
+import cat.dam.roig.cleanstream.models.VideoQuality;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
@@ -177,6 +178,7 @@ public class MainFrame extends javax.swing.JFrame {
         jrbBestAvailable = new javax.swing.JRadioButton();
         jrb1080p = new javax.swing.JRadioButton();
         jrb720p = new javax.swing.JRadioButton();
+        jrb480p = new javax.swing.JRadioButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniExit = new javax.swing.JMenuItem();
@@ -355,6 +357,11 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(jrb720p);
         jrb720p.setBounds(250, 230, 60, 22);
 
+        bgQuality.add(jrb480p);
+        jrb480p.setText("480p");
+        pnlMainPanel.add(jrb480p);
+        jrb480p.setBounds(320, 230, 60, 22);
+
         pnlContent.add(pnlMainPanel, "card3");
 
         getContentPane().add(pnlContent);
@@ -446,8 +453,10 @@ public class MainFrame extends javax.swing.JFrame {
         // Construcción del comando
         java.util.List<String> command = new java.util.ArrayList<>();
         command.add(ytDlpPath);
-        command.add("-f");
-        command.add("bv*+ba/b/22/18"); // incluye fallback progresivo
+//        command.add("-f");
+//        command.add("bv*+ba/b/22/18"); // incluye fallback progresivo
+        VideoQuality q = getSelectedQuality();
+        CommandExecutor.appendQualityArgs(command, q);
         if (!downloadDir.isBlank()) {
             command.add("-P");
             command.add(downloadDir);
@@ -862,6 +871,13 @@ public class MainFrame extends javax.swing.JFrame {
     public void setLastDownloadedFile(String lastDownloadedFile) {
         this.lastDownloadedFile = lastDownloadedFile;
     }
+    
+    public VideoQuality getSelectedQuality() {
+        if (jrb1080p.isSelected()) return VideoQuality.P1080;
+        if (jrb720p.isSelected()) return VideoQuality.P720;
+        if (jrb480p.isSelected()) return VideoQuality.P480;
+        return VideoQuality.BEST_AVAILABLE;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgFormat;
@@ -876,6 +892,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkSemana;
     private javax.swing.JComboBox<String> cmbTipo;
     private javax.swing.JRadioButton jrb1080p;
+    private javax.swing.JRadioButton jrb480p;
     private javax.swing.JRadioButton jrb720p;
     private javax.swing.JRadioButton jrbBestAvailable;
     private javax.swing.JLabel lblActualDir;
