@@ -326,6 +326,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(chkLimitSpeed);
         chkLimitSpeed.setBounds(680, 100, 120, 22);
 
+        chkCreateM3u.setSelected(true);
         chkCreateM3u.setText("Create .m3u");
         add(chkCreateM3u);
         chkCreateM3u.setBounds(680, 210, 100, 22);

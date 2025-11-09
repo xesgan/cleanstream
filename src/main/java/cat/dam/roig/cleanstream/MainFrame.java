@@ -6,7 +6,9 @@ import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
+import java.awt.Desktop;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -261,6 +263,11 @@ public class MainFrame extends javax.swing.JFrame {
         btnStop.setBounds(230, 310, 140, 24);
 
         btnOpenLast.setText("Open last");
+        btnOpenLast.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOpenLastActionPerformed(evt);
+            }
+        });
         pnlMainPanel.add(btnOpenLast);
         btnOpenLast.setBounds(430, 310, 140, 24);
 
@@ -686,6 +693,36 @@ public class MainFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_rbAudioActionPerformed
 
+    private void btnOpenLastActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenLastActionPerformed
+        String last = getLastDownloadedFile();
+
+        if (last == null || last.isBlank()) {
+            JOptionPane.showMessageDialog(this, "No previous download found.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        File f = new File(last);
+        if (!f.exists()) {
+            JOptionPane.showMessageDialog(this, "The last downloaded file cannot be found.", "Error", JOptionPane.ERROR_MESSAGE);
+            btnOpenLast.setEnabled(false);
+            return;
+        }
+        
+        try {
+            if (f.getName().endsWith(".m3u") || f.getName().endsWith(".m3u8")) {
+                new ProcessBuilder("vlc", f.getAbsolutePath()).start();
+            } else {
+                Desktop.getDesktop().open(f);
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Could not open the file:\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        setLastDownloadedFile(lastDownloadedFile);
+        btnOpenLast.setEnabled(true);
+
+    }//GEN-LAST:event_btnOpenLastActionPerformed
+
     private void applyFiltersIfReady() {
         if (!hasScanned || isScanning) {
             return;  // no hay datos o estoy escaneando
@@ -702,19 +739,18 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-    private void reloadListFiltered() {
-        if (master.isEmpty()) {
-            return; // <-- evita borrar lista vacía antes del primer scan
-        }
-
-        downloadsModel.clear();
-        for (ResourceDownloaded r : master) {
-            if (matchTipo(r) && matchSemana(r)) {
-                downloadsModel.addElement(r);
-            }
-        }
-    }
-
+//    private void reloadListFiltered() {
+//        if (master.isEmpty()) {
+//            return; // <-- evita borrar lista vacía antes del primer scan
+//        }
+//
+//        downloadsModel.clear();
+//        for (ResourceDownloaded r : master) {
+//            if (matchTipo(r) && matchSemana(r)) {
+//                downloadsModel.addElement(r);
+//            }
+//        }
+//    }
     // ---- filtros ----
     private static String norm(String s) {
         return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).trim();
@@ -792,6 +828,15 @@ public class MainFrame extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new MainFrame().setVisible(true));
+    }
+
+    // ----- GETTERS Y SETTERS ------
+    public String getLastDownloadedFile() {
+        return lastDownloadedFile;
+    }
+
+    public void setLastDownloadedFile(String lastDownloadedFile) {
+        this.lastDownloadedFile = lastDownloadedFile;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
