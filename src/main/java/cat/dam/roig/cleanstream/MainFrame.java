@@ -84,10 +84,12 @@ public class MainFrame extends javax.swing.JFrame {
         col0.setMinWidth(100);
         col0.setMaxWidth(180);
 
+        btnDeleteDownloadFileFolder.setEnabled(false);
         lstDownloadScanList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 ResourceDownloaded sel = lstDownloadScanList.getSelectedValue();
                 metaModel.setResource(sel);
+                btnDeleteDownloadFileFolder.setEnabled(true);
             }
         });
 
@@ -833,7 +835,43 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbTipoActionPerformed
 
     private void btnDeleteDownloadFileFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteDownloadFileFolderActionPerformed
-        // TODO add your handling code here:
+        int idx = lstDownloadScanList.getSelectedIndex();
+        if (idx == -1) {
+            return;
+        }
+
+        ResourceDownloaded rd = lstDownloadScanList.getModel().getElementAt(idx);
+        String route = rd.getRoute();
+        if (route == null || route.isBlank()) {
+            return;
+        }
+        Path file = Paths.get(route);
+
+        int opt = JOptionPane.showConfirmDialog(
+                this,
+                "¿Eliminar el archivo?\n" + file,
+                "Eliminar",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (opt != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            boolean deleted = java.nio.file.Files.deleteIfExists(file);
+            if (deleted) {
+                // Quitar del modelo
+                DefaultListModel<ResourceDownloaded> model = (DefaultListModel<ResourceDownloaded>) lstDownloadScanList.getModel();
+                model.remove(idx);
+                // (Opcional) si tienes JTable o contador, refresca aquí
+                JOptionPane.showMessageDialog(this, "Archivo eliminado.");
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo eliminar (¿ya no existe?).", "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al eliminar:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btnDeleteDownloadFileFolderActionPerformed
 
     private void rbAudioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAudioActionPerformed
