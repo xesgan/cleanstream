@@ -462,13 +462,25 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
+        boolean audio = rbAudio.isSelected();
+
         // Construcción del comando base
         java.util.List<String> command = new java.util.ArrayList<>();
         command.add(ytDlpPath);
 
+        if (audio) {
+            command.add("-x");
+
+            // Forzar formato de salida
+            String audioFormat = "mp3"; // o desde combo si lo tienes
+            command.add("--audio-format");
+            command.add(audioFormat);
+        } else {
+
 // Insertamos calidad seleccionada (mantén tu mapeo actual en appendQualityArgs)
-        VideoQuality q = getSelectedQuality();
-        CommandExecutor.appendQualityArgs(command, q);
+            VideoQuality q = getSelectedQuality();
+            CommandExecutor.appendQualityArgs(command, q);
+        }
 
 // Directorio de salida
         if (!downloadDir.isBlank()) {
