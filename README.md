@@ -133,7 +133,8 @@ private String extension;
 
 - Refinar renderizado visual con ListCellRenderer avanzado y estilos coherentes
 - Integrar **PO-Token generator** para obtener calidades superiores en descargas futuras
-- Ampliar el sistema de descargas con **más opciones de formato**, incluyendo audio de alta calidad y combinaciones personalizadas de vídeo + audio  
+- Ampliar el sistema de descargas con **más opciones de formato**, incluyendo audio de alta calidad y combinaciones personalizadas de vídeo + audio
+- Mejorar la **organización del código** en paquetes (`ui`, `services`, `domain`, `utils`, etc.) para favorecer la mantenibilidad y la escalabilidad del proyecto  
 
 > El proyecto se encuentra en fase estable de prototipo funcional, con base sólida para ampliaciones futuras.
 
