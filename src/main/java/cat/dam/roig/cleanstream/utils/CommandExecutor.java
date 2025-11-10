@@ -58,33 +58,22 @@ public class CommandExecutor {
     }
 
     public static void appendQualityArgs(List<String> cmd, VideoQuality q) {
-        // Devuelve el "-f" adecuado y, si aplica, el merge de salida.
-        String format;
-        String merge = null; // "mp4" cuando queramos forzar contenedor final
-
+        String f;
         switch (q) {
-            case P1080 -> {
-                format = "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]";
-                merge = "mp4";
-            }
-            case P720 -> {
-                format = "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]";
-                merge = "mp4";
-            }
-            case P480 -> {
-                format = "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]";
-                merge = "mp4";
-            }
-            default -> {
-                format = "bv*+ba/best"; // Best Available
-            }
+            case P1080 ->
+                f = "137+140/248+140/22/b[height<=720]/b[height<=480]/b";
+            case P720 ->
+                f = "b[format_id=22]/bv*+ba/b[height<=720]/b[height<=480]/b";
+            case P480 ->
+                f = "bv*[height<=480]+ba/b[height<=480]/b";
+            default ->
+                f = "22/137+140/248+140/b[height<=720]/b[height<=480]/b";
         }
-
         cmd.add("-f");
-        cmd.add(format);
-        if (merge != null) {
-            cmd.add("--merge-output-format");
-            cmd.add(merge);
-        }
+        cmd.add(f);
+
+        // Opcional: si prefieres ficheros finales .mp4
+        cmd.add("--merge-output-format");
+        cmd.add("mp4");
     }
 }

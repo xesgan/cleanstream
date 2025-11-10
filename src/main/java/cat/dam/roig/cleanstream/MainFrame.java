@@ -47,6 +47,7 @@ public class MainFrame extends javax.swing.JFrame {
     private boolean hasScanned = false;
     private boolean isScanning = false;
     private volatile Process currentProcess;
+    private volatile boolean stopRequest = false;
     private SwingWorker<Integer, String> currentDownloadWorker;
     private JTextArea log;
 
@@ -463,11 +464,11 @@ public class MainFrame extends javax.swing.JFrame {
         java.util.List<String> command = new java.util.ArrayList<>();
         command.add(ytDlpPath);
 
-        // Insertamos calidad seleccionada
+// Insertamos calidad seleccionada (mantén tu mapeo actual en appendQualityArgs)
         VideoQuality q = getSelectedQuality();
         CommandExecutor.appendQualityArgs(command, q);
 
-        // Directorio de salida
+// Directorio de salida
         if (!downloadDir.isBlank()) {
             command.add("-P");
             command.add(downloadDir);
@@ -475,36 +476,54 @@ public class MainFrame extends javax.swing.JFrame {
             command.add("%(title)s.%(ext)s");
         }
 
-        // Ruta fija a ffmpeg
+// Ruta fija a ffmpeg
         if (ffmpegPath != null && !ffmpegPath.isBlank() && new File(ffmpegPath).exists()) {
             command.add("--ffmpeg-location");
             command.add(ffmpegPath);
         }
 
-        // Flags de estabilidad
+// Detecta si es YouTube
+        boolean isYouTube = url.contains("youtube.com") || url.contains("youtu.be");
+
+// Flags de estabilidad comunes
         command.add("--force-ipv4");
         command.add("--http-chunk-size");
         command.add("10M");
-        command.add("--user-agent");
-        command.add("Mozilla/5.0");
-        command.add("--add-header");
-        command.add("Referer:https://www.youtube.com/");
-        command.add("--add-header");
-        command.add("Accept-Language:es-ES,es;q=0.9");
         command.add("--concurrent-fragments");
         command.add("1");
         command.add("--retries");
         command.add("infinite");
         command.add("--fragment-retries");
         command.add("infinite");
-        command.add("--cookies-from-browser");
-        command.add("vivaldi:Default::" + System.getProperty("user.home") + "/.config/vivaldi");
 
-        // Imprime en stdout la ruta final de cada item descargado
+// >>> Diferenciación por sitio
+        if (isYouTube) {
+            // Para YouTube: NO cookies ni headers personalizados (activan SABR con más frecuencia)
+            // Cliente alternativo “limpio”
+            command.add("--extractor-args");
+            command.add("youtube:player_client=web_safari");
+
+            // Evita que cargue config global y caché del sistema
+            command.add("--ignore-config");
+            command.add("--no-cache-dir");
+
+        } else {
+            // Para otros sitios: mantén tus headers/cookies como antes
+            command.add("--user-agent");
+            command.add("Mozilla/5.0");
+            command.add("--add-header");
+            command.add("Referer:https://www.youtube.com/"); // si no es YouTube, elimina o cambia el referer adecuado
+            command.add("--add-header");
+            command.add("Accept-Language:es-ES,es;q=0.9");
+            command.add("--cookies-from-browser");
+            command.add("vivaldi:Default::" + System.getProperty("user.home") + "/.config/vivaldi");
+        }
+
+// Imprime en stdout la ruta final de cada item descargado
         command.add("--print");
         command.add("after_move:filepath");
 
-        // Si el usuario activa el limit speed
+// Limit rate (si procede)
         if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
             String rate = pnlPreferencesPanel.getSldLimitSpeed();
             if (rate != null && !rate.isBlank()) {
@@ -513,7 +532,11 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }
 
-        // URL al final
+// Imprime la calidad REAL seleccionada
+        command.add("--print");
+        command.add("QUALITY:%(format_id)s|%(resolution)s|%(fps)s|v:%(vcodec)s|a:%(acodec)s");
+
+// URL al final
         command.add(url.trim());
 
         // Mostrar comando y versión
@@ -616,15 +639,34 @@ public class MainFrame extends javax.swing.JFrame {
             @Override
             protected void done() {
                 try {
-                    int exit = get();
-                    if (exit == -2) {
-                        log.append("\n[STOP] Download cancelled by the user.\n");
-                        return;
-                    } else {
-                        log.append("\nProcess ended with code: " + exit + "\n");
-                        log.append("OS Detected: " + DetectOS.detectOS());
-                        log.append("\nDownload dir (final): " + downloadDir);
+
+                    // Si el worker está cancelado, no intentes get(): sal limpio
+                    if (isCancelled()) {
+                        log.append("\n[STOP] Cancelled by user.\n");
+                        return; // evita .m3u y abrir el player
                     }
+
+                    int exit = get();
+
+                    // Obtener el texto completo del log
+                    String allLog = txaLogArea.getText();
+
+                    // Buscar el patrón que indica SABR (360p)
+                    if (allLog.contains("QUALITY:18|640x360")) {
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "YouTube ha limitado este vídeo a 360p (SABR).\n"
+                                + "Tu selección de calidad no se pudo aplicar.\n\n"
+                                + "Si necesitas 1080p+, añade un PO token en Preferencias.",
+                                "Aviso de calidad YouTube",
+                                JOptionPane.INFORMATION_MESSAGE
+                        );
+                    }
+
+                    log.append("\nProcess ended with code: " + exit + "\n");
+                    log.append("OS Detected: " + DetectOS.detectOS());
+                    log.append("\nDownload dir (final): " + downloadDir);
+
                     if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
                         log.append("\nLimit Speed Applied: " + pnlPreferencesPanel.getSldLimitSpeed());
                     }
@@ -647,7 +689,7 @@ public class MainFrame extends javax.swing.JFrame {
                     }
 
                 } catch (CancellationException ce) {
-                    log.append("\n[STOP] Cancelled (CancellationException).\n");
+                    log.append("\n[STOP] Cancelled by user.\n");
                 } catch (ExecutionException ee) {
                     Throwable cause = ee.getCause();
                     log.append("ERROR when finished: " + (cause != null ? cause.toString() : ee.toString()) + "\n");
@@ -668,6 +710,7 @@ public class MainFrame extends javax.swing.JFrame {
                 try {
                     Process p = currentProcess;
                     if (p != null) {
+                        publish("[STOP] Killing yt-dlp process...");
                         p.destroy();
                         p.waitFor(800, java.util.concurrent.TimeUnit.MILLISECONDS);
                         if (p.isAlive()) {
@@ -828,23 +871,14 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnOpenLastActionPerformed
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
+        stopRequest = true;
         // Cancelamos el worker
         if (currentDownloadWorker != null && !currentDownloadWorker.isDone()) {
             currentDownloadWorker.cancel(false);
         }
 
         // intenta parar el proceso (si aún no está asignado no pasa nada)
-        Process p = currentProcess;
-        if (p != null) {
-            getTxaLogArea().append("[STOP] Killing yt-dlp process...\n");
-            try {
-                p.destroy();
-                if (p.isAlive()) {
-                    p.destroyForcibly();
-                }
-            } catch (Exception ignore) {
-            }
-        }
+        getTxaLogArea().append("[STOP] Solicitud de cancelación enviada.\n");
         btnStop.setEnabled(false);
         btnDownload.setEnabled(true);
     }//GEN-LAST:event_btnStopActionPerformed
@@ -865,18 +899,6 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-//    private void reloadListFiltered() {
-//        if (master.isEmpty()) {
-//            return; // <-- evita borrar lista vacía antes del primer scan
-//        }
-//
-//        downloadsModel.clear();
-//        for (ResourceDownloaded r : master) {
-//            if (matchTipo(r) && matchSemana(r)) {
-//                downloadsModel.addElement(r);
-//            }
-//        }
-//    }
     // ---- filtros ----
     private static String norm(String s) {
         return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).trim();
