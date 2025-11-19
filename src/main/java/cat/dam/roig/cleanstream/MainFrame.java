@@ -34,21 +34,31 @@ import javax.swing.SwingWorker;
 public class MainFrame extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
-    private PreferencesPanel pnlPreferencesPanel;
-    private DetectOS scanOS;
+
+    // --- Constantes de configuración por defecto ---
     private static final String YT_DLP_PATH = "/bin/yt-dlp";
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
     private static final String COOKIES_TXT = System.getProperty("user.home") + "/Downloads/youtube_cookies.txt"; // fallback
-    private String lastDownloadedFile = null;
+
+    // --- Dependencias de UI ---
+    private PreferencesPanel pnlPreferencesPanel;
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
     private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
-    private final List<ResourceDownloaded> master = new ArrayList<>();
     private MetadataTableModel metaModel; // para la tabla de metadata
+
+    // --- Lógica de estado ---
+    private DetectOS scanOS; // revisar si se usa
+    private String lastDownloadedFile = null;
+    private final List<ResourceDownloaded> master = new ArrayList<>();
     private boolean hasScanned = false;
     private boolean isScanning = false;
+
+    // --- Descarga en curso ---
     private volatile Process currentProcess;
     private volatile boolean stopRequest = false;
     private SwingWorker<Integer, String> currentDownloadWorker;
+
+    // --- Referencias de log ---
     private JTextArea log;
 
     /**
@@ -57,26 +67,39 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         initComponents();
 
-        pnlPreferencesPanel = new PreferencesPanel(this);
+        initPreferencesPanel();
+        initWindow();
+        initDownloadsList();
+        initMetadataTable();
+        initFilters();
+    }
 
+    // ------------------- INIT HELPERS -------------------
+    private void initWindow() {
         setResizable(false);
         setLocationRelativeTo(null);
 
-        // Same size and position
+        // Misma posición y tamaño para ambos paneles
         pnlMainPanel.setBounds(0, 0, getWidth(), getHeight());
         pnlPreferencesPanel.setBounds(0, 0, getWidth(), getHeight());
 
         getContentPane().add(pnlPreferencesPanel);
         pnlPreferencesPanel.setVisible(false);
         pnlContent.setVisible(true);
+    }
 
-        // JList (renderer + model solo una vez)
+    private void initPreferencesPanel() {
+        pnlPreferencesPanel = new PreferencesPanel(this);
+    }
+
+    private void initDownloadsList() {
         lstDownloadScanList.setModel(downloadsModel);
-        lstDownloadScanList.setCellRenderer(new ResourceDownloadedRenderer());
+        lstDownloadScanList.setCellRenderer(RDR);
         lstDownloadScanList.setFixedCellHeight(56);
+    }
 
-        // Selección -> metadata
-        MetadataTableModel metaModel = new MetadataTableModel();
+    private void initMetadataTable() {
+        metaModel = new MetadataTableModel();
         tblMetaData.setModel(metaModel);
 
         var col0 = tblMetaData.getColumnModel().getColumn(0);
@@ -85,25 +108,26 @@ public class MainFrame extends javax.swing.JFrame {
         col0.setMaxWidth(180);
 
         btnDeleteDownloadFileFolder.setEnabled(false);
+
         lstDownloadScanList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 ResourceDownloaded sel = lstDownloadScanList.getSelectedValue();
                 metaModel.setResource(sel);
-                btnDeleteDownloadFileFolder.setEnabled(true);
+                btnDeleteDownloadFileFolder.setEnabled(sel != null);
             }
         });
-
-        cmbTipo.addActionListener(e -> applyFiltersIfReady());
-        chkSemana.addActionListener(e -> applyFiltersIfReady());
-        // arranque con "Todo"
-        cmbTipo.setSelectedItem("Todo");
     }
 
-    // Navigation Methods
+    private void initFilters() {
+        cmbTipo.addActionListener(e -> applyFiltersIfReady());
+        chkSemana.addActionListener(e -> applyFiltersIfReady());
+        cmbTipo.setSelectedItem("Todo");  // arranque con "Todo"
+    }
+
+    // ------------------- NAVIGATION -------------------
     public void showPreferences() {
         pnlContent.setVisible(false);
         pnlPreferencesPanel.setVisible(true);
-        // Ordering the layers
         getContentPane().setComponentZOrder(pnlPreferencesPanel, 0);
     }
 
@@ -437,69 +461,139 @@ public class MainFrame extends javax.swing.JFrame {
         showPreferences();
     }//GEN-LAST:event_mniPreferencesActionPerformed
 
+    // Datos necesarios para lanzar una descarga
+    private static class DownloadContext {
+
+        final String ytDlpPath;
+        final String ffmpegPath;
+        final String downloadDir;
+        final String url;
+        final boolean audio;
+        final boolean isYouTube;
+
+        DownloadContext(String ytDlpPath,
+                String ffmpegPath,
+                String downloadDir,
+                String url,
+                boolean audio,
+                boolean isYouTube) {
+            this.ytDlpPath = ytDlpPath;
+            this.ffmpegPath = ffmpegPath;
+            this.downloadDir = downloadDir;
+            this.url = url;
+            this.audio = audio;
+            this.isYouTube = isYouTube;
+        }
+    }
+
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
+        startDownload();
+    }//GEN-LAST:event_btnDownloadActionPerformed
+
+    private void startDownload() {
+        // Lista donde iremos guardando los archivos detectados
+        final List<String> downloadedFiles = new ArrayList<>();
+
+        // 1) Validar y construir contexto
+        DownloadContext ctx = buildDownloadContext();
+        if (ctx == null) {
+            return; // algo ha fallado en la validación, ya se ha mostrado mensaje
+        }
+
+        // 2) Construir el comando completo de yt-dlp
+        List<String> command = buildYtDlpCommand(ctx);
+
+        // 3) Preparar UI (log y botones)
+        prepareUiBeforeDownload(command);
+
+        // 4) Crear y lanzar el SwingWorker
+        currentDownloadWorker = createDownloadWorker(ctx, command, downloadedFiles);
+        currentDownloadWorker.execute();
+    }
+
+    private DownloadContext buildDownloadContext() {
         String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath();
         String ffmpegPath = pnlPreferencesPanel.getTxtFfpmegDir();
-
-        final String downloadDir = DetectOS.resolveDownloadDir(pnlPreferencesPanel.getTxtDownloadsDir().trim());
-        final List<String> downloadedFiles = new ArrayList<>();
+        String downloadDir = DetectOS.resolveDownloadDir(
+                pnlPreferencesPanel.getTxtDownloadsDir().trim()
+        );
         String url = txtUrl.getText().trim();
 
         if (url.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Video URL is missing.", "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Video URL is missing.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return null;
         }
 
-        // Aqui hacemos la validacion de que el usuario haya ingresado bien la ruta de su yt-dlp antes de empezar.
         if (ytDlpPath.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Yt-Dlp path is missing. Please configure it in Preferences.", "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Yt-Dlp path is missing. Please configure it in Preferences.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return null;
         }
 
         File execFile = new File(ytDlpPath);
         if (!execFile.exists() || !execFile.canExecute()) {
-            JOptionPane.showMessageDialog(this, "yt-dlp executable not found or not accessible. \n Check your Preferences path.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+            JOptionPane.showMessageDialog(
+                    this,
+                    "yt-dlp executable not found or not accessible. \nCheck your Preferences path.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return null;
         }
 
         boolean audio = rbAudio.isSelected();
+        boolean isYouTube = url.contains("youtube.com") || url.contains("youtu.be");
 
-        // Construcción del comando base
-        java.util.List<String> command = new java.util.ArrayList<>();
-        command.add(ytDlpPath);
+        return new DownloadContext(ytDlpPath, ffmpegPath, downloadDir, url, audio, isYouTube);
+    }
 
-        if (audio) {
+    /**
+     * Construye el comando completo de yt-dlp a partir del contexto.
+     */
+    private List<String> buildYtDlpCommand(DownloadContext ctx) {
+        List<String> command = new ArrayList<>();
+
+        // Ejecutable
+        command.add(ctx.ytDlpPath);
+
+        // --- Audio / Vídeo ---
+        if (ctx.audio) {
             command.add("-x");
-
-            // Forzar formato de salida
-            String audioFormat = "mp3"; // o desde combo si lo tienes
+            String audioFormat = "mp3"; // TODO: sacar de combo en el futuro
             command.add("--audio-format");
             command.add(audioFormat);
         } else {
-
-// Insertamos calidad seleccionada (mantén tu mapeo actual en appendQualityArgs)
             VideoQuality q = getSelectedQuality();
             CommandExecutor.appendQualityArgs(command, q);
         }
 
-// Directorio de salida
-        if (!downloadDir.isBlank()) {
+        // --- Directorio de salida ---
+        if (!ctx.downloadDir.isBlank()) {
             command.add("-P");
-            command.add(downloadDir);
+            command.add(ctx.downloadDir);
             command.add("-o");
             command.add("%(title)s.%(ext)s");
         }
 
-// Ruta fija a ffmpeg
-        if (ffmpegPath != null && !ffmpegPath.isBlank() && new File(ffmpegPath).exists()) {
+        // --- Ruta a ffmpeg ---
+        if (ctx.ffmpegPath != null
+                && !ctx.ffmpegPath.isBlank()
+                && new File(ctx.ffmpegPath).exists()) {
+
             command.add("--ffmpeg-location");
-            command.add(ffmpegPath);
+            command.add(ctx.ffmpegPath);
         }
 
-// Detecta si es YouTube
-        boolean isYouTube = url.contains("youtube.com") || url.contains("youtu.be");
-
-// Flags de estabilidad comunes
+        // --- Flags de estabilidad comunes ---
         command.add("--force-ipv4");
         command.add("--http-chunk-size");
         command.add("10M");
@@ -510,34 +604,31 @@ public class MainFrame extends javax.swing.JFrame {
         command.add("--fragment-retries");
         command.add("infinite");
 
-// >>> Diferenciación por sitio
-        if (isYouTube) {
-            // Para YouTube: NO cookies ni headers personalizados (activan SABR con más frecuencia)
-            // Cliente alternativo “limpio”
+        // --- Diferenciación por sitio ---
+        if (ctx.isYouTube) {
+            // YouTube: cliente "limpio", sin config ni caché global
             command.add("--extractor-args");
             command.add("youtube:player_client=web_safari");
-
-            // Evita que cargue config global y caché del sistema
             command.add("--ignore-config");
             command.add("--no-cache-dir");
-
         } else {
-            // Para otros sitios: mantén tus headers/cookies como antes
+            // Otros sitios: headers y cookies
             command.add("--user-agent");
             command.add("Mozilla/5.0");
             command.add("--add-header");
-            command.add("Referer:https://www.youtube.com/"); // si no es YouTube, elimina o cambia el referer adecuado
+            command.add("Referer:https://www.youtube.com/");
             command.add("--add-header");
             command.add("Accept-Language:es-ES,es;q=0.9");
             command.add("--cookies-from-browser");
-            command.add("vivaldi:Default::" + System.getProperty("user.home") + "/.config/vivaldi");
+            command.add("vivaldi:Default::" + System.getProperty("user.home")
+                    + "/.config/vivaldi");
         }
 
-// Imprime en stdout la ruta final de cada item descargado
+        // Imprime path final de cada ítem descargado
         command.add("--print");
         command.add("after_move:filepath");
 
-// Limit rate (si procede)
+        // Limit rate (si procede)
         if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
             String rate = pnlPreferencesPanel.getSldLimitSpeed();
             if (rate != null && !rate.isBlank()) {
@@ -546,43 +637,59 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }
 
-// Imprime la calidad REAL seleccionada
+        // Imprime la calidad REAL seleccionada
         command.add("--print");
         command.add("QUALITY:%(format_id)s|%(resolution)s|%(fps)s|v:%(vcodec)s|a:%(acodec)s");
 
-// URL al final
-        command.add(url.trim());
+        // URL al final
+        command.add(ctx.url.trim());
 
-        // Mostrar comando y versión
-        java.util.List<String> verCmd = java.util.List.of(ytDlpPath, "--version");
+        return command;
+    }
+
+    private void prepareUiBeforeDownload(List<String> command) {
         log = getTxaLogArea();
         log.setText("");
         log.append("CMD: " + String.join(" ", command) + "\n\n");
 
         btnDownload.setEnabled(false);
         btnStop.setEnabled(true);
+    }
 
-        // SwingWorker
-        currentDownloadWorker = new SwingWorker<>() {
+    /**
+     * Crea el SwingWorker que ejecuta yt-dlp y procesa la salida.
+     */
+    private SwingWorker<Integer, String> createDownloadWorker(DownloadContext ctx,
+            List<String> command,
+            List<String> downloadedFiles) {
+
+        final String downloadDir = ctx.downloadDir;
+        final String ytDlpPath = ctx.ytDlpPath;
+
+        return new SwingWorker<>() {
+
             @Override
             protected Integer doInBackground() {
                 try {
                     // 0) versión
-                    CommandExecutor.runStreaming(java.util.List.of(ytDlpPath, "--version"),
-                            line -> publish("[yt-dlp --version] " + line));
+                    CommandExecutor.runStreaming(
+                            List.of(ytDlpPath, "--version"),
+                            line -> publish("[yt-dlp --version] " + line)
+                    );
 
                     if (isCancelled()) {
                         return -2;
                     }
 
                     // === 1) INTENTO WEB (con cookies) ===
-                    java.util.List<String> cmdWeb = new java.util.ArrayList<>(command);
+                    List<String> cmdWeb = new ArrayList<>(command);
                     setExtractorClient(cmdWeb, "web");
                     publish("[try] web + cookies");
+
                     int exitWeb = CommandExecutor.runStreaming(
                             cmdWeb,
                             this::publish,
-                            p -> currentProcess = p // <<-- CAPTURAMOS EL PROCESS
+                            p -> currentProcess = p // capturamos el Process
                     );
 
                     if (isCancelled()) {
@@ -595,12 +702,17 @@ public class MainFrame extends javax.swing.JFrame {
                     }
 
                     // === 2) FALLBACK ANDROID (sin cookies) ===
-                    java.util.List<String> cmdAndroid = new java.util.ArrayList<>(command);
+                    List<String> cmdAndroid = new ArrayList<>(command);
                     setExtractorClient(cmdAndroid, "android");
                     // Android no soporta cookies → quitar opción y su valor
                     removeOptionWithValue(cmdAndroid, "--cookies-from-browser");
                     publish("[retry] android (without cookies)");
-                    int exitAndroid = CommandExecutor.runStreaming(cmdAndroid, this::publish, p -> currentProcess = p);
+
+                    int exitAndroid = CommandExecutor.runStreaming(
+                            cmdAndroid,
+                            this::publish,
+                            p -> currentProcess = p
+                    );
 
                     if (isCancelled()) {
                         destroyProcessQuiet();
@@ -611,20 +723,19 @@ public class MainFrame extends javax.swing.JFrame {
                 } catch (Exception e) {
                     String msg = (e.getMessage() != null) ? e.getMessage() : e.toString();
                     publish("ERROR: " + msg);
-                    e.printStackTrace(); // para ver el origen real en consola
+                    e.printStackTrace();
                     return -1;
                 } finally {
-                    // ya no habria proceso asociado
                     currentProcess = null;
                 }
             }
 
             @Override
-            protected void process(java.util.List<String> lines) {
+            protected void process(List<String> lines) {
                 for (String line : lines) {
                     log.append(line + "\n");
 
-                    // Captura directa del ouput de --print after_move:filepath
+                    // Captura directa del output de --print after_move:filepath
                     if (!line.isBlank() && new File(line).isAbsolute()) {
                         downloadedFiles.add(line);
                         lastDownloadedFile = line.trim();
@@ -633,11 +744,14 @@ public class MainFrame extends javax.swing.JFrame {
 
                     // Detectar el archivo descargado (fallback)
                     if (line.contains("Destination:")) {
-                        String path = line.substring(line.indexOf("Destination:") + "Destination:".length()).trim();
+                        String path = line.substring(
+                                line.indexOf("Destination:") + "Destination:".length()
+                        ).trim();
                         downloadedFiles.add(path);
                         lastDownloadedFile = path;
                         continue;
                     }
+
                     if (line.contains("Merging formats into")) {
                         int q = line.indexOf('"');
                         int qq = line.lastIndexOf('"');
@@ -653,19 +767,15 @@ public class MainFrame extends javax.swing.JFrame {
             @Override
             protected void done() {
                 try {
-
-                    // Si el worker está cancelado, no intentes get(): sal limpio
                     if (isCancelled()) {
                         log.append("\n[STOP] Cancelled by user.\n");
-                        return; // evita .m3u y abrir el player
+                        return;
                     }
 
                     int exit = get();
 
-                    // Obtener el texto completo del log
                     String allLog = txaLogArea.getText();
 
-                    // Buscar el patrón que indica SABR (360p)
                     if (allLog.contains("QUALITY:18|640x360")) {
                         JOptionPane.showMessageDialog(
                                 null,
@@ -682,21 +792,26 @@ public class MainFrame extends javax.swing.JFrame {
                     log.append("\nDownload dir (final): " + downloadDir);
 
                     if (pnlPreferencesPanel.chkLimitSpeed.isSelected()) {
-                        log.append("\nLimit Speed Applied: " + pnlPreferencesPanel.getSldLimitSpeed());
+                        log.append("\nLimit Speed Applied: "
+                                + pnlPreferencesPanel.getSldLimitSpeed());
                     }
 
-                    // Crear .m3u si todo OK
-                    if (exit == 0 && pnlPreferencesPanel.getChkCreateM3u() && !downloadedFiles.isEmpty()) {
-                        writeM3u(downloadedFiles, downloadDir); // el nombre ya no se usa
+                    if (exit == 0
+                            && pnlPreferencesPanel.getChkCreateM3u()
+                            && !downloadedFiles.isEmpty()) {
+
+                        writeM3u(downloadedFiles, downloadDir);
                         log.append("\n[m3u] playlist updated\n");
                     }
 
-                    // Solo abrir si el checkbox está marcado y el proceso fue correcto
-                    if (exit == 0 && pnlPreferencesPanel.chkOpenWhenDone.isSelected() && lastDownloadedFile != null) {
-                        java.io.File file = new java.io.File(lastDownloadedFile);
+                    if (exit == 0
+                            && pnlPreferencesPanel.chkOpenWhenDone.isSelected()
+                            && lastDownloadedFile != null) {
+
+                        File file = new File(lastDownloadedFile);
                         if (file.exists()) {
                             log.append("Playing: " + file.getName() + "\n");
-                            java.awt.Desktop.getDesktop().open(file);
+                            Desktop.getDesktop().open(file);
                         } else {
                             log.append("Couldn't find the downloaded file.\n");
                         }
@@ -706,12 +821,14 @@ public class MainFrame extends javax.swing.JFrame {
                     log.append("\n[STOP] Cancelled by user.\n");
                 } catch (ExecutionException ee) {
                     Throwable cause = ee.getCause();
-                    log.append("ERROR when finished: " + (cause != null ? cause.toString() : ee.toString()) + "\n");
+                    log.append("ERROR when finished: "
+                            + (cause != null ? cause.toString() : ee.toString()) + "\n");
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     log.append("ERROR when finished: " + ie.toString() + "\n");
                 } catch (IOException ex) {
-                    System.getLogger(MainFrame.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                    System.getLogger(MainFrame.class.getName())
+                            .log(System.Logger.Level.ERROR, (String) null, ex);
                 } finally {
                     btnDownload.setEnabled(true);
                     btnStop.setEnabled(false);
@@ -736,9 +853,7 @@ public class MainFrame extends javax.swing.JFrame {
                 }
             }
         };
-
-        currentDownloadWorker.execute();
-    }//GEN-LAST:event_btnDownloadActionPerformed
+    }
 
     // Helper de btnDownload
     private void writeM3u(List<String> files, String outputDir) {
@@ -847,18 +962,70 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbTipoActionPerformed
 
     private void btnDeleteDownloadFileFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteDownloadFileFolderActionPerformed
+        deleteSelectedDownloadFile();
+    }//GEN-LAST:event_btnDeleteDownloadFileFolderActionPerformed
+
+    /**
+     * Elimina el recurso seleccionado en la lista (si existe) tanto del disco
+     * como del modelo de la JList.
+     */
+    private void deleteSelectedDownloadFile() {
         int idx = lstDownloadScanList.getSelectedIndex();
         if (idx == -1) {
+            // Nada seleccionado, no hacemos nada
             return;
         }
 
-        ResourceDownloaded rd = lstDownloadScanList.getModel().getElementAt(idx);
-        String route = rd.getRoute();
-        if (route == null || route.isBlank()) {
+        ResourceDownloaded selected = lstDownloadScanList.getModel().getElementAt(idx);
+        if (selected == null || selected.getRoute() == null || selected.getRoute().isBlank()) {
             return;
         }
-        Path file = Paths.get(route);
 
+        Path file = Paths.get(selected.getRoute());
+
+        if (!confirmDeletion(file)) {
+            return;
+        }
+
+        try {
+            boolean deleted = Files.deleteIfExists(file);
+
+            if (deleted) {
+                downloadsModel.remove(idx);
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Archivo eliminado.",
+                        "Eliminar",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } else {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No se pudo eliminar (¿ya no existe?).",
+                        "Aviso",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.SEVERE, "Error al eliminar archivo", ex);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al eliminar:\n" + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    /**
+     * Muestra un diálogo de confirmación antes de eliminar el archivo.
+     *
+     * @param file Ruta del archivo a eliminar.
+     * @return true si el usuario confirma, false en caso contrario.
+     */
+    private boolean confirmDeletion(Path file) {
         int opt = JOptionPane.showConfirmDialog(
                 this,
                 "¿Eliminar el archivo?\n" + file,
@@ -866,80 +1033,126 @@ public class MainFrame extends javax.swing.JFrame {
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
         );
-        if (opt != JOptionPane.YES_OPTION) {
-            return;
-        }
+        return opt == JOptionPane.YES_OPTION;
+    }
 
-        try {
-            boolean deleted = java.nio.file.Files.deleteIfExists(file);
-            if (deleted) {
-                // Quitar del modelo
-                DefaultListModel<ResourceDownloaded> model = (DefaultListModel<ResourceDownloaded>) lstDownloadScanList.getModel();
-                model.remove(idx);
-                // (Opcional) si tienes JTable o contador, refresca aquí
-                JOptionPane.showMessageDialog(this, "Archivo eliminado.");
-            } else {
-                JOptionPane.showMessageDialog(this, "No se pudo eliminar (¿ya no existe?).", "Aviso", JOptionPane.WARNING_MESSAGE);
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al eliminar:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_btnDeleteDownloadFileFolderActionPerformed
 
     private void rbAudioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAudioActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_rbAudioActionPerformed
 
     private void btnOpenLastActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenLastActionPerformed
+        openLastDownloadedFile();
+    }//GEN-LAST:event_btnOpenLastActionPerformed
+
+    /**
+     * Intenta abrir el último archivo descargado. Si es una playlist (.m3u /
+     * .m3u8), usa VLC. En caso contrario, usa Desktop.open().
+     */
+    private void openLastDownloadedFile() {
         String last = getLastDownloadedFile();
 
         if (last == null || last.isBlank()) {
-            JOptionPane.showMessageDialog(this, "No previous download found.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No previous download found.",
+                    "Info",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            btnOpenLast.setEnabled(false);
             return;
         }
 
-        File f = new File(last);
-        if (!f.exists()) {
-            JOptionPane.showMessageDialog(this, "The last downloaded file cannot be found.", "Error", JOptionPane.ERROR_MESSAGE);
+        File file = new File(last);
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "The last downloaded file cannot be found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
             btnOpenLast.setEnabled(false);
             return;
         }
 
         try {
-            if (f.getName().endsWith(".m3u") || f.getName().endsWith(".m3u8")) {
-                new ProcessBuilder("vlc", f.getAbsolutePath()).start();
+            if (isPlaylistFile(file)) {
+                // Abrimos con VLC si es una playlist
+                new ProcessBuilder("vlc", file.getAbsolutePath()).start();
             } else {
-                Desktop.getDesktop().open(f);
+                Desktop.getDesktop().open(file);
             }
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not open the file:\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Could not open the file:\n" + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            btnOpenLast.setEnabled(false);
+            return;
         }
 
-        setLastDownloadedFile(lastDownloadedFile);
+        // Si ha ido bien, actualizamos el último archivo abierto
+        setLastDownloadedFile(last);
         btnOpenLast.setEnabled(true);
+    }
 
-    }//GEN-LAST:event_btnOpenLastActionPerformed
+    /**
+     * Indica si el archivo es una playlist soportada (.m3u / .m3u8).
+     */
+    private boolean isPlaylistFile(File file) {
+        String name = file.getName().toLowerCase();
+        return name.endsWith(".m3u") || name.endsWith(".m3u8");
+    }
+
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
-        stopRequest = true;
-        // Cancelamos el worker
+        stopCurrentDownload();
+
+//        stopRequest = true;
+//        // Cancelamos el worker
+//        if (currentDownloadWorker != null && !currentDownloadWorker.isDone()) {
+//            currentDownloadWorker.cancel(false);
+//        }
+//
+//        // intenta parar el proceso (si aún no está asignado no pasa nada)
+//        getTxaLogArea().append("[STOP] Solicitud de cancelación enviada.\n");
+//        btnStop.setEnabled(false);
+//        btnDownload.setEnabled(true);
+    }//GEN-LAST:event_btnStopActionPerformed
+
+    /**
+     * Solicita detener la descarga en curso. Cancela el SwingWorker y
+     * deshabilita los botones correspondientes.
+     */
+    private void stopCurrentDownload() {
+
         if (currentDownloadWorker != null && !currentDownloadWorker.isDone()) {
             currentDownloadWorker.cancel(false);
         }
 
-        // intenta parar el proceso (si aún no está asignado no pasa nada)
         getTxaLogArea().append("[STOP] Solicitud de cancelación enviada.\n");
+
         btnStop.setEnabled(false);
         btnDownload.setEnabled(true);
-    }//GEN-LAST:event_btnStopActionPerformed
+    }
 
+    // ------ FILTROS DE DESCARGAS ------
+    /**
+     * Aplica los filtros de tipo y semana solo si ya se ha realizado al menos
+     * un escaneo y no hay uno en curso.
+     */
     private void applyFiltersIfReady() {
         if (!hasScanned || isScanning) {
             return;  // no hay datos o estoy escaneando
         }
-        applyFilters(); // tu antiguo reloadListFiltered()
+        applyFilters();
     }
 
+    /**
+     * Rellena el modelo de la JList en función de los filtros activos.
+     */
     private void applyFilters() {
         downloadsModel.clear();
         for (ResourceDownloaded r : master) {
@@ -949,44 +1162,54 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-    // ---- filtros ----
+    // ---- helpers de filtro ----
     private static String norm(String s) {
-        return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).trim();
+        return (s == null) ? "" : s.toLowerCase(java.util.Locale.ROOT).trim();
     }
+
+    // Extensiones conocidas de audio / vídeo para desambiguar cuando el mimeType no ayuda
+    private static final java.util.Set<String> AUDIO_EXTENSIONS
+            = java.util.Set.of("mp3", "m4a", "aac", "wav", "flac", "ogg", "opus");
+
+    private static final java.util.Set<String> VIDEO_EXTENSIONS
+            = java.util.Set.of("mp4", "mkv", "avi", "mov", "webm", "flv");
 
     private static boolean esAudio(ResourceDownloaded r) {
         String mt = norm(r.getMimeType());
         String ex = norm(r.getExtension()).replace(".", "");
+
         if (mt.startsWith("audio/")) {
             return true;
         }
         if (mt.startsWith("video/")) {
             return false;
         }
-        return java.util.Set.of("mp3", "m4a", "aac", "wav", "flac", "ogg", "opus").contains(ex);
+        return AUDIO_EXTENSIONS.contains(ex);
     }
 
     private static boolean esVideo(ResourceDownloaded r) {
         String mt = norm(r.getMimeType());
         String ex = norm(r.getExtension()).replace(".", "");
+
         if (mt.startsWith("video/")) {
             return true;
         }
         if (mt.startsWith("audio/")) {
             return false;
         }
-        return java.util.Set.of("mp4", "mkv", "avi", "mov", "webm", "flv").contains(ex);
+        return VIDEO_EXTENSIONS.contains(ex);
     }
 
     private boolean matchTipo(ResourceDownloaded r) {
         String tipo = norm(String.valueOf(cmbTipo.getSelectedItem()));
+
         if (tipo.contains("video")) {
             return esVideo(r) && !esAudio(r);
         }
         if (tipo.contains("audio")) {
             return esAudio(r) && !esVideo(r);
         }
-        return true; // Todo/Todos
+        return true; // "Todo" / "Todos"
     }
 
     private boolean matchSemana(ResourceDownloaded r) {
@@ -996,10 +1219,12 @@ public class MainFrame extends javax.swing.JFrame {
         if (r.getDownloadDate() == null) {
             return false;
         }
+
         LocalDate hoy = LocalDate.now();
         LocalDate ini = hoy.with(DayOfWeek.MONDAY);
         LocalDate fin = ini.plusDays(6);
         LocalDate f = r.getDownloadDate().toLocalDate();
+
         return !f.isBefore(ini) && !f.isAfter(fin);
     }
 
