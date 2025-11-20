@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -59,20 +60,28 @@ public class CommandExecutor {
 
     public static void appendQualityArgs(List<String> cmd, VideoQuality q) {
         String f;
+
         switch (q) {
             case P1080 ->
-                f = "137+140/248+140/22/b[height<=720]/b[height<=480]/b";
+                // Mejor vídeo <=1080p + mejor audio
+                f = "[height<=1080]";
             case P720 ->
-                f = "b[format_id=22]/bv*+ba/b[height<=720]/b[height<=480]/b";
+                // Mejor vídeo <=720p + mejor audio
+                f = "[height<=720]";
             case P480 ->
-                f = "bv*[height<=480]+ba/b[height<=480]/b";
+                // Mejor vídeo <=480p + mejor audio
+                f = "[height<=480]";
             default ->
-                f = "22/137+140/248+140/b[height<=720]/b[height<=480]/b";
+                // Mejor disponible
+                f = "bv*+ba/b";
         }
-        cmd.add("-f");
-        cmd.add(f);
+        
+        System.out.println(">>> USING FORMAT SELECTOR: " + f);
 
-        // Opcional: si prefieres ficheros finales .mp4
+        cmd.add("-f");
+
+        // Siempre dejamos el contenedor final en MP4
+        cmd.add("bv" + f + "+bestaudio[ext=m4a]/mp4");
         cmd.add("--merge-output-format");
         cmd.add("mp4");
     }

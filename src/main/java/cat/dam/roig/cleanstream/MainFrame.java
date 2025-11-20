@@ -142,31 +142,31 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     // ------- HELPERS --------
-    private static void setExtractorClient(java.util.List<String> cmd, String client) {
-        int idx = cmd.indexOf("--extractor-args");
-        if (idx >= 0 && idx + 1 < cmd.size()) {
-            cmd.set(idx + 1, "youtube:player_client=" + client);
-        } else {
-            cmd.add("--extractor-args");
-            cmd.add("youtube:player_client=" + client);
-        }
-    }
-
-    /**
-     * Elimina una opción y su valor inmediatamente siguiente. Solo la primera
-     * ocurrencia.
-     */
-    private static void removeOptionWithValue(java.util.List<String> cmd, String option) {
-        for (int i = 0; i < cmd.size(); i++) {
-            if (option.equals(cmd.get(i))) {
-                cmd.remove(i);                  // quita la opción
-                if (i < cmd.size()) {
-                    cmd.remove(i); // quita el valor que ahora ocupa ese índice
-                }
-                break;
-            }
-        }
-    }
+//    private static void setExtractorClient(java.util.List<String> cmd, String client) {
+//        int idx = cmd.indexOf("--extractor-args");
+//        if (idx >= 0 && idx + 1 < cmd.size()) {
+//            cmd.set(idx + 1, "youtube:player_client=" + client);
+//        } else {
+//            cmd.add("--extractor-args");
+//            cmd.add("youtube:player_client=" + client);
+//        }
+//    }
+//
+//    /**
+//     * Elimina una opción y su valor inmediatamente siguiente. Solo la primera
+//     * ocurrencia.
+//     */
+//    private static void removeOptionWithValue(java.util.List<String> cmd, String option) {
+//        for (int i = 0; i < cmd.size(); i++) {
+//            if (option.equals(cmd.get(i))) {
+//                cmd.remove(i);                  // quita la opción
+//                if (i < cmd.size()) {
+//                    cmd.remove(i); // quita el valor que ahora ocupa ese índice
+//                }
+//                break;
+//            }
+//        }
+//    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -573,6 +573,7 @@ public class MainFrame extends javax.swing.JFrame {
             command.add(audioFormat);
         } else {
             VideoQuality q = getSelectedQuality();
+            System.out.println(">>> VIDEO QUALITY EN COMBO: " + q);
             CommandExecutor.appendQualityArgs(command, q);
         }
 
@@ -593,36 +594,9 @@ public class MainFrame extends javax.swing.JFrame {
             command.add(ctx.ffmpegPath);
         }
 
-        // --- Flags de estabilidad comunes ---
-        command.add("--force-ipv4");
-        command.add("--http-chunk-size");
-        command.add("10M");
-        command.add("--concurrent-fragments");
-        command.add("1");
-        command.add("--retries");
-        command.add("infinite");
-        command.add("--fragment-retries");
-        command.add("infinite");
-
-        // --- Diferenciación por sitio ---
-        if (ctx.isYouTube) {
-            // YouTube: cliente "limpio", sin config ni caché global
-            command.add("--extractor-args");
-            command.add("youtube:player_client=web_safari");
-            command.add("--ignore-config");
-            command.add("--no-cache-dir");
-        } else {
-            // Otros sitios: headers y cookies
-            command.add("--user-agent");
-            command.add("Mozilla/5.0");
-            command.add("--add-header");
-            command.add("Referer:https://www.youtube.com/");
-            command.add("--add-header");
-            command.add("Accept-Language:es-ES,es;q=0.9");
-            command.add("--cookies-from-browser");
-            command.add("vivaldi:Default::" + System.getProperty("user.home")
-                    + "/.config/vivaldi");
-        }
+        // --- Diferenciación por sitio (versión simple) ---
+        command.add("--ignore-config");   // <- SIEMPRE
+        command.add("--no-cache-dir");    // opcional, pero limpio
 
         // Imprime path final de cada ítem descargado
         command.add("--print");
@@ -643,6 +617,10 @@ public class MainFrame extends javax.swing.JFrame {
 
         // URL al final
         command.add(ctx.url.trim());
+
+        // debbuging
+        System.out.println(">>> YT-DLP PATH EN CONTEXTO: " + ctx.ytDlpPath);
+        System.out.println("CMD: " + String.join(" ", command));
 
         return command;
     }
@@ -681,35 +659,12 @@ public class MainFrame extends javax.swing.JFrame {
                         return -2;
                     }
 
-                    // === 1) INTENTO WEB (con cookies) ===
-                    List<String> cmdWeb = new ArrayList<>(command);
-                    setExtractorClient(cmdWeb, "web");
-                    publish("[try] web + cookies");
+                    // === ÚNICO INTENTO: comando tal cual ===
+                    List<String> cmd = new ArrayList<>(command);
+                    publish("[try] default client");
 
-                    int exitWeb = CommandExecutor.runStreaming(
-                            cmdWeb,
-                            this::publish,
-                            p -> currentProcess = p // capturamos el Process
-                    );
-
-                    if (isCancelled()) {
-                        destroyProcessQuiet();
-                        return -2;
-                    }
-
-                    if (exitWeb == 0) {
-                        return 0; // ✅ no reintentes si ya fue bien
-                    }
-
-                    // === 2) FALLBACK ANDROID (sin cookies) ===
-                    List<String> cmdAndroid = new ArrayList<>(command);
-                    setExtractorClient(cmdAndroid, "android");
-                    // Android no soporta cookies → quitar opción y su valor
-                    removeOptionWithValue(cmdAndroid, "--cookies-from-browser");
-                    publish("[retry] android (without cookies)");
-
-                    int exitAndroid = CommandExecutor.runStreaming(
-                            cmdAndroid,
+                    int exit = CommandExecutor.runStreaming(
+                            cmd,
                             this::publish,
                             p -> currentProcess = p
                     );
@@ -718,7 +673,8 @@ public class MainFrame extends javax.swing.JFrame {
                         destroyProcessQuiet();
                         return -2;
                     }
-                    return exitAndroid;
+
+                    return exit;
 
                 } catch (Exception e) {
                     String msg = (e.getMessage() != null) ? e.getMessage() : e.toString();
