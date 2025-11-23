@@ -5,6 +5,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -120,9 +121,11 @@ public final class LoginPanel extends JPanel {
 
         btnLogin = new JButton("Login");
         btnExit = new JButton("Exit");
+        chkRememberMe = new JCheckBox("Remember me");
 
         pnlBtnsLogin.add(btnLogin);
         pnlBtnsLogin.add(btnExit);
+        pnlBtnsLogin.add(chkRememberMe);
 
         return pnlBtnsLogin;
     }
@@ -136,4 +139,5 @@ public final class LoginPanel extends JPanel {
     private JPasswordField txtPassword;
     private JButton btnLogin;
     private JButton btnExit;
+    private JCheckBox chkRememberMe;
 }
