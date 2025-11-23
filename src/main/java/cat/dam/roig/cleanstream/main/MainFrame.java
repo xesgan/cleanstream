@@ -41,12 +41,15 @@ public class MainFrame extends javax.swing.JFrame {
     // --- Constantes de configuración por defecto ---
     private static final String YT_DLP_PATH = "/bin/yt-dlp";
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
-
+    private static final String baseUrl = "https://dimedianetapi9.azurewebsites.net";
+    
     // --- Dependencias de UI ---
     private PreferencesPanel pnlPreferencesPanel;
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
     private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
     private MetadataTableModel metaModel; // para la tabla de metadata
+    private ApiClient apiClient = new ApiClient(baseUrl);
+    private LoginPanel loginPanel = new LoginPanel(apiClient);;
 
     // --- Lógica de estado ---
     private String lastDownloadedFile = null;
@@ -130,10 +133,6 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public void showLogin() {
-        String baseUrl = "https://dimedianetapi9.azurewebsites.net";
-        ApiClient apiClient = new ApiClient(baseUrl);
-        LoginPanel loginPanel = new LoginPanel(apiClient);
-
         loginPanel.setOnLoginSucces(() -> {
             showMainView();
         });
@@ -204,6 +203,7 @@ public class MainFrame extends javax.swing.JFrame {
         jrb480p = new javax.swing.JRadioButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
+        mniLogout = new javax.swing.JMenuItem();
         mniExit = new javax.swing.JMenuItem();
         mnuEdit = new javax.swing.JMenu();
         mniPreferences = new javax.swing.JMenuItem();
@@ -215,7 +215,6 @@ public class MainFrame extends javax.swing.JFrame {
         setSize(new java.awt.Dimension(1200, 650));
         getContentPane().setLayout(null);
 
-        pnlContent.setPreferredSize(null);
         pnlContent.setLayout(new java.awt.CardLayout());
 
         pnlMainPanel.setLayout(null);
@@ -396,6 +395,14 @@ public class MainFrame extends javax.swing.JFrame {
         pnlContent.setBounds(0, 0, 1200, 610);
 
         mnuFile.setText("File");
+
+        mniLogout.setText("Logout");
+        mniLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mniLogoutActionPerformed(evt);
+            }
+        });
+        mnuFile.add(mniLogout);
 
         mniExit.setText("Exit");
         mniExit.addActionListener(new java.awt.event.ActionListener() {
@@ -1059,6 +1066,29 @@ public class MainFrame extends javax.swing.JFrame {
         stopCurrentDownload();
     }//GEN-LAST:event_btnStopActionPerformed
 
+    private void mniLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniLogoutActionPerformed
+        doLogout();
+    }//GEN-LAST:event_mniLogoutActionPerformed
+
+    private void doLogout() {
+        // Preguntar si esta seguro
+        int opt = JOptionPane.showConfirmDialog(
+                this,
+                "Do you really want to log out?",
+                "Confirm logout",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (opt != JOptionPane.YES_OPTION) {
+            return; // usuario canceló
+        }
+        // Limpiar estado de sesion
+        loginPanel.clearRememberMe();
+        // Volver a la pantalla login
+        showLogin();
+    }
+
     /**
      * Solicita detener la descarga en curso. Cancela el SwingWorker y
      * deshabilita los botones correspondientes.
@@ -1239,6 +1269,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuBar mnbBar;
     private javax.swing.JMenuItem mniAbout;
     private javax.swing.JMenuItem mniExit;
+    private javax.swing.JMenuItem mniLogout;
     private javax.swing.JMenuItem mniPreferences;
     private javax.swing.JMenu mnuEdit;
     private javax.swing.JMenu mnuFile;

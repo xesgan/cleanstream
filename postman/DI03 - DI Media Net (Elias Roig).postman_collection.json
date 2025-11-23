@@ -1,0 +1,277 @@
+{
+	"info": {
+		"_postman_id": "a3e0b117-c123-4589-99f4-1cbb57e703b0",
+		"name": "DI03 - DI Media Net (Elias Roig)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "41722685"
+	},
+	"item": [
+		{
+			"name": "/api/Files/all",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiZWxpYXMiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjE1IiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoiZUByLmEiLCJleHAiOjE3NjM5ODAyMzMsImlzcyI6ImRpbWVkaWFuZXRhcGkiLCJhdWQiOiJkaW1lZGlhbmV0YXBpX3VzZXJzIn0.to7TZYlhsuxXHsNR4qp68kFYoLtFoDQ2zJ-UQTLCOIoi6dafLIDyI-Y7W6yvj4B1VUdKB_iP_pJgoewW54Ts0Q",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"e@r.a\",\n  \"password\": \"1234\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Dimedianetapi9}}/api/Files/all",
+					"host": [
+						"{{Dimedianetapi9}}"
+					],
+					"path": [
+						"api",
+						"Files",
+						"all"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/Auth/login",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"e@r.a\",\n  \"password\": \"1234\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Dimedianetapi9}}/api/Auth/login",
+					"host": [
+						"{{Dimedianetapi9}}"
+					],
+					"path": [
+						"api",
+						"Auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/Users/me",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiZWxpYXMiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjE1IiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoiZUByLmEiLCJleHAiOjE3NjM5ODA0NDEsImlzcyI6ImRpbWVkaWFuZXRhcGkiLCJhdWQiOiJkaW1lZGlhbmV0YXBpX3VzZXJzIn0.h_3vGZnzIcdjjilKXW5SkwSihYhXQulHFO46iI9vtaNTxGoLpXpwVnE9tdhRvik01ilt8XBPQgdHU65laai3MA",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{Dimedianetapi9}}/api/Users/me",
+					"host": [
+						"{{Dimedianetapi9}}"
+					],
+					"path": [
+						"api",
+						"Users",
+						"me"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/Users/{id}/nickname",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiRWxpYXNSb2lnIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiIzMCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImUyQHIuYSIsImV4cCI6MTc2NDE4Njc4OSwiaXNzIjoiZGltZWRpYW5ldGFwaSIsImF1ZCI6ImRpbWVkaWFuZXRhcGlfdXNlcnMifQ.aI6TiQosYibbAFKTCZPPWcw1EN2K5DS1PEUYmNDEt_pyA1C2RQEmSVcNk7mPKFqNxdMbL5P_keslNY_CLrjqlg",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{Dimedianetapi9}}/api/Users/30/nickname",
+					"host": [
+						"{{Dimedianetapi9}}"
+					],
+					"path": [
+						"api",
+						"Users",
+						"30",
+						"nickname"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/Files/upload",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiZWxpYXMiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjE1IiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoiZUByLmEiLCJleHAiOjE3NjM5ODAyMzMsImlzcyI6ImRpbWVkaWFuZXRhcGkiLCJhdWQiOiJkaW1lZGlhbmV0YXBpX3VzZXJzIn0.to7TZYlhsuxXHsNR4qp68kFYoLtFoDQ2zJ-UQTLCOIoi6dafLIDyI-Y7W6yvj4B1VUdKB_iP_pJgoewW54Ts0Q",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "23GPz-stf/added that last note of nostalgia 🤧.mp4"
+						},
+						{
+							"key": "downloadedFromUrl",
+							"value": "https://www.youtube.com/shorts/Qxs8e72-Uw8?feature=share",
+							"type": "text"
+						},
+						{
+							"key": "container",
+							"value": "dimedianetblobs",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{Dimedianetapi9}}/api/Files/upload",
+					"host": [
+						"{{Dimedianetapi9}}"
+					],
+					"path": [
+						"api",
+						"Files",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/Auth/register",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"e2@r.a\",\n  \"password\": \"1234\",\n  \"nickName\": \"EliasRoig\",\n  \"dateOfBirth\": \"1905-10-10\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{DI03}}/api/Auth/register",
+					"host": [
+						"{{DI03}}"
+					],
+					"path": [
+						"api",
+						"Auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/Files/{id}",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiRWxpYXNSb2lnIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiIzMCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImUyQHIuYSIsImV4cCI6MTc2NDE4Njc4OSwiaXNzIjoiZGltZWRpYW5ldGFwaSIsImF1ZCI6ImRpbWVkaWFuZXRhcGlfdXNlcnMifQ.aI6TiQosYibbAFKTCZPPWcw1EN2K5DS1PEUYmNDEt_pyA1C2RQEmSVcNk7mPKFqNxdMbL5P_keslNY_CLrjqlg",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{Dimedianetapi9}}/api/Files/50?container=dimedianetblobs",
+					"host": [
+						"{{Dimedianetapi9}}"
+					],
+					"path": [
+						"api",
+						"Files",
+						"50"
+					],
+					"query": [
+						{
+							"key": "container",
+							"value": "dimedianetblobs"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "Dimedianetapi9",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

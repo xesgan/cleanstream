@@ -1,9 +1,7 @@
 package cat.dam.roig.cleanstream.ui;
 
-import cat.dam.roig.cleanstream.main.MainFrame;
 import cat.dam.roig.cleanstream.services.ApiClient;
 import cat.dam.roig.cleanstream.models.Usuari;
-import cat.dam.roig.cleanstream.services.SessionManager;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -73,7 +71,7 @@ public final class LoginPanel extends JPanel {
         btnLogin.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                doLogin();
+                doLogin(); // ===== LOGIN EVENT =====
             }
         });
     }
@@ -99,7 +97,7 @@ public final class LoginPanel extends JPanel {
 
             // Obtener los datos del usuario
             Usuari me = apiClient.getMe(token);
-
+            
             // Guardamos o limpiamos el Remember Me segun el estado del checkbox
             if (chkRememberMe.isSelected()) {
                 saveRememberMe(email, token, System.currentTimeMillis());
@@ -121,14 +119,6 @@ public final class LoginPanel extends JPanel {
         }
     }
 
-    public void logout() {
-        // limpiar token/usuario
-        this.token = null;
-        clearRememberMe();
-        chkRememberMe.setSelected(false);
-        // cambiar a login panel
-    }
-
     // ================ DoLogin HELPERS ================ 
     private void saveRememberMe(String email, String token, long issuedAtMillis) {
         java.util.prefs.Preferences prefs = Preferences.userNodeForPackage(LoginPanel.class);
@@ -137,11 +127,13 @@ public final class LoginPanel extends JPanel {
         prefs.putLong("remember.issuedAt", issuedAtMillis);
     }
 
-    private void clearRememberMe() {
+    public void clearRememberMe() {
         Preferences prefs = Preferences.userNodeForPackage(LoginPanel.class);
         prefs.remove("remember.email");
         prefs.remove("remember.token");
         prefs.remove("remember.issuedAt");
+        
+        txtPassword.setText("");
     }
 
     private void tryAutoFillRememberMe() {
