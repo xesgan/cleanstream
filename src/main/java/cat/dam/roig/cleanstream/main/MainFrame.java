@@ -3,6 +3,7 @@ package cat.dam.roig.cleanstream.main;
 import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.VideoQuality;
+import cat.dam.roig.cleanstream.services.ApiClient;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.ui.AboutDialog;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
@@ -64,29 +65,23 @@ public class MainFrame extends javax.swing.JFrame {
      * Creates new form MainFrame
      */
     public MainFrame() {
+        // Crea pnlContent, pnlMainPanel, etc
         initComponents();
-
+        // Crea pnlPreferencesPanel
         initPreferencesPanel();
+        // Solo configura la ventana
         initWindow();
-
+        // Primera vista: Login
         showLogin();
     }
 
     // ------------------- INIT HELPERS -------------------
     private void initWindow() {
         setTitle("CleanStream");
-        setMinimumSize(new java.awt.Dimension(1000, 700));
-        setPreferredSize(new java.awt.Dimension(1000, 700));
+        setMinimumSize(new java.awt.Dimension(1200, 700));
+        setPreferredSize(new java.awt.Dimension(1200, 700));
         setResizable(false);
         setLocationRelativeTo(null);
-
-        // Misma posición y tamaño para ambos paneles
-        pnlMainPanel.setBounds(0, 0, getWidth(), getHeight());
-        pnlPreferencesPanel.setBounds(0, 0, getWidth(), getHeight());
-
-        getContentPane().add(pnlPreferencesPanel);
-        pnlPreferencesPanel.setVisible(false);
-        pnlContent.setVisible(true);
     }
 
     private void initPreferencesPanel() {
@@ -127,25 +122,30 @@ public class MainFrame extends javax.swing.JFrame {
 
     // ------------------- NAVIGATION -------------------
     public void showPreferences() {
-        pnlContent.setVisible(false);
-        pnlPreferencesPanel.setVisible(true);
-        getContentPane().setComponentZOrder(pnlPreferencesPanel, 0);
+        showInContentPanel(pnlPreferencesPanel);
     }
 
     public void showMain() {
-        pnlPreferencesPanel.setVisible(false);
-        pnlContent.setVisible(true);
-        getContentPane().setComponentZOrder(pnlContent, 0);
+        showMainView();
     }
 
     public void showLogin() {
-        LoginPanel loginPanel = new LoginPanel(this);
+        String baseUrl = "https://dimedianetapi9.azurewebsites.net";
+        ApiClient apiClient = new ApiClient(baseUrl);
+        LoginPanel loginPanel = new LoginPanel(apiClient);
 
-        pnlContent.removeAll(); // Vaciamos el contenido actual
-        pnlContent.setLayout(new java.awt.BorderLayout());  // Colocamos un layout comodo
-        pnlContent.add(loginPanel, BorderLayout.CENTER); // metemos el login en el centro
+        loginPanel.setOnLoginSucces(() -> {
+            showMainView();
+        });
 
-        pnlContent.revalidate(); // refrescamos el layout
+        showInContentPanel(loginPanel);
+    }
+
+    private void showInContentPanel(java.awt.Component comp) {
+        pnlContent.removeAll();
+        pnlContent.setLayout(new java.awt.BorderLayout());
+        pnlContent.add(comp, java.awt.BorderLayout.CENTER);
+        pnlContent.revalidate();
         pnlContent.repaint();
     }
 
@@ -153,11 +153,7 @@ public class MainFrame extends javax.swing.JFrame {
         initDownloadsList();
         initMetadataTable();
         initFilters();
-
-        pnlContent.add(pnlMainPanel, BorderLayout.CENTER);
-
-        pnlContent.revalidate();
-        pnlContent.repaint();
+        showInContentPanel(pnlMainPanel);
     }
 
     public JTextArea getTxaLogArea() {
