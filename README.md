@@ -1,142 +1,218 @@
 # 🧩 CleanStream
 
-**Desarrollo de Interfaces — Semanas 2 y 3 (DI01_1 + DI01_2)**
+**Desarrollo de Interfaces — DI01 · DI01_2 · DI03**
 
 ## 📋 Descripción general
 
-CleanStream es una aplicación de escritorio desarrollada en Java Swing con NetBeans 27 y JDK 24, que actúa como interfaz gráfica para la herramienta yt-dlp.
+CleanStream es una aplicación de escritorio creada en **Java Swing**, diseñada como una interfaz gráfica (GUI) moderna para la herramienta **yt-dlp**, e integrada posteriormente con la **DI Media NET API** para sincronizar archivos multimedia en la nube.
 
-Su objetivo es ofrecer una interfaz limpia y funcional para descargar vídeos o audios desde plataformas online, con configuración personalizable, ejecución en segundo plano y registro visual del proceso.
+El proyecto se desarrolla utilizando:
+- **NetBeans 27 / 28**
+- **JDK 24**
+- **Maven**
+- **Swing + Designer**
 
-- **Semana 2 (DI01_1)**: Implementación de la estructura principal, la interfaz gráfica y la ejecución asíncrona de comandos.
-- **Semana 3 (DI01_2)**: Ampliación con funcionalidades de gestión de la biblioteca multimedia, utilizando JList, JComboBox y JTable con modelos personalizados.
+## 📌 Estado del Proyecto
 
-## 🧩 Nuevas funcionalidades (Semana 3 avanzada)
+### ✔ DI01
 
-Durante la tercera semana se ha ampliado el alcance de la aplicación añadiendo nuevas funciones que mejoran la experiencia de usuario, la estabilidad y la capacidad de gestión de contenidos descargados:
+GUI inicial + configuración + descarga de vídeos/audio mediante yt-dlp.
 
-- **Botón Stop**: permite detener una descarga en ejecución de forma segura desde la interfaz
-- **Selector de calidad**: muestra un JOptionPane con la calidad detectada al finalizar la descarga, facilitando la validación del proceso
-- **Creación automática de playlists .m3u**: al finalizar una serie de descargas, la aplicación genera un archivo de lista de reproducción en la carpeta de destino
-- **Gestión de audio y vídeo**: se añade compatibilidad con descargas de tipo audio (-x) o vídeo completo, según selección del usuario
-- **Flags de estabilidad**: el CommandExecutor añade soporte para opciones avanzadas de yt-dlp como `--force-ipv4`, `--http-chunk-size 10M`, `--concurrent-fragments 1` y `--retries infinite`
-- **Renderizado básico de la JList**: se implementa un ListCellRenderer que mejora la visualización de los archivos descargados
-- **Validación mejorada de rutas**: el PreferencesPanel comprueba la existencia de las rutas de yt-dlp, ffmpeg y la carpeta de salida antes de ejecutar el proceso
-- **Gestión sincronizada**: entre JList, JComboBox y JTable para mantener la coherencia entre las vistas y los detalles de la biblioteca multimedia
+### ✔ DI01_2
 
-## 🧱 Estructura actual de la aplicación
+Gestión de biblioteca local con:
+- `JList<Object>`
+- `JComboBox<Object>`
+- `JTable` con `AbstractTableModel`
+- Renderers personalizados
+- Filtrado dinámico
+- Escaneo de carpetas
+- Metadatos locales
 
-### Ventanas y paneles
+### 🟦 DI03 — Parte 1 completada
 
-#### 🪟 MainFrame (ventana principal)
+**Funcionalidad implementada:**
 
-- Contiene el menú superior (File, Edit, Help)
-- Desde Edit > Preferences se abre el panel de configuración
-- Permite introducir una URL y ejecutar la descarga mediante yt-dlp
-- Incluye un área de texto (`txaLogArea`) para mostrar los logs en tiempo real
-- Incorpora una JList y un JTable que muestran los archivos descargados
+- Formulario de Login sin Designer
+- Autenticación contra **DI Media NET API** (JWT)
+- Recuperación de datos del usuario con `/api/Users/me`
+- Sistema **Remember Me** con expiración automática de 3 días
+- Logout con limpieza de sesión
+- Refactor de navegación: `pnlContent` como contenedor único
+- Preparación para integración futura del componente de polling
 
-#### ⚙️ PreferencesPanel (panel de preferencias)
+## 🚀 Funcionalidades Principales
 
-**Permite definir rutas de:**
-- yt-dlp
-- ffmpeg
-- Carpeta de salida
+### 🔐 Login con JWT (DI03 Parte 1)
 
-**Opciones adicionales:**
-- Límite de velocidad
-- Creación de .m3u para playlists
+- Captura de email y contraseña
+- Validación básica
+- Llamada a `ApiClient.login(email, password)`
+- Obtención del token JWT
+- Llamada a `getMe(token)` para cargar datos del usuario
+- Transición limpia al panel principal usando callback (`onLoginSuccess`)
 
-**Funcionalidades:**
-- Botones Browse que usan JFileChooser para seleccionar archivos o carpetas
-- Botón Volver, que devuelve al panel principal sin crear nuevas instancias
+### ✔ Remember Me avanzado
 
-#### 💡 AboutDialog (pendiente de implementación)
+- Guarda: email, token y timestamp
+- Expira automáticamente si pasan 3 días
+- Pre-rellena el Login si el token sigue siendo válido
+- Previene auto-login si se ha caducado
 
-Modal JDialog que mostrará:
-- Autor
-- Curso
-- Recursos utilizados
+### ✔ Logout
 
-## ⚙️ Lógica implementada
+- Limpieza del Remember Me
+- Limpieza visual de la interfaz
+- Retorno al Login
 
-### 🔹 Ejecución de yt-dlp
+### 🗂️ Navegación unificada
 
-- Construcción dinámica del comando con rutas y flags personalizados
-- Ejecución asíncrona mediante `SwingWorker` y `ProcessBuilder`
-- Lectura en tiempo real de la salida estándar, mostrando el progreso en el log
-- Gestión de interrupción de descarga mediante botón Stop
+Todo el proyecto ahora usa un único contenedor central: **`pnlContent`**, donde se cargan:
+- `LoginPanel`
+- `MainPanel`
+- `PreferencesPanel`
 
-### 🔹 CommandExecutor
-
-Clase utilitaria (`cat.dam.roig.cleanstream.utils.CommandExecutor`) encargada de:
-- Ejecutar el proceso externo
-- Leer su salida línea a línea
-- Pasar cada línea a la interfaz mediante un `Consumer<String>`
-- Aplicar opciones de estabilidad y compatibilidad con YouTube
-
-### 🔹 Gestión de archivos descargados
-
-Nueva clase `ResourceDownloaded` con los campos:
+Con un método único:
 ```java
-private String name;
-private String route;
-private long size;
-private String mimeType;
-private LocalDateTime downloadDate;
-private String extension;
+private void showInContentPanel(Component comp)
 ```
 
-- Clase `DownloadsScanner` que recorre la carpeta configurada y devuelve una lista de objetos `ResourceDownloaded`
-- Integración con los componentes de la interfaz (JList, JComboBox, JTable)
-- Renderizado personalizado en JList y sincronización de selección entre componentes
+Permitiendo una navegación estable, limpia y mantenible.
+
+### 🔌 Integración con la DI Media NET API
+
+Se utiliza la clase proporcionada por el profesor:
+- `ApiClient.java`
+- `Usuari.java`
+- `Media.java`
+
+**Endpoints usados en esta fase:**
+- `/api/Auth/login`
+- `/api/Users/me`
+- `/api/Files/me` (Postman)
+- `/api/Files/upload` (Postman)
+- `/api/Files/all` (Postman)
+- `/api/Files/{id}` (Postman)
+- `/api/Users/{id}/nickname` (Postman)
+
+### 🔎 Pruebas Postman (Requisito DI03 Parte 1)
+
+He creado una colección completa con todas las peticiones necesarias:
+
+📁 `postman/DI03_DI_Media_NET_EliasRoig.postman_collection.json`
+
+**Incluye:**
+- Registro de usuario
+- Login
+- Upload (1 vídeo + 2 audios)
+- Listado de ficheros
+- Descarga por ID
+- Nickname por ID
+
+> Esta colección se puede importar directamente en Postman para validar la conectividad y endpoints.
+
+### 🎬 Descarga de vídeos/audio con yt-dlp
+
+- **Botón Stop**: permite detener una descarga en ejecución de forma segura desde la interfaz
+- **Selector de calidad**: muestra un JOptionPane con la calidad detectada al finalizar la descarga
+- **Creación automática de playlists .m3u**: al finalizar una serie de descargas, la aplicación genera un archivo de lista de reproducción
+- **Gestión de audio y vídeo**: compatibilidad con descargas de tipo audio (-x) o vídeo completo
+- **Flags de estabilidad**: soporte para opciones avanzadas de yt-dlp como `--force-ipv4`, `--http-chunk-size 10M`, `--concurrent-fragments 1` y `--retries infinite`
+- **Validación mejorada de rutas**: comprueba la existencia de las rutas de yt-dlp, ffmpeg y la carpeta de salida
+
+## 🧱 Arquitectura del Proyecto
+```
+cleanstream/
+│
+├── src/main/java/cat/dam/roig/cleanstream
+│   ├── ui
+│   │   ├── MainFrame.java
+│   │   ├── LoginPanel.java
+│   │   ├── MainPanel.java
+│   │   └── PreferencesPanel.java
+│   │
+│   ├── models
+│   │   ├── Media.java
+│   │   ├── Usuari.java
+│   │   └── ResourceDownloaded.java
+│   │
+│   ├── services
+│   │   ├── ApiClient.java   (proporcionado)
+│   │   └── [ApiService.java para DI03 Parte 3]
+│   │
+│   └── utils
+│       ├── CommandExecutor.java
+│       └── DownloadsScanner.java
+│
+└── resources/
+```
 
 ## 🧭 Instrucciones de uso
 
-### 1. Configurar rutas
+### 1. Iniciar sesión
 
-1. Abrir **Edit > Preferences** y establecer las rutas de yt-dlp, ffmpeg y la carpeta de salida
-2. Guardar los cambios con el botón **Volver**
+1. Introducir **email** y **contraseña**
+2. Marcar **Remember Me** si se desea mantener la sesión (3 días)
+3. Pulsar **Login**
+4. El sistema cargará automáticamente los datos del usuario
 
-### 2. Descargar contenido
+### 2. Configurar rutas (Primera vez)
+
+1. Abrir **Edit > Preferences**
+2. Establecer las rutas de:
+   - yt-dlp
+   - ffmpeg
+   - Carpeta de salida
+3. Configurar opciones adicionales (límite de velocidad, creación de .m3u)
+4. Guardar los cambios con el botón **Volver**
+
+### 3. Descargar contenido
 
 1. Introducir la URL del vídeo o playlist en el campo principal
 2. Pulsar **Download** para iniciar el proceso
 3. Observar el progreso en tiempo real en el área de logs
-
-### 3. Detener descarga
-
-- Pulsar el botón **Stop** para interrumpir la descarga en curso
+4. Usar **Stop** para interrumpir si es necesario
 
 ### 4. Consultar la biblioteca multimedia
 
 - Visualizar los archivos descargados desde la JList o JTable
 - Filtrar resultados mediante la JComboBox
+- Ver detalles de cada archivo seleccionado
 
-### 5. Generar playlists
+### 5. Cerrar sesión
 
-- Al finalizar las descargas, se creará automáticamente un archivo `.m3u` en la carpeta de destino
+- Usar **File > Logout** para cerrar sesión y limpiar credenciales guardadas
 
 ## 🧠 Estado actual del proyecto
 
 ### ✅ Completado
 
 - Interfaz gráfica funcional (JFrame + JPanel)
+- Sistema de autenticación con JWT
+- Remember Me con expiración automática
+- Navegación unificada con `pnlContent`
 - Menú con navegación y panel de preferencias
 - Ejecución real de yt-dlp con logs en tiempo real
 - Botón Stop funcional
 - Carga de archivos descargados y visualización en JList/JTable
 - Creación automática de listas .m3u
-- Validación de campos y control básico de errores
+- Validación de campos y control de errores
+- Integración con DI Media NET API
+- Colección Postman completa
 
-### 🚧 Pendiente
+### 🚧 Pendiente (Próximos pasos DI03 Parte 2)
 
-- Refinar renderizado visual con ListCellRenderer avanzado y estilos coherentes
-- Integrar **PO-Token generator** para obtener calidades superiores en descargas futuras
-- Ampliar el sistema de descargas con **más opciones de formato**, incluyendo audio de alta calidad y combinaciones personalizadas de vídeo + audio
-- Mejorar la **organización del código** en paquetes (`ui`, `services`, `domain`, `utils`, etc.) para favorecer la mantenibilidad y la escalabilidad del proyecto  
+- Crear `SessionManager` para gestionar token/usuario
+- Implementar el **Polling Component** externo
+- Crear proyecto independiente para el componente
+- Empaquetar el componente con maven-shade
+- Probar el componente dentro de CleanStream
+- Funcionalidad de sincronización:
+  - Ver red vs local
+  - Subir ficheros
+  - Descargar ficheros de otros usuarios
 
-> El proyecto se encuentra en fase estable de prototipo funcional, con base sólida para ampliaciones futuras.
+> El proyecto se encuentra en fase estable con integración básica de API completada.
 
 ## 🪛 Problemas encontrados y soluciones
 
@@ -144,33 +220,70 @@ private String extension;
 |----------|-------|-------------------|
 | Paneles superpuestos al iniciar | Ambos añadidos al contentPane desde el Designer | Se controló la visibilidad en el constructor de MainFrame |
 | Congelamiento al ejecutar yt-dlp | Ejecución en el hilo principal | Implementación de SwingWorker con `publish()` |
-| No se accedía a `txtYtDlpPath` desde MainFrame | Campo en otra clase | Getters públicos en PreferencesPanel |
-| Error 403 al descargar de YouTube | Cambios en la API | Se añadieron flags: `--compat-options youtube-disable-po-token`, `--force-ipv4`, `--user-agent Mozilla/5.0` |
-| CommandExecutor creaba nuevas ventanas ocultas | Inicializaba MainFrame internamente | Se eliminó la dependencia, ahora es una clase utilitaria |
-| Detección de calidad no funcional con PO-Tokens | Incompatibilidad con yt-dlp actual | Se documentó la limitación y se aplicó una alternativa con detección final por log |
+| Navegación entre paneles inconsistente | Múltiples métodos de cambio de panel | Refactor con método único `showInContentPanel()` |
+| Error 403 al descargar de YouTube | Cambios en la API | Flags: `--compat-options youtube-disable-po-token`, `--force-ipv4`, `--user-agent Mozilla/5.0` |
+| Remember Me persistía indefinidamente | Falta de control de expiración | Sistema de timestamp con validación de 72h |
+| Token no se limpiaba al logout | Falta de método de limpieza | Implementación de `clearRememberMe()` |
 
-> El proyecto ha sido probado en **Linux Manjaro**, ejecutando binarios locales de yt-dlp y ffmpeg, confirmando compatibilidad y estabilidad del sistema.
+> El proyecto ha sido probado en **Linux Manjaro** y **Windows**, ejecutando binarios locales de yt-dlp y ffmpeg.
 
 ## 📚 Recursos y referencias
 
-### Oficiales y docentes
+### 📌 Tecnologías
 
-- Enunciado Tarea para DI01_1 25-26
-- Enunciado Tarea para DI01_2 25-26
-- DI01 Support Notes 25-26
+- Java Swing
+- Maven
+- NetBeans Designer
+- yt-dlp
+- ffmpeg
+- HttpClient (Java 11+)
+- JSON Jackson Databind
+
+### 📌 API
+
+- **DI Media NET** — Azure
+
+### 📌 Documentación oficial
+
 - [Documentación oficial de yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [Documentación oficial de ffmpeg](https://ffmpeg.org/)
+- [HttpClient Documentation](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html)
+- [Jackson Databind](https://github.com/FasterXML/jackson-databind)
 
-### Consultas externas y soporte
+### 📌 Apuntes y material del curso
+
+- Apuntes oficiales del módulo DI
+- Videos soporte DI01 / DI02 / DI03
+- Enunciado Tarea para DI01_1 25-26
+- Enunciado Tarea para DI01_2 25-26
+- Enunciado Tarea para DI03 25-26
+- DI01 Support Notes 25-26
+- DI03 Support Notes 25-26
+- Tutorias realizadas por el profesor
+
+### 📌 Consultas externas y soporte
 
 - **ChatGPT** (modelo GPT-5, OpenAI): resolución de errores, documentación y guía de implementación
-- **StackOverflow**: ejemplos sobre ProcessBuilder, SwingWorker y AbstractTableModel
-- Pruebas realizadas en **Linux Manjaro**, ejecutando binarios locales de yt-dlp y ffmpeg
+- **GitHub Copilot**: sugerencias de código
+- **StackOverflow**: ejemplos sobre ProcessBuilder, SwingWorker, AbstractTableModel y HttpClient
+
+> **Aclaración**: Todo el código extra generado con asistencia (ChatGPT / Copilot) ha sido comprendido, adaptado, modificado y documentado, conforme a las normas del módulo.
+
+## 🧩 Funcionalidades extra / mejoras
+
+- Expiración automática temporal para Remember Me (72h)
+- Sistema de navegación unificado con `pnlContent`
+- Refactor del MainFrame para simplificar la UI
+- Limpieza de eventos y renderers
+- Preparación para SessionManager (Parte 2–3)
+- Corrección de errores de selección y renderizado
+- Validación de rutas antes de ejecutar yt-dlp
+- Renderizado personalizado en JList
 
 ## 👨‍💻 Créditos
 
 - **Autor**: Elias Roig
-- **Asistencia técnica y documentación**: ChatGPT (OpenAI GPT-5)
+- **Asistencia técnica y documentación**: ChatGPT (OpenAI GPT-5), GitHub Copilot
 - **Curso**: Desarrollo de Interfaces — FP DAM 2025-26
 
 ---
@@ -180,16 +293,20 @@ private String extension;
 # Clonar el repositorio
 git clone https://github.com/tu-usuario/cleanstream.git
 
-# Abrir el proyecto en NetBeans 27 con JDK 24
-# Compilar y ejecutar
+# Abrir el proyecto en NetBeans 27/28 con JDK 24
+# Compilar con Maven y ejecutar
 ```
 
 ### Requisitos previos
 
-- **NetBeans 27** o superior
+- **NetBeans 27 o 28**
 - **JDK 24**
+- **Maven** (integrado en NetBeans)
 - **yt-dlp** instalado en el sistema
 - **ffmpeg** instalado en el sistema
+- Conexión a Internet para acceder a **DI Media NET API**
+
+```
 
 ## 📝 Licencia
 
