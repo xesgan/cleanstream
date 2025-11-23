@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream;
+package cat.dam.roig.cleanstream.ui;
 
 /**
  *
@@ -38,7 +38,6 @@ public class AboutDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("About - CleanStream");
         setMinimumSize(new java.awt.Dimension(420, 300));
-        setPreferredSize(new java.awt.Dimension(420, 300));
         setResizable(false);
         getContentPane().setLayout(null);
 

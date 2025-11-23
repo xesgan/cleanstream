@@ -1,5 +1,6 @@
-package cat.dam.roig.cleanstream;
+package cat.dam.roig.cleanstream.ui;
 
+import cat.dam.roig.cleanstream.main.MainFrame;
 import java.io.File;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;

@@ -1,12 +1,16 @@
-package cat.dam.roig.cleanstream;
+package cat.dam.roig.cleanstream.main;
 
 import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.VideoQuality;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
+import cat.dam.roig.cleanstream.ui.AboutDialog;
+import cat.dam.roig.cleanstream.ui.LoginPanel;
+import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
+import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -38,7 +40,6 @@ public class MainFrame extends javax.swing.JFrame {
     // --- Constantes de configuración por defecto ---
     private static final String YT_DLP_PATH = "/bin/yt-dlp";
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
-    private static final String COOKIES_TXT = System.getProperty("user.home") + "/Downloads/youtube_cookies.txt"; // fallback
 
     // --- Dependencias de UI ---
     private PreferencesPanel pnlPreferencesPanel;
@@ -47,15 +48,13 @@ public class MainFrame extends javax.swing.JFrame {
     private MetadataTableModel metaModel; // para la tabla de metadata
 
     // --- Lógica de estado ---
-    private DetectOS scanOS; // revisar si se usa
     private String lastDownloadedFile = null;
-    private final List<ResourceDownloaded> master = new ArrayList<>();
+    private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
     private boolean hasScanned = false;
     private boolean isScanning = false;
 
     // --- Descarga en curso ---
     private volatile Process currentProcess;
-    private volatile boolean stopRequest = false;
     private SwingWorker<Integer, String> currentDownloadWorker;
 
     // --- Referencias de log ---
@@ -69,13 +68,15 @@ public class MainFrame extends javax.swing.JFrame {
 
         initPreferencesPanel();
         initWindow();
-        initDownloadsList();
-        initMetadataTable();
-        initFilters();
+
+        showLogin();
     }
 
     // ------------------- INIT HELPERS -------------------
     private void initWindow() {
+        setTitle("CleanStream");
+        setMinimumSize(new java.awt.Dimension(1000, 700));
+        setPreferredSize(new java.awt.Dimension(1000, 700));
         setResizable(false);
         setLocationRelativeTo(null);
 
@@ -137,36 +138,31 @@ public class MainFrame extends javax.swing.JFrame {
         getContentPane().setComponentZOrder(pnlContent, 0);
     }
 
+    public void showLogin() {
+        LoginPanel loginPanel = new LoginPanel(this);
+
+        pnlContent.removeAll(); // Vaciamos el contenido actual
+        pnlContent.setLayout(new java.awt.BorderLayout());  // Colocamos un layout comodo
+        pnlContent.add(loginPanel, BorderLayout.CENTER); // metemos el login en el centro
+
+        pnlContent.revalidate(); // refrescamos el layout
+        pnlContent.repaint();
+    }
+
+    public void showMainView() {
+        initDownloadsList();
+        initMetadataTable();
+        initFilters();
+
+        pnlContent.add(pnlMainPanel, BorderLayout.CENTER);
+
+        pnlContent.revalidate();
+        pnlContent.repaint();
+    }
+
     public JTextArea getTxaLogArea() {
         return txaLogArea;
     }
-
-    // ------- HELPERS --------
-//    private static void setExtractorClient(java.util.List<String> cmd, String client) {
-//        int idx = cmd.indexOf("--extractor-args");
-//        if (idx >= 0 && idx + 1 < cmd.size()) {
-//            cmd.set(idx + 1, "youtube:player_client=" + client);
-//        } else {
-//            cmd.add("--extractor-args");
-//            cmd.add("youtube:player_client=" + client);
-//        }
-//    }
-//
-//    /**
-//     * Elimina una opción y su valor inmediatamente siguiente. Solo la primera
-//     * ocurrencia.
-//     */
-//    private static void removeOptionWithValue(java.util.List<String> cmd, String option) {
-//        for (int i = 0; i < cmd.size(); i++) {
-//            if (option.equals(cmd.get(i))) {
-//                cmd.remove(i);                  // quita la opción
-//                if (i < cmd.size()) {
-//                    cmd.remove(i); // quita el valor que ahora ocupa ese índice
-//                }
-//                break;
-//            }
-//        }
-//    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -219,11 +215,11 @@ public class MainFrame extends javax.swing.JFrame {
         mniAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(1200, 700));
         setResizable(false);
-        setSize(new java.awt.Dimension(1200, 700));
+        setSize(new java.awt.Dimension(1200, 650));
         getContentPane().setLayout(null);
 
+        pnlContent.setPreferredSize(null);
         pnlContent.setLayout(new java.awt.CardLayout());
 
         pnlMainPanel.setLayout(null);
@@ -891,8 +887,8 @@ public class MainFrame extends javax.swing.JFrame {
             protected void done() {
                 try {
                     List<ResourceDownloaded> lista = get();
-                    master.clear();
-                    master.addAll(lista);
+                    resourceDownloadeds.clear();
+                    resourceDownloadeds.addAll(lista);
                     hasScanned = true;
                     applyFilters(); // ahora sí aplico filtros con datos nuevos
                 } catch (InterruptedException ie) {
@@ -1065,17 +1061,6 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
         stopCurrentDownload();
-
-//        stopRequest = true;
-//        // Cancelamos el worker
-//        if (currentDownloadWorker != null && !currentDownloadWorker.isDone()) {
-//            currentDownloadWorker.cancel(false);
-//        }
-//
-//        // intenta parar el proceso (si aún no está asignado no pasa nada)
-//        getTxaLogArea().append("[STOP] Solicitud de cancelación enviada.\n");
-//        btnStop.setEnabled(false);
-//        btnDownload.setEnabled(true);
     }//GEN-LAST:event_btnStopActionPerformed
 
     /**
@@ -1111,7 +1096,7 @@ public class MainFrame extends javax.swing.JFrame {
      */
     private void applyFilters() {
         downloadsModel.clear();
-        for (ResourceDownloaded r : master) {
+        for (ResourceDownloaded r : resourceDownloadeds) {
             if (matchTipo(r) && matchSemana(r)) {
                 downloadsModel.addElement(r);
             }

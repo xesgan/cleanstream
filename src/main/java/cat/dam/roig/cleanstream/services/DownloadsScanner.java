@@ -62,6 +62,8 @@ public class DownloadsScanner {
      * Escanea una carpeta (no recursivo por defecto) y devuelve los recursos descargados.
      * @param dir Carpeta a recorrer.
      * @param recursive true para recorrer subdirectorios (cuidado con rendimiento).
+     * @return 
+     * @throws java.io.IOException
      */
     public List<ResourceDownloaded> scan(Path dir, boolean recursive) throws IOException {
         if (dir == null) throw new IllegalArgumentException("dir is null");
