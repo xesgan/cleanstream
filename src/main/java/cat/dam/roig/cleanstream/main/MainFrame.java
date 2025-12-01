@@ -4,6 +4,7 @@ import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.VideoQuality;
 import cat.dam.roig.cleanstream.services.ApiClient;
+import cat.dam.roig.cleanstream.services.AuthManager;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.ui.AboutDialog;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
@@ -11,7 +12,6 @@ import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
-import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -42,14 +42,16 @@ public class MainFrame extends javax.swing.JFrame {
     private static final String YT_DLP_PATH = "/bin/yt-dlp";
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
     private static final String baseUrl = "https://dimedianetapi9.azurewebsites.net";
-    
+
     // --- Dependencias de UI ---
     private PreferencesPanel pnlPreferencesPanel;
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
     private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
     private MetadataTableModel metaModel; // para la tabla de metadata
-    private ApiClient apiClient = new ApiClient(baseUrl);
-    private LoginPanel loginPanel = new LoginPanel(apiClient);;
+
+    private final ApiClient apiClient = new ApiClient(baseUrl);
+    private final AuthManager authManager = new AuthManager(apiClient);
+    private final LoginPanel loginPanel = new LoginPanel(authManager);
 
     // --- Lógica de estado ---
     private String lastDownloadedFile = null;
@@ -68,14 +70,26 @@ public class MainFrame extends javax.swing.JFrame {
      * Creates new form MainFrame
      */
     public MainFrame() {
-        // Crea pnlContent, pnlMainPanel, etc
+        // 1. Construye UI base (paneles, botones, menús...)
         initComponents();
-        // Crea pnlPreferencesPanel
+
+        // 2. Panel de preferencias
         initPreferencesPanel();
-        // Solo configura la ventana
+
+        // 3. Configura ventana
         initWindow();
-        // Primera vista: Login
-        showLogin();
+
+        // 4. Configura qué hacer cuando el login tenga éxito
+        authManager.setOnLoginSuccess(this::showMainView);
+
+        // 5. Intentamos auto-login inteligente
+        if (authManager.tryAutoLogin()) {
+            // Token válido → vamos a la vista principal
+            showMainView();
+        } else {
+            // No hay token o no funciona → mostramos login
+            showLogin();
+        }
     }
 
     // ------------------- INIT HELPERS -------------------
@@ -133,10 +147,6 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public void showLogin() {
-        loginPanel.setOnLoginSucces(() -> {
-            showMainView();
-        });
-
         showInContentPanel(loginPanel);
     }
 
@@ -1084,7 +1094,7 @@ public class MainFrame extends javax.swing.JFrame {
             return; // usuario canceló
         }
         // Limpiar estado de sesion
-        loginPanel.clearRememberMe();
+        authManager.clearRememberMe();
         // Volver a la pantalla login
         showLogin();
     }

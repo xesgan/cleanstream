@@ -1,223 +1,144 @@
 package cat.dam.roig.cleanstream.ui;
 
-import cat.dam.roig.cleanstream.services.ApiClient;
-import cat.dam.roig.cleanstream.models.Usuari;
+import cat.dam.roig.cleanstream.services.AuthManager;
+
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 /**
+ * Panel de Login.
+ *
+ * Solo UI, la lógica de login la gestiona AuthManager.
  *
  * @author metku
  */
 public final class LoginPanel extends JPanel {
 
-    private final ApiClient apiClient;
-    private String token;
-    private static final long TOKEN_MAX_AGE_MILLIS = 3L * 24 * 60 * 60 * 1000; // 3 días
-    private Runnable onLoginSucces;
+    private final AuthManager authManager;
 
-    /**
-     * @param apiClient
-     * @param mainFrame
-     */
-    public LoginPanel(ApiClient apiClient) {
-        this.apiClient = apiClient;
+    private JPanel pnlPrincipal;
+    private JPanel pnlFormulario;
+    private JPanel pnlBtnsLogin;
+    private JLabel lblUser;
+    private JLabel lblPassword;
+    private JTextField txtEmail;
+    private JPasswordField txtPassword;
+    private JButton btnLogin;
+    private JButton btnExit;
+    private JCheckBox chkRememberMe;
+
+    public LoginPanel(AuthManager authManager) {
+        this.authManager = authManager;
+        this.authManager.setLoginPanel(this);
+
         initComponents();
         initEvents();
-
     }
 
     private void initComponents() {
-        showLogin();
+        // Layout base del propio panel
+        setLayout(new BorderLayout());
+        setSize(1000, 700);
 
-        pnlPrincipal = buildLoginPanel();
+        // Panel principal con GridBagLayout para centrar el contenido
+        pnlPrincipal = new JPanel(new GridBagLayout());
+
+        // --- Formulario + botones envueltos en "wrapper" ---
         pnlFormulario = buildFormulario();
         pnlBtnsLogin = buildBtnLogin();
 
-        // WRAPPER: junta formulario + botones
         JPanel wrapper = new JPanel();
         wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.Y_AXIS));
-
         wrapper.add(pnlFormulario);
-        wrapper.add(Box.createVerticalStrut(20));     // separación entre formulario y botones
+        wrapper.add(Box.createVerticalStrut(15));
         wrapper.add(pnlBtnsLogin);
 
-        // el border se aplica ahora al bloque entero
-        wrapper.setBorder(
-                BorderFactory.createEmptyBorder(250, 410, 50, 420)
-        );
+        // Un pequeño margen alrededor, sin romper el centrado
+        wrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        pnlPrincipal.add(wrapper, BorderLayout.CENTER);
+        // Centramos el wrapper dentro de pnlPrincipal
+        GridBagConstraints gbcCenter = new GridBagConstraints();
+        gbcCenter.gridx = 0;
+        gbcCenter.gridy = 0;
+        gbcCenter.anchor = GridBagConstraints.CENTER;
+        pnlPrincipal.add(wrapper, gbcCenter);
 
-        // Llamamos al metodo para verificar que el chkbox este seleccionado o el token no haya expirado
-        tryAutoFillRememberMe();
+        // Añadimos pnlPrincipal al centro del LoginPanel
+        add(pnlPrincipal, BorderLayout.CENTER);
 
         setVisible(true);
     }
 
     private void initEvents() {
+        // LOGIN
         btnLogin.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                doLogin(); // ===== LOGIN EVENT =====
+                authManager.doLogin();
+            }
+        });
+
+        // EXIT
+        btnExit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
             }
         });
     }
 
-    private void doLogin() {
-
-        String email = txtEmail.getText();
-        char[] pwChars = txtPassword.getPassword();
-        String pass = new String(pwChars);
-        if (email == null || email.isBlank() || pass == null || pass.isBlank()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Password or Email cannot be empty!",
-                    "Check your data",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        try {
-            // Obtener el jwt
-            token = apiClient.login(email, pass);
-
-            // Obtener los datos del usuario
-            Usuari me = apiClient.getMe(token);
-            
-            // Guardamos o limpiamos el Remember Me segun el estado del checkbox
-            if (chkRememberMe.isSelected()) {
-                saveRememberMe(email, token, System.currentTimeMillis());
-            } else {
-                clearRememberMe();
-            }
-
-            // Podemos avisar de que el login ha sido un exito
-            if (onLoginSucces != null) {
-                onLoginSucces.run();
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Password or Email are not valid!",
-                    "Check your data",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
-    }
-
-    // ================ DoLogin HELPERS ================ 
-    private void saveRememberMe(String email, String token, long issuedAtMillis) {
-        java.util.prefs.Preferences prefs = Preferences.userNodeForPackage(LoginPanel.class);
-        prefs.put("remember.email", email);
-        prefs.put("remember.token", token);
-        prefs.putLong("remember.issuedAt", issuedAtMillis);
-    }
-
-    public void clearRememberMe() {
-        Preferences prefs = Preferences.userNodeForPackage(LoginPanel.class);
-        prefs.remove("remember.email");
-        prefs.remove("remember.token");
-        prefs.remove("remember.issuedAt");
-        
-        txtPassword.setText("");
-    }
-
-    private void tryAutoFillRememberMe() {
-        Preferences prefs = Preferences.userNodeForPackage(LoginPanel.class);
-
-        String savedEmail = prefs.get("remember.email", null);
-        String savedToken = prefs.get("remember.token", null);
-        long issuedAt = prefs.getLong("remember.issuedAt", -1L);
-
-        if (savedEmail == null || savedToken == null || issuedAt <= 0) {
-            chkRememberMe.setSelected(false);
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        long age = now - issuedAt;
-
-        if (age > TOKEN_MAX_AGE_MILLIS) {
-            clearRememberMe();
-            chkRememberMe.setSelected(false);
-            return;
-        }
-
-        txtEmail.setText(savedEmail);
-        chkRememberMe.setSelected(true);
-    }
-
     // ================ BUILDINGS ================ 
-    private void showLogin() {
-        setSize(1000, 700);
-    }
-
-    private JPanel buildLoginPanel() {
-        pnlPrincipal = new JPanel();
-
-        pnlPrincipal.setLayout(new java.awt.BorderLayout());
-        this.add(pnlPrincipal, BorderLayout.CENTER);
-
-        return pnlPrincipal;
-    }
 
     private JPanel buildFormulario() {
-        pnlFormulario = new JPanel();
-        pnlFormulario.setLayout(new BoxLayout(pnlFormulario, BoxLayout.Y_AXIS));
+        pnlFormulario = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
         lblUser = new JLabel("Email: ");
-        lblUser.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        txtEmail = new javax.swing.JTextField();
-
         lblPassword = new JLabel("Password: ");
-        lblPassword.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        txtPassword = new javax.swing.JPasswordField();
+        txtEmail = new JTextField(15);
+        txtPassword = new JPasswordField(15);
 
-        // FILA 1
-        JPanel rowUser = new JPanel();
-        rowUser.setLayout(new BorderLayout());
-        rowUser.add(lblUser, BorderLayout.WEST);
-        rowUser.add(txtEmail, BorderLayout.EAST);
-        txtEmail.setColumns(15);
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.EAST;   // labels alineados a la derecha
 
-        rowUser.setMaximumSize(
-                new java.awt.Dimension(Integer.MAX_VALUE, rowUser.getPreferredSize().height)
-        );
+        // Fila 1: Email
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        pnlFormulario.add(lblUser, gbc);
 
-        // FILA 2
-        JPanel rowPass = new JPanel();
-        rowPass.setLayout(new BorderLayout());
-        rowPass.add(lblPassword, BorderLayout.WEST);
-        rowPass.add(txtPassword, BorderLayout.EAST);
-        txtPassword.setColumns(15);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        pnlFormulario.add(txtEmail, gbc);
 
-        rowPass.setMaximumSize(
-                new java.awt.Dimension(Integer.MAX_VALUE, rowPass.getPreferredSize().height)
-        );
+        // Fila 2: Password
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.EAST;
+        pnlFormulario.add(lblPassword, gbc);
 
-        pnlFormulario.add(rowUser);
-        pnlFormulario.add(javax.swing.Box.createVerticalStrut(10));
-        pnlFormulario.add(rowPass);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        pnlFormulario.add(txtPassword, gbc);
 
         return pnlFormulario;
     }
 
     private JPanel buildBtnLogin() {
-        pnlBtnsLogin = new JPanel();
+        pnlBtnsLogin = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
         btnLogin = new JButton("Login");
         btnExit = new JButton("Exit");
@@ -230,12 +151,13 @@ public final class LoginPanel extends JPanel {
         return pnlBtnsLogin;
     }
 
-    // ================ GETTERS ================ 
+    // ================ GETTERS / SETTERS ================ 
+
     public boolean isRememberMeSelected() {
         return chkRememberMe.isSelected();
     }
 
-    public JTextField getTxtUsername() {
+    public JTextField getTxtEmail() {
         return txtEmail;
     }
 
@@ -243,18 +165,7 @@ public final class LoginPanel extends JPanel {
         return txtPassword;
     }
 
-    public void setOnLoginSucces(Runnable callBack) {
-        this.onLoginSucces = callBack;
+    public void setTxtEmail(String txtEmail) {
+        this.txtEmail.setText(txtEmail);
     }
-
-    private JPanel pnlPrincipal;
-    private JPanel pnlFormulario;
-    private JPanel pnlBtnsLogin;
-    private JLabel lblUser;
-    private JLabel lblPassword;
-    private JTextField txtEmail;
-    private JPasswordField txtPassword;
-    private JButton btnLogin;
-    private JButton btnExit;
-    private JCheckBox chkRememberMe;
 }
