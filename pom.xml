@@ -18,5 +18,10 @@
             <artifactId>jackson-databind</artifactId>
             <version>3.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>cat.dam.roig</groupId>
+            <artifactId>RoigMediaPollingcomponent</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>

@@ -1,5 +1,6 @@
 package cat.dam.roig.cleanstream.main;
 
+import cat.dam.roig.cleanstream.models.Media;
 import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.VideoQuality;
@@ -89,6 +90,69 @@ public class MainFrame extends javax.swing.JFrame {
         } else {
             // No hay token o no funciona → mostramos login
             showLogin();
+        }
+    }
+
+    // ------------------- METODO DE PRUEBA DEL COMPONENTE --------------------
+    private void testLoginAndStartPolling() {
+        String email = "roig@elias.cat";
+        String password = "1234";
+
+        try {
+            // 2. Hacemos login a través del componente
+            String token = roigMediaPollingComponent1.login(email, password);
+            System.out.println("Login OK. Token recibido: " + token);
+
+            // 3. Registramos un listener para ver los nuevos media
+            roigMediaPollingComponent1.addMediaListener(event -> {
+                System.out.println("🟢 Nuevos media detectados: " + event.getNewMedia().size());
+                event.getNewMedia().forEach(m -> {
+                    System.out.println(" - " + m.id + " :: " + m.mediaFileName);
+                });
+                System.out.println("Detectados en: " + event.getDiscoveredAt());
+            });
+
+            // 4. Arrancamos el polling
+            roigMediaPollingComponent1.setRunning(true);
+
+            // 5. Aviso visual opcional
+//            javax.swing.JOptionPane.showMessageDialog(
+//                    this,
+//                    "Login correcto y polling iniciado.",
+//                    "Info",
+//                    javax.swing.JOptionPane.INFORMATION_MESSAGE
+//            );
+            System.out.println("======================================================");
+            String nickname = roigMediaPollingComponent1.getNickName(26);
+            System.out.println("Nickname: " + nickname);
+
+            System.out.println("======================================================");
+            List<cat.dam.roig.roigmediapollingcomponent.Media> all = roigMediaPollingComponent1.getAllMedia();
+            System.out.println("Total media en la red: " + all.size());
+            System.out.println("======================================================");
+
+//            String baseDir = System.getProperty("user.home") + "/Downloads/yt/borrar/";
+//            int mediaId = 2;
+//
+//            File destino = new File(baseDir + "media_" + mediaId + ".bin");
+//
+//            roigMediaPollingComponent1.download(mediaId, destino);
+//
+//            System.out.println("✅ Descarga completada: " + destino.getAbsolutePath());
+
+//            System.out.println("======================================================");
+//            File f = new File("/home/metku/Downloads/yt/borrar/海外コンサートでマリオを完全再現 #piano.mp4");
+//            String respuesta = roigMediaPollingComponent1.uploadFileMultipart(f, "https://www.youtube.com/shorts/zTbrfZdBb4Q?feature=share");
+//            System.out.println("Respuesta upload: " + respuesta);
+//            System.out.println("======================================================");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "Error al hacer login: " + ex.getMessage(),
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
@@ -211,6 +275,8 @@ public class MainFrame extends javax.swing.JFrame {
         jrb1080p = new javax.swing.JRadioButton();
         jrb720p = new javax.swing.JRadioButton();
         jrb480p = new javax.swing.JRadioButton();
+        roigMediaPollingComponent1 = new cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent();
+        jButton1 = new javax.swing.JButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniLogout = new javax.swing.JMenuItem();
@@ -398,6 +464,20 @@ public class MainFrame extends javax.swing.JFrame {
         jrb480p.setText("480p");
         pnlMainPanel.add(jrb480p);
         jrb480p.setBounds(320, 230, 60, 22);
+
+        roigMediaPollingComponent1.setApiUrl("https://dimedianetapi9.azurewebsites.net");
+        roigMediaPollingComponent1.setPollingInterval(3);
+        pnlMainPanel.add(roigMediaPollingComponent1);
+        roigMediaPollingComponent1.setBounds(630, 60, 100, 70);
+
+        jButton1.setText("Test Polling");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        pnlMainPanel.add(jButton1);
+        jButton1.setBounds(260, 40, 140, 24);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -1080,6 +1160,10 @@ public class MainFrame extends javax.swing.JFrame {
         doLogout();
     }//GEN-LAST:event_mniLogoutActionPerformed
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        testLoginAndStartPolling();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     private void doLogout() {
         // Preguntar si esta seguro
         int opt = JOptionPane.showConfirmDialog(
@@ -1264,6 +1348,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnStop;
     private javax.swing.JCheckBox chkSemana;
     private javax.swing.JComboBox<String> cmbTipo;
+    private javax.swing.JButton jButton1;
     private javax.swing.JRadioButton jrb1080p;
     private javax.swing.JRadioButton jrb480p;
     private javax.swing.JRadioButton jrb720p;
@@ -1288,6 +1373,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel pnlMainPanel;
     private javax.swing.JRadioButton rbAudio;
     private javax.swing.JRadioButton rbVideo;
+    private cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent roigMediaPollingComponent1;
     private javax.swing.JScrollPane scpMetaDataTable;
     private javax.swing.JScrollPane scpScanListPane;
     private javax.swing.JScrollPane scrLogArea;
