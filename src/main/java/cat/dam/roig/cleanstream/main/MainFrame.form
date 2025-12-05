@@ -464,7 +464,7 @@
                 </Constraint>
               </Constraints>
             </Component>
-            <Component class="cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent" name="roigMediaPollingComponent1">
+            <Component class="cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent" name="roigMediaPollingComponent">
               <Properties>
                 <Property name="apiUrl" type="java.lang.String" value="https://dimedianetapi9.azurewebsites.net"/>
                 <Property name="pollingInterval" type="int" value="3"/>

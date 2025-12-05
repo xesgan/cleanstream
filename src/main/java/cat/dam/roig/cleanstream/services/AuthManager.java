@@ -1,8 +1,8 @@
 package cat.dam.roig.cleanstream.services;
 
-import cat.dam.roig.cleanstream.models.Usuari;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
-import java.io.IOException;
+import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.util.Arrays;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 
@@ -19,14 +19,17 @@ public class AuthManager {
     private static final String KEY_EMAIL  = "auth.email";
 
     // ---- Dependencias ----
-    private final ApiClient apiClient;
     private LoginPanel loginPanel;
+    private final RoigMediaPollingComponent mediaComponent;
 
     // Callback cuando el login tiene éxito (para que el MainFrame cambie de panel)
     private Runnable onLoginSuccess;
 
-    public AuthManager(ApiClient apiClient) {
-        this.apiClient = apiClient;
+    public AuthManager(RoigMediaPollingComponent comp) {
+        if (comp == null) {
+           throw new IllegalArgumentException("RoigMediaPollingComponent no puede ser null");
+        }
+        this.mediaComponent = comp;
         this.prefs = Preferences.userNodeForPackage(AuthManager.class);
     }
 
@@ -88,24 +91,7 @@ public class AuthManager {
         if (token == null || token.isBlank()) {
             return false;
         }
-
-        try {
-            // Endpoint ligero que requiere auth (por ejemplo /me)
-            Usuari me = apiClient.getMe(token);
-            System.out.println("CONFIRMAMOS QUE FUNCIONA: " + me.nickName);
-
-            return true; // si no lanza excepción, asumimos OK
-        } catch (IOException | InterruptedException ex) {
-            // Aquí asumimos que no podemos auto loguear al usuario.
-            clearToken();
-            return false;
-        } catch (Exception ex) {
-            // Auth inválida, token caducado o similar
-            System.getLogger(AuthManager.class.getName())
-                    .log(System.Logger.Level.ERROR, (String) null, ex);
-            clearToken();
-            return false;
-        }
+        return true;
     }
 
     // ----------------- Login normal desde el LoginPanel -----------------
@@ -135,11 +121,11 @@ public class AuthManager {
 
         try {
             // Obtener el jwt
-            String token = apiClient.login(email, pass);
+            mediaComponent.login(email, pass);
 
             // Guardamos o limpiamos el Remember Me segun el estado del checkbox
             if (loginPanel.isRememberMeSelected()) {
-                saveRememberMe(email, token);
+                saveRememberMe(email, mediaComponent.getToken());
             } else {
                 clearRememberMe();
             }
@@ -149,12 +135,15 @@ public class AuthManager {
                 onLoginSuccess.run();
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
             JOptionPane.showMessageDialog(
                     loginPanel,
                     "Password or Email are not valid!",
                     "Check your data",
                     JOptionPane.ERROR_MESSAGE
             );
+        } finally {
+            Arrays.fill(pwChars, '\0');
         }
     }
 }

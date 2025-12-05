@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.view;
+package cat.dam.roig.cleanstream.ui.renderers;
 
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import javax.swing.*;

@@ -77,7 +77,7 @@ public class DownloadsScanner {
                     .filter(Files::isRegularFile)
                     .filter(this::notHiddenSafe)
                     .filter(this::notTempFile)
-                    .map(this::toRecurso)
+                    .map(this::toResource)
                     .filter(Objects::nonNull)
                     .sorted(Comparator.comparing(ResourceDownloaded::getDownloadDate).reversed())
                     .collect(Collectors.toUnmodifiableList());
@@ -85,7 +85,7 @@ public class DownloadsScanner {
     }
 
     /** Conversión de Path -> RecursoDescargado con metadatos. */
-    private ResourceDownloaded toRecurso(Path p) {
+    private ResourceDownloaded toResource(Path p) {
         try {
             BasicFileAttributes attrs = Files.readAttributes(p, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
@@ -110,7 +110,6 @@ public class DownloadsScanner {
             return r;
 
         } catch (Exception e) {
-            // Si algo falla con este archivo, lo omitimos (o loguea si tienes un Logger)
             return null;
         }
     }

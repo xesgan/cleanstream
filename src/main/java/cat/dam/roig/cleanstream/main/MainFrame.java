@@ -1,10 +1,9 @@
 package cat.dam.roig.cleanstream.main;
 
-import cat.dam.roig.cleanstream.models.Media;
+import cat.dam.roig.cleanstream.controller.DownloadsController;
 import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.VideoQuality;
-import cat.dam.roig.cleanstream.services.ApiClient;
 import cat.dam.roig.cleanstream.services.AuthManager;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.ui.AboutDialog;
@@ -12,7 +11,9 @@ import cat.dam.roig.cleanstream.ui.LoginPanel;
 import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.utils.CommandExecutor;
 import cat.dam.roig.cleanstream.utils.DetectOS;
-import cat.dam.roig.cleanstream.view.ResourceDownloadedRenderer;
+import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
+import cat.dam.roig.cleanstrem.controller.MainController;
+import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -44,19 +45,24 @@ public class MainFrame extends javax.swing.JFrame {
     private static final String FFMPEG_PATH = "/bin/ffmpeg";      // opcional
     private static final String baseUrl = "https://dimedianetapi9.azurewebsites.net";
 
+    // Dependencias Controller
+    private DownloadsController downloadsController;
+
     // --- Dependencias de UI ---
     private PreferencesPanel pnlPreferencesPanel;
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
+    private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
     private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
     private MetadataTableModel metaModel; // para la tabla de metadata
 
-    private final ApiClient apiClient = new ApiClient(baseUrl);
-    private final AuthManager authManager = new AuthManager(apiClient);
-    private final LoginPanel loginPanel = new LoginPanel(authManager);
+    private final RoigMediaPollingComponent mediaComponent;
+    private final AuthManager authManager;
+    private final LoginPanel loginPanel;
+//    private DownloadsPanel downloadsPanel;
 
     // --- Lógica de estado ---
     private String lastDownloadedFile = null;
-    private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
+//    private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
     private boolean hasScanned = false;
     private boolean isScanning = false;
 
@@ -74,86 +80,17 @@ public class MainFrame extends javax.swing.JFrame {
         // 1. Construye UI base (paneles, botones, menús...)
         initComponents();
 
-        // 2. Panel de preferencias
-        initPreferencesPanel();
-
         // 3. Configura ventana
         initWindow();
 
-        // 4. Configura qué hacer cuando el login tenga éxito
-        authManager.setOnLoginSuccess(this::showMainView);
+        this.mediaComponent = roigMediaPollingComponent;
+        this.authManager = new AuthManager(mediaComponent);
+        this.loginPanel = new LoginPanel(authManager);
 
-        // 5. Intentamos auto-login inteligente
-        if (authManager.tryAutoLogin()) {
-            // Token válido → vamos a la vista principal
-            showMainView();
-        } else {
-            // No hay token o no funciona → mostramos login
-            showLogin();
-        }
-    }
-
-    // ------------------- METODO DE PRUEBA DEL COMPONENTE --------------------
-    private void testLoginAndStartPolling() {
-        String email = "roig@elias.cat";
-        String password = "1234";
-
-        try {
-            // 2. Hacemos login a través del componente
-            String token = roigMediaPollingComponent1.login(email, password);
-            System.out.println("Login OK. Token recibido: " + token);
-
-            // 3. Registramos un listener para ver los nuevos media
-            roigMediaPollingComponent1.addMediaListener(event -> {
-                System.out.println("🟢 Nuevos media detectados: " + event.getNewMedia().size());
-                event.getNewMedia().forEach(m -> {
-                    System.out.println(" - " + m.id + " :: " + m.mediaFileName);
-                });
-                System.out.println("Detectados en: " + event.getDiscoveredAt());
-            });
-
-            // 4. Arrancamos el polling
-            roigMediaPollingComponent1.setRunning(true);
-
-            // 5. Aviso visual opcional
-//            javax.swing.JOptionPane.showMessageDialog(
-//                    this,
-//                    "Login correcto y polling iniciado.",
-//                    "Info",
-//                    javax.swing.JOptionPane.INFORMATION_MESSAGE
-//            );
-            System.out.println("======================================================");
-            String nickname = roigMediaPollingComponent1.getNickName(26);
-            System.out.println("Nickname: " + nickname);
-
-            System.out.println("======================================================");
-            List<cat.dam.roig.roigmediapollingcomponent.Media> all = roigMediaPollingComponent1.getAllMedia();
-            System.out.println("Total media en la red: " + all.size());
-            System.out.println("======================================================");
-
-//            String baseDir = System.getProperty("user.home") + "/Downloads/yt/borrar/";
-//            int mediaId = 2;
-//
-//            File destino = new File(baseDir + "media_" + mediaId + ".bin");
-//
-//            roigMediaPollingComponent1.download(mediaId, destino);
-//
-//            System.out.println("✅ Descarga completada: " + destino.getAbsolutePath());
-
-//            System.out.println("======================================================");
-//            File f = new File("/home/metku/Downloads/yt/borrar/海外コンサートでマリオを完全再現 #piano.mp4");
-//            String respuesta = roigMediaPollingComponent1.uploadFileMultipart(f, "https://www.youtube.com/shorts/zTbrfZdBb4Q?feature=share");
-//            System.out.println("Respuesta upload: " + respuesta);
-//            System.out.println("======================================================");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(
-                    this,
-                    "Error al hacer login: " + ex.getMessage(),
-                    "Error",
-                    javax.swing.JOptionPane.ERROR_MESSAGE
-            );
-        }
+        initPreferencesPanel();
+        initDownloadsList();
+        initMetadataTable();
+        initFilters();
     }
 
     // ------------------- INIT HELPERS -------------------
@@ -196,9 +133,15 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void initFilters() {
-        cmbTipo.addActionListener(e -> applyFiltersIfReady());
-        chkSemana.addActionListener(e -> applyFiltersIfReady());
-        cmbTipo.setSelectedItem("Todo");  // arranque con "Todo"
+        downloadsController = new DownloadsController(
+                downloadsModel,
+                resourceDownloadeds,
+                cmbTipo,
+                chkSemana
+        );
+        cmbTipo.addActionListener(e -> downloadsController.applyFiltersIfReady());
+        chkSemana.addActionListener(e -> downloadsController.applyFiltersIfReady());
+        cmbTipo.setSelectedItem("Todo");
     }
 
     // ------------------- NAVIGATION -------------------
@@ -223,9 +166,6 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public void showMainView() {
-        initDownloadsList();
-        initMetadataTable();
-        initFilters();
         showInContentPanel(pnlMainPanel);
     }
 
@@ -275,7 +215,7 @@ public class MainFrame extends javax.swing.JFrame {
         jrb1080p = new javax.swing.JRadioButton();
         jrb720p = new javax.swing.JRadioButton();
         jrb480p = new javax.swing.JRadioButton();
-        roigMediaPollingComponent1 = new cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent();
+        roigMediaPollingComponent = new cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent();
         jButton1 = new javax.swing.JButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
@@ -465,10 +405,10 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(jrb480p);
         jrb480p.setBounds(320, 230, 60, 22);
 
-        roigMediaPollingComponent1.setApiUrl("https://dimedianetapi9.azurewebsites.net");
-        roigMediaPollingComponent1.setPollingInterval(3);
-        pnlMainPanel.add(roigMediaPollingComponent1);
-        roigMediaPollingComponent1.setBounds(630, 60, 100, 70);
+        roigMediaPollingComponent.setApiUrl("https://dimedianetapi9.azurewebsites.net");
+        roigMediaPollingComponent.setPollingInterval(3);
+        pnlMainPanel.add(roigMediaPollingComponent);
+        roigMediaPollingComponent.setBounds(630, 60, 100, 70);
 
         jButton1.setText("Test Polling");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -967,6 +907,9 @@ public class MainFrame extends javax.swing.JFrame {
         SwingWorker<java.util.List<ResourceDownloaded>, Void> worker = new SwingWorker<>() {
             @Override
             protected java.util.List<ResourceDownloaded> doInBackground() {
+
+                // Avisamos al controller de que empieza el escaneo
+                downloadsController.onScanStarted();
                 try {
                     DownloadsScanner scanner = new DownloadsScanner();
                     return scanner.scan(downloads, false); // no recursivo
@@ -980,10 +923,7 @@ public class MainFrame extends javax.swing.JFrame {
             protected void done() {
                 try {
                     List<ResourceDownloaded> lista = get();
-                    resourceDownloadeds.clear();
-                    resourceDownloadeds.addAll(lista);
-                    hasScanned = true;
-                    applyFilters(); // ahora sí aplico filtros con datos nuevos
+                    downloadsController.onScanFinished(lista);
                 } catch (InterruptedException ie) {
                     // Vuelves a marcar el hilo como interrumpido
                     Thread.currentThread().interrupt();
@@ -994,7 +934,6 @@ public class MainFrame extends javax.swing.JFrame {
                     System.err.println("Scan falló: " + (cause != null ? cause.getMessage() : ee.getMessage()));
                     cause.printStackTrace();
                 } finally {
-                    isScanning = false;          // <- si usas el flag
                     btnScanDownloadFolder.setEnabled(true);
                 }
             }
@@ -1161,7 +1100,6 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_mniLogoutActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        testLoginAndStartPolling();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void doLogout() {
@@ -1199,121 +1137,6 @@ public class MainFrame extends javax.swing.JFrame {
         btnDownload.setEnabled(true);
     }
 
-    // ------ FILTROS DE DESCARGAS ------
-    /**
-     * Aplica los filtros de tipo y semana solo si ya se ha realizado al menos
-     * un escaneo y no hay uno en curso.
-     */
-    private void applyFiltersIfReady() {
-        if (!hasScanned || isScanning) {
-            return;  // no hay datos o estoy escaneando
-        }
-        applyFilters();
-    }
-
-    /**
-     * Rellena el modelo de la JList en función de los filtros activos.
-     */
-    private void applyFilters() {
-        downloadsModel.clear();
-        for (ResourceDownloaded r : resourceDownloadeds) {
-            if (matchTipo(r) && matchSemana(r)) {
-                downloadsModel.addElement(r);
-            }
-        }
-    }
-
-    // ---- helpers de filtro ----
-    private static String norm(String s) {
-        return (s == null) ? "" : s.toLowerCase(java.util.Locale.ROOT).trim();
-    }
-
-    // Extensiones conocidas de audio / vídeo para desambiguar cuando el mimeType no ayuda
-    private static final java.util.Set<String> AUDIO_EXTENSIONS
-            = java.util.Set.of("mp3", "m4a", "aac", "wav", "flac", "ogg", "opus");
-
-    private static final java.util.Set<String> VIDEO_EXTENSIONS
-            = java.util.Set.of("mp4", "mkv", "avi", "mov", "webm", "flv");
-
-    private static boolean esAudio(ResourceDownloaded r) {
-        String mt = norm(r.getMimeType());
-        String ex = norm(r.getExtension()).replace(".", "");
-
-        if (mt.startsWith("audio/")) {
-            return true;
-        }
-        if (mt.startsWith("video/")) {
-            return false;
-        }
-        return AUDIO_EXTENSIONS.contains(ex);
-    }
-
-    private static boolean esVideo(ResourceDownloaded r) {
-        String mt = norm(r.getMimeType());
-        String ex = norm(r.getExtension()).replace(".", "");
-
-        if (mt.startsWith("video/")) {
-            return true;
-        }
-        if (mt.startsWith("audio/")) {
-            return false;
-        }
-        return VIDEO_EXTENSIONS.contains(ex);
-    }
-
-    private boolean matchTipo(ResourceDownloaded r) {
-        String tipo = norm(String.valueOf(cmbTipo.getSelectedItem()));
-
-        if (tipo.contains("video")) {
-            return esVideo(r) && !esAudio(r);
-        }
-        if (tipo.contains("audio")) {
-            return esAudio(r) && !esVideo(r);
-        }
-        return true; // "Todo" / "Todos"
-    }
-
-    private boolean matchSemana(ResourceDownloaded r) {
-        if (!chkSemana.isSelected()) {
-            return true;
-        }
-        if (r.getDownloadDate() == null) {
-            return false;
-        }
-
-        LocalDate hoy = LocalDate.now();
-        LocalDate ini = hoy.with(DayOfWeek.MONDAY);
-        LocalDate fin = ini.plusDays(6);
-        LocalDate f = r.getDownloadDate().toLocalDate();
-
-        return !f.isBefore(ini) && !f.isAfter(fin);
-    }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new MainFrame().setVisible(true));
-    }
-
     // ----- GETTERS Y SETTERS ------
     public String getLastDownloadedFile() {
         return lastDownloadedFile;
@@ -1334,6 +1157,14 @@ public class MainFrame extends javax.swing.JFrame {
             return VideoQuality.P480;
         }
         return VideoQuality.BEST_AVAILABLE;
+    }
+
+    public RoigMediaPollingComponent getRoigMediaPollingComponent1() {
+        return roigMediaPollingComponent;
+    }
+
+    public AuthManager getAuthManager() {
+        return authManager;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1373,7 +1204,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel pnlMainPanel;
     private javax.swing.JRadioButton rbAudio;
     private javax.swing.JRadioButton rbVideo;
-    private cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent roigMediaPollingComponent1;
+    private cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent roigMediaPollingComponent;
     private javax.swing.JScrollPane scpMetaDataTable;
     private javax.swing.JScrollPane scpScanListPane;
     private javax.swing.JScrollPane scrLogArea;
