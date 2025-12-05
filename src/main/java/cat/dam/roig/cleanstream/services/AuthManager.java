@@ -15,8 +15,8 @@ public class AuthManager {
 
     // ---- Preferencias ----
     private final Preferences prefs;
-    private static final String KEY_TOKEN  = "auth.token";
-    private static final String KEY_EMAIL  = "auth.email";
+    private static final String KEY_TOKEN = "auth.token";
+    private static final String KEY_EMAIL = "auth.email";
 
     // ---- Dependencias ----
     private LoginPanel loginPanel;
@@ -27,7 +27,7 @@ public class AuthManager {
 
     public AuthManager(RoigMediaPollingComponent comp) {
         if (comp == null) {
-           throw new IllegalArgumentException("RoigMediaPollingComponent no puede ser null");
+            throw new IllegalArgumentException("RoigMediaPollingComponent no puede ser null");
         }
         this.mediaComponent = comp;
         this.prefs = Preferences.userNodeForPackage(AuthManager.class);
@@ -43,7 +43,6 @@ public class AuthManager {
     }
 
     // ----------------- Gestión de token / remember me -----------------
-
     public void saveToken(String token) {
         if (token != null && !token.isBlank()) {
             prefs.put(KEY_TOKEN, token);
@@ -74,12 +73,10 @@ public class AuthManager {
 
         if (loginPanel != null) {
             loginPanel.setTxtEmail("");
-            // Si quieres, también: loginPanel.setTxtPassword("");
         }
     }
 
     // ----------------- Auto login con token -----------------
-
     /**
      * Intenta usar el token guardado.
      *
@@ -91,11 +88,19 @@ public class AuthManager {
         if (token == null || token.isBlank()) {
             return false;
         }
+
+        // 1. Inyectamos el token en el componente
+        mediaComponent.setToken(token);
+
+        // 2. Rellenamos el email en el loginPanel
+        if (loginPanel != null) {
+            loginPanel.setTxtEmail(getRememberedEmail());
+        }
+
         return true;
     }
 
     // ----------------- Login normal desde el LoginPanel -----------------
-
     /**
      * Ejecuta el login leyendo usuario y password del LoginPanel.
      */
@@ -145,5 +150,9 @@ public class AuthManager {
         } finally {
             Arrays.fill(pwChars, '\0');
         }
+    }
+
+    public void logout() {
+        clearRememberMe();
     }
 }

@@ -1,7 +1,7 @@
 package cat.dam.roig.cleanstream.app;
 
 import cat.dam.roig.cleanstream.main.MainFrame;
-import cat.dam.roig.cleanstrem.controller.MainController;
+import cat.dam.roig.cleanstream.controller.MainController;
 
 /**
  *
