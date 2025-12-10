@@ -16,15 +16,22 @@ public class MainController {
     public MainController(MainFrame mainFrame, AuthManager auth) {
         this.mainFrame = mainFrame;
         this.authManager = auth;
+//        this.downloadsController = downloadsController;
+    }
+
+    // método privado para no duplicar lógica
+    private void onLoginSuccess() {
+        mainFrame.showMainView();
+        mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
     }
 
     public void start() {
-        // Configurar que hacer cuando el login tenga exito
-        authManager.setOnLoginSuccess(mainFrame::showMainView);
+        // Login manual
+        authManager.setOnLoginSuccess(this::onLoginSuccess);
 
-        // Intentar auto-login inteligente
+        // Auto-login
         if (authManager.tryAutoLogin()) {
-            mainFrame.showMainView();
+            onLoginSuccess();
         } else {
             mainFrame.showLogin();
         }

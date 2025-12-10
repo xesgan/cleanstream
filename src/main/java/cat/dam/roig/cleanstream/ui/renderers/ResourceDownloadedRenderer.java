@@ -1,8 +1,10 @@
 package cat.dam.roig.cleanstream.ui.renderers;
 
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
+import cat.dam.roig.cleanstream.models.ResourceState;
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 public class ResourceDownloadedRenderer extends JPanel implements ListCellRenderer<ResourceDownloaded> {
 
@@ -10,7 +12,11 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
     private final JLabel lblTitle = new JLabel();
     private final JLabel lblSub = new JLabel();
 
-    public ResourceDownloadedRenderer() {
+    private final Map<String, ResourceState> stateByFileName;
+
+    public ResourceDownloadedRenderer(Map<String, ResourceState> stateByFileName) {
+        this.stateByFileName = stateByFileName;
+
         setLayout(new BorderLayout(8, 0));
         lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD));
         lblSub.setFont(lblSub.getFont().deriveFont(Font.PLAIN, 11f));
@@ -35,7 +41,16 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
             boolean isSelected, boolean cellHasFocus) {
 
         // Título
-        lblTitle.setText(value.getName());
+        ResourceState state = stateByFileName.getOrDefault(value.getName(), ResourceState.LOCAL_ONLY);
+        String prefix = switch (state) {
+            case BOTH ->
+                "[LOCAL + CLOUD] ";
+            case CLOUD_ONLY ->
+                "[CLOUD] ";
+            case LOCAL_ONLY ->
+                "[LOCAL] ";
+        };
+        lblTitle.setText(prefix + value.getName());
 
         // Subtítulo (elige lo que más te sirva)
         String sub = String.format(".%s   —   %s   —   %s",

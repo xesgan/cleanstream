@@ -32,7 +32,6 @@ public class MainFrame extends javax.swing.JFrame {
     private PreferencesPanel pnlPreferencesPanel;
     private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
     private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
-    private final ResourceDownloadedRenderer RDR = new ResourceDownloadedRenderer();
     private MetadataTableModel metaModel; // para la tabla de metadata
 
     private final RoigMediaPollingComponent mediaComponent;
@@ -89,7 +88,6 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void initDownloadsList() {
         lstDownloadScanList.setModel(downloadsModel);
-        lstDownloadScanList.setCellRenderer(RDR);
         lstDownloadScanList.setFixedCellHeight(56);
     }
 
@@ -111,7 +109,8 @@ public class MainFrame extends javax.swing.JFrame {
                 chkSemana,
                 lstDownloadScanList,
                 metaModel,
-                btnDeleteDownloadFileFolder
+                btnDeleteDownloadFileFolder,
+                getRoigMediaPollingComponent1()
         );
         cmbTipo.addActionListener(e -> downloadsController.applyFiltersIfReady());
         chkSemana.addActionListener(e -> downloadsController.applyFiltersIfReady());
@@ -524,6 +523,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     public AuthManager getAuthManager() {
         return authManager;
+    }
+
+    public DownloadsController getDownloadsController() {
+        return downloadsController;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

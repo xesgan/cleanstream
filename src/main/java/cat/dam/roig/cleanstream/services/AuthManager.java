@@ -89,15 +89,25 @@ public class AuthManager {
             return false;
         }
 
-        // 1. Inyectamos el token en el componente
         mediaComponent.setToken(token);
 
-        // 2. Rellenamos el email en el loginPanel
-        if (loginPanel != null) {
-            loginPanel.setTxtEmail(getRememberedEmail());
-        }
+        try {
+            // Llamada mínima para validar token
+            mediaComponent.getAllMedia(); // o algún endpoint ligero si tienes otro
 
-        return true;
+            // Si llegamos aquí, el token funciona
+            if (loginPanel != null) {
+                loginPanel.setTxtEmail(getRememberedEmail());
+            }
+            return true;
+
+        } catch (Exception ex) {
+            // Token no válido: limpiamos todo
+            ex.printStackTrace();
+            clearRememberMe();
+            mediaComponent.setToken(null);
+            return false;
+        }
     }
 
     // ----------------- Login normal desde el LoginPanel -----------------
