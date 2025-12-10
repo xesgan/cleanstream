@@ -191,8 +191,8 @@ public class DownloadsController {
      * un escaneo y no hay uno en curso.
      */
     public void applyFiltersIfReady() {
-        if (!hasScanned || isScanning) {
-            return;  // no hay datos o estoy escaneando
+        if (isScanning) {
+            return;
         }
         applyFilters();
     }
@@ -202,9 +202,28 @@ public class DownloadsController {
      */
     private void applyFilters() {
         downloadsModel.clear();
+
+        // 1) Recursos locales (LOCAL_ONLY o BOTH)
         for (ResourceDownloaded r : allResources) {
             if (matchTipo(r) && matchSemana(r)) {
                 downloadsModel.addElement(r);
+            }
+        }
+
+        // 2) Recursos que solo están en la nube (CLOUD_ONLY)
+        for (Media m : cloudMedia) {
+            String name = m.mediaFileName;
+            if (name == null) {
+                continue;
+            }
+
+            ResourceState state = stateByFileName.get(name);
+            if (state == ResourceState.CLOUD_ONLY) {
+                ResourceDownloaded virtualRes = toVirtualResource(m);
+
+                if (matchTipo(virtualRes) && matchSemana(virtualRes)) {
+                    downloadsModel.addElement(virtualRes);
+                }
             }
         }
     }
@@ -307,12 +326,12 @@ public class DownloadsController {
 
                     // Merge Cloud + local
                     recomputeStates();
+                    applyFiltersIfReady();
 
 //                    System.out.println("Cloud media loaded: " + cloudMedia.size() + " items");
 //                    cloudMedia.stream()
 //                            .limit(5)
 //                            .forEach(m -> System.out.println(" - " + m.mediaFileName));
-
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(
@@ -354,6 +373,31 @@ public class DownloadsController {
                 stateByFileName.put(name, ResourceState.BOTH);
             }
         }
+    }
+
+    private ResourceDownloaded toVirtualResource(Media m) {
+        ResourceDownloaded r = new ResourceDownloaded();
+        r.setName(m.mediaFileName);
+        r.setRoute(null); // no existe en disco todavía
+
+        // Tamaño desconocido por ahora
+        r.setSize(0L);
+
+        // MIME y extensión desde el nombre
+        r.setMimeType(m.mediaMimeType);
+        String ext = null;
+        if (m.mediaFileName != null) {
+            int i = m.mediaFileName.lastIndexOf('.');
+            if (i > 0 && i < m.mediaFileName.length() - 1) {
+                ext = m.mediaFileName.substring(i + 1);
+            }
+        }
+        r.setExtension(ext);
+
+        // Fecha de descarga local: null (no está descargado)
+        r.setDownloadDate(null);
+
+        return r;
     }
 
 }
