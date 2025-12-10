@@ -2,6 +2,7 @@ package cat.dam.roig.cleanstream.ui;
 
 import cat.dam.roig.cleanstream.main.MainFrame;
 import java.io.File;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -27,46 +28,75 @@ public class PreferencesPanel extends javax.swing.JPanel {
         initComponents();
     }
 
-    
     // ------- GETTERS --------
-    
-    public String getTxtYtDlpPath() {
-        return txtYtDlpPath.getText().trim();
+    public JTextField getTxtYtDlpPath() {
+        return txtYtDlpPath;
     }
 
-    public String getTxtFfpmegDir() {
-        return txtFfpmegDir.getText().trim();
+    public JTextField getTxtDownloadsDir() {
+        return txtDownloadsDir;
     }
 
-    public String getTxtFfprobeDir() {
-        return txtFfprobeDir.getText().trim();
+    public JTextField getTxtFfpmegDir() {
+        return txtFfpmegDir;
     }
 
-    public String getTxtTempDir() {
-        return txtTempDir.getText().trim();
+    public JTextField getTxtFfprobeDir() {
+        return txtFfprobeDir;
     }
 
-    public String getTxtDownloadsDir() {
-        return txtDownloadsDir.getText().trim();
+    public JTextField getTxtTempDir() {
+        return txtTempDir;
     }
 
     public JTextField getTxtScanDownloadsFolder() {
         return txtScanDownloadsFolder;
     }
 
+    public String getSTxtYtDlpPath() {
+        return txtYtDlpPath.getText();
+    }
+
+    public String getSTxtDownloadsDir() {
+        return txtDownloadsDir.getText();
+    }
+
+    public String getSTxtFfpmegDir() {
+        return txtFfpmegDir.getText();
+    }
+
+    public String getSTxtFfprobeDir() {
+        return txtFfprobeDir.getText();
+    }
+
+    public String getSTxtTempDir() {
+        return txtTempDir.getText();
+    }
+
+    public String getSTxtScanDownloadsFolder() {
+        return txtScanDownloadsFolder.getText();
+    }
+
+    public JButton getBtnSave() {
+        return btnSave;
+    }
+
     public String getSldLimitSpeed() {
 
         return switch (sldLimitSpeed.getValue()) {
-            case 0 -> "512K";
-            case 20 -> "1M";
-            default -> "2M";
+            case 0 ->
+                "512K";
+            case 20 ->
+                "1M";
+            default ->
+                "2M";
         };
     }
 
     public boolean getChkCreateM3u() {
         return chkCreateM3u.isSelected();
     }
-    
+
     // Helpers Reusable
     /**
      * Diálogo para elegir ARCHIVO ejecutable (yt-dlp, ffmpeg, ffprobe)
@@ -84,7 +114,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
                 fc.setSelectedFile(current);
             }
         }
-        
+
         // En Windows puedes filtrar .exe; en Linux/Mac no tiene sentido
         if (tryExeFilter && isWindows()) {
             fc.setAcceptAllFileFilterUsed(true);

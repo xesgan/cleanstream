@@ -12,6 +12,7 @@ import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
+import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,6 +57,8 @@ public class MainFrame extends javax.swing.JFrame {
         authManager.setLoginPanel(loginPanel);
 
         initPreferencesPanel();
+        loadPreferencesToUi();
+
         initDownloadsList();
         initMetadataTable();
         initFilters();
@@ -84,6 +87,43 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void initPreferencesPanel() {
         pnlPreferencesPanel = new PreferencesPanel(this);
+        pnlPreferencesPanel.getBtnSave().addActionListener(e -> savePreferencesFromUi());
+    }
+
+    private void loadPreferencesToUi() {
+        // Carpeta de descargas
+        String downloadDir = UserPreferences.getDownloadDir();
+        if (downloadDir != null) {
+            pnlPreferencesPanel.getTxtDownloadsDir().setText(downloadDir);
+        }
+
+        // Rutas de yt-dlp y ffmpeg SOLO si tienes esos campos en el panel
+        String ytDlpPath = UserPreferences.getYtDlpPath();
+        if (ytDlpPath != null) {
+            pnlPreferencesPanel.getTxtYtDlpPath().setText(ytDlpPath);
+        }
+
+        String ffmpegPath = UserPreferences.getFfmpegPath();
+        if (ffmpegPath != null) {
+            pnlPreferencesPanel.getTxtFfpmegDir().setText(ffmpegPath);
+        }
+        
+        String scanPath = UserPreferences.getScanFolderPath();
+        if (scanPath != null) {
+            pnlPreferencesPanel.getTxtScanDownloadsFolder().setText(scanPath);
+        }
+    }
+
+    private void savePreferencesFromUi() {
+        String downloadDir = pnlPreferencesPanel.getTxtDownloadsDir().getText();
+        String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath().getText();
+        String ffmpegPath = pnlPreferencesPanel.getTxtFfpmegDir().getText();
+        String scanPath = pnlPreferencesPanel.getTxtScanDownloadsFolder().getText();
+
+        UserPreferences.setDownloadDir(downloadDir);
+        UserPreferences.setYtDlpPath(ytDlpPath);
+        UserPreferences.setFfmpegPath(ffmpegPath);
+        UserPreferences.setScanFolderPath(scanPath);
     }
 
     private void initDownloadsList() {

@@ -151,10 +151,10 @@ public class DownloadExecutionController {
     }
 
     private DownloadContext buildDownloadContext() {
-        String ytDlpPath = preferencesPanel.getTxtYtDlpPath();
-        String ffmpegPath = preferencesPanel.getTxtFfpmegDir();
+        String ytDlpPath = preferencesPanel.getSTxtYtDlpPath();
+        String ffmpegPath = preferencesPanel.getSTxtFfpmegDir();
         String downloadDir = DetectOS.resolveDownloadDir(
-                preferencesPanel.getTxtDownloadsDir().trim()
+                preferencesPanel.getSTxtDownloadsDir().trim()
         );
         String url = txtUrl.getText().trim();
 
