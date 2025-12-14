@@ -150,6 +150,8 @@ public class MainFrame extends javax.swing.JFrame {
                 lstDownloadScanList,
                 metaModel,
                 btnDeleteDownloadFileFolder,
+                btnFetchFromCloud,
+                btnUploadFromLocal,
                 getRoigMediaPollingComponent1()
         );
         cmbTipo.addActionListener(e -> downloadsController.applyFiltersIfReady());
@@ -225,7 +227,8 @@ public class MainFrame extends javax.swing.JFrame {
         jrb720p = new javax.swing.JRadioButton();
         jrb480p = new javax.swing.JRadioButton();
         roigMediaPollingComponent = new cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent();
-        jButton1 = new javax.swing.JButton();
+        btnFetchFromCloud = new javax.swing.JButton();
+        btnUploadFromLocal = new javax.swing.JButton();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniLogout = new javax.swing.JMenuItem();
@@ -353,7 +356,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnScanDownloadFolder);
-        btnScanDownloadFolder.setBounds(990, 100, 72, 24);
+        btnScanDownloadFolder.setBounds(830, 100, 72, 24);
 
         btnDeleteDownloadFileFolder.setText("Delete");
         btnDeleteDownloadFileFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -362,7 +365,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnDeleteDownloadFileFolder);
-        btnDeleteDownloadFileFolder.setBounds(1070, 100, 72, 24);
+        btnDeleteDownloadFileFolder.setBounds(1080, 100, 72, 24);
 
         tblMetaData.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -387,11 +390,11 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(cmbTipo);
-        cmbTipo.setBounds(760, 100, 110, 24);
+        cmbTipo.setBounds(600, 100, 110, 24);
 
         chkSemana.setText("This Week");
         pnlMainPanel.add(chkSemana);
-        chkSemana.setBounds(890, 100, 100, 22);
+        chkSemana.setBounds(730, 100, 100, 22);
 
         bgQuality.add(jrbBestAvailable);
         jrbBestAvailable.setSelected(true);
@@ -417,16 +420,25 @@ public class MainFrame extends javax.swing.JFrame {
         roigMediaPollingComponent.setApiUrl("https://dimedianetapi9.azurewebsites.net");
         roigMediaPollingComponent.setPollingInterval(3);
         pnlMainPanel.add(roigMediaPollingComponent);
-        roigMediaPollingComponent.setBounds(630, 60, 100, 70);
+        roigMediaPollingComponent.setBounds(1120, 0, 100, 70);
 
-        jButton1.setText("Test Polling");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnFetchFromCloud.setText("Fetch");
+        btnFetchFromCloud.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnFetchFromCloudActionPerformed(evt);
             }
         });
-        pnlMainPanel.add(jButton1);
-        jButton1.setBounds(260, 40, 140, 24);
+        pnlMainPanel.add(btnFetchFromCloud);
+        btnFetchFromCloud.setBounds(1002, 100, 70, 24);
+
+        btnUploadFromLocal.setText("Upload");
+        btnUploadFromLocal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUploadFromLocalActionPerformed(evt);
+            }
+        });
+        pnlMainPanel.add(btnUploadFromLocal);
+        btnUploadFromLocal.setBounds(920, 100, 74, 24);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -540,8 +552,15 @@ public class MainFrame extends javax.swing.JFrame {
         mainController.doLogout();
     }//GEN-LAST:event_mniLogoutActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void btnUploadFromLocalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUploadFromLocalActionPerformed
+        // TODO add your handling code here:
+        downloadsController.uploadToCloud(this);
+    }//GEN-LAST:event_btnUploadFromLocalActionPerformed
+
+    private void btnFetchFromCloudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFetchFromCloudActionPerformed
+        // TODO add your handling code here:
+        downloadsController.downloadFromCloud(this);
+    }//GEN-LAST:event_btnFetchFromCloudActionPerformed
 
     // ----- GETTERS Y SETTERS ------
     public VideoQuality getSelectedQuality() {
@@ -575,13 +594,14 @@ public class MainFrame extends javax.swing.JFrame {
     private java.awt.Button btnClear;
     private javax.swing.JButton btnDeleteDownloadFileFolder;
     private javax.swing.JButton btnDownload;
+    private javax.swing.JButton btnFetchFromCloud;
     private javax.swing.JButton btnOpenLast;
     private java.awt.Button btnPaste;
     private javax.swing.JButton btnScanDownloadFolder;
     private javax.swing.JButton btnStop;
+    private javax.swing.JButton btnUploadFromLocal;
     private javax.swing.JCheckBox chkSemana;
     private javax.swing.JComboBox<String> cmbTipo;
-    private javax.swing.JButton jButton1;
     private javax.swing.JRadioButton jrb1080p;
     private javax.swing.JRadioButton jrb480p;
     private javax.swing.JRadioButton jrb720p;

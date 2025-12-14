@@ -4,9 +4,11 @@ import cat.dam.roig.cleanstream.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.ResourceState;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
+import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +34,8 @@ public class DownloadsController {
     private final Map<String, ResourceState> stateByFileName = new HashMap<>();
     private final MetadataTableModel metaModel;
     private final JButton btnDelete;
+    private final JButton btnDownloadFromCloud;
+    private final JButton btnUploadFromLocal;
 
     private final List<Media> cloudMedia = new ArrayList<>();
 
@@ -47,6 +51,8 @@ public class DownloadsController {
             JList<ResourceDownloaded> downloadsList,
             MetadataTableModel metaModel,
             JButton btnDelete,
+            JButton btnDownloadFromCloud,
+            JButton btnUploadFromLocal,
             RoigMediaPollingComponent mediaComponent
     ) {
         if (mediaComponent == null) {
@@ -61,6 +67,8 @@ public class DownloadsController {
         this.downloadsList = downloadsList;
         this.metaModel = metaModel;
         this.btnDelete = btnDelete;
+        this.btnDownloadFromCloud = btnDownloadFromCloud;
+        this.btnUploadFromLocal = btnUploadFromLocal;
 
         initSelectionListener();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
@@ -68,19 +76,36 @@ public class DownloadsController {
 
     private void initSelectionListener() {
         btnDelete.setEnabled(false);
+        btnDownloadFromCloud.setEnabled(false);
+        btnUploadFromLocal.setEnabled(false);
 
         downloadsList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 ResourceDownloaded sel = downloadsList.getSelectedValue();
                 metaModel.setResource(sel);
-                downloadsList.setEnabled(sel != null);
+
+                if (sel == null) {
+                    btnDelete.setEnabled(false);
+                    btnDownloadFromCloud.setEnabled(false);
+                    btnUploadFromLocal.setEnabled(false);
+                    return;
+                }
+
+                String name = sel.getName();
+                ResourceState state = stateByFileName.getOrDefault(name, ResourceState.LOCAL_ONLY);
+
+                btnDelete.setEnabled(sel.getRoute() != null);               // solo si existe en disco
+                btnDownloadFromCloud.setEnabled(state == ResourceState.CLOUD_ONLY); // solo si es cloud-only
+                btnUploadFromLocal.setEnabled(state == ResourceState.LOCAL_ONLY && sel.getRoute() != null);
             }
         });
     }
 
     public void scanDownloads(Path downloadsDir, JButton btnScan) {
 
-        btnScan.setEnabled(false);
+        if (btnScan != null) {
+            btnScan.setEnabled(false);
+        }
 
         SwingWorker<List<ResourceDownloaded>, Void> worker = new SwingWorker<>() {
 
@@ -104,7 +129,9 @@ public class DownloadsController {
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    btnScan.setEnabled(true);
+                    if (btnScan != null) {
+                        btnScan.setEnabled(true);
+                    }
                 }
             }
         };
@@ -142,6 +169,14 @@ public class DownloadsController {
             if (deleted) {
                 downloadsModel.remove(idx);
 
+                // Re-scan local
+                String scanDir = UserPreferences.getScanFolderPath();
+                if (scanDir != null && !scanDir.isBlank()) {
+                    scanDownloads(Paths.get(scanDir), null);
+                }
+
+                loadCloudMedia(parentForDialog);
+
                 JOptionPane.showMessageDialog(
                         parentForDialog,
                         "Archivo eliminado.",
@@ -166,6 +201,99 @@ public class DownloadsController {
                     JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    public void downloadFromCloud(java.awt.Component parent) {
+
+        ResourceDownloaded sel = downloadsList.getSelectedValue();
+        if (sel == null) {
+            return;
+        }
+
+        ResourceState state = stateByFileName.get(sel.getName());
+        if (state != ResourceState.CLOUD_ONLY) {
+            return;
+        }
+
+        // Buscar el Media real
+        Media media = cloudMedia.stream()
+                .filter(m -> sel.getName().equals(m.mediaFileName))
+                .findFirst()
+                .orElse(null);
+
+        if (media == null) {
+            JOptionPane.showMessageDialog(parent, "Cloud media not found.");
+            return;
+        }
+
+        // Carpeta destino (la de scan)
+        String baseDir = UserPreferences.getDownloadDir();
+        if (baseDir == null || baseDir.isBlank()) {
+            JOptionPane.showMessageDialog(parent, "Scan folder not configured.");
+            return;
+        }
+
+        File dest = new File(baseDir, media.mediaFileName);
+
+        // Descargar en background
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                mediaComponent.download(media.id, dest);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                // Re-scan local y refresco
+                scanDownloads(Paths.get(baseDir), null);
+            }
+        }.execute();
+    }
+
+    public void uploadToCloud(java.awt.Component parent) {
+
+        ResourceDownloaded sel = downloadsList.getSelectedValue();
+        if (sel == null) {
+            return;
+        }
+
+        ResourceState state = stateByFileName.getOrDefault(sel.getName(), ResourceState.LOCAL_ONLY);
+        String fromUrl = (sel.getSourceURL() != null) ? sel.getSourceURL() : "";
+
+        // Solo subimos si es local-only y existe en disco
+        if (state != ResourceState.LOCAL_ONLY || sel.getRoute() == null || sel.getRoute().isBlank()) {
+            return;
+        }
+
+        File file = new File(sel.getRoute());
+        if (!file.exists() || !file.isFile()) {
+            JOptionPane.showMessageDialog(parent, "Local file not found:\n" + file, "Upload", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                mediaComponent.uploadFileMultipart(file, fromUrl);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get(); // si falló, aquí salta excepción
+                    JOptionPane.showMessageDialog(parent, "Uploaded to cloud.", "Upload", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Refrescar nube y estados
+                    loadCloudMedia(parent);
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(parent, "Upload failed.", "Upload", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     /**

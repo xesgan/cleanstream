@@ -7,24 +7,26 @@ import java.time.LocalDateTime;
  * @author metku
  */
 public class ResourceDownloaded {
-    
+
     private String name;
     private String route;
     private long size;
     private String mimeType;
     private LocalDateTime downloadDate;
     private String extension;
+    private String sourceURL;
 
     public ResourceDownloaded() {
     }
 
-    public ResourceDownloaded(String name, String route, long size, String mimeType, LocalDateTime downloadDate, String extension) {
+    public ResourceDownloaded(String name, String route, long size, String mimeType, LocalDateTime downloadDate, String extension, String sourceUrl) {
         this.name = name;
         this.route = route;
         this.size = size;
         this.mimeType = mimeType;
         this.downloadDate = downloadDate;
         this.extension = extension;
+        this.sourceURL = sourceUrl;
     }
 
     public String getName() {
@@ -46,7 +48,7 @@ public class ResourceDownloaded {
     public void setSize(long size) {
         this.size = size;
     }
-    
+
     public void setRoute(String route) {
         this.route = route;
     }
@@ -75,9 +77,17 @@ public class ResourceDownloaded {
         this.extension = extension;
     }
 
+    public String getSourceURL() {
+        return sourceURL;
+    }
+
+    public void setSourceURL(String sourceURL) {
+        this.sourceURL = sourceURL;
+    }
+
     @Override
     public String toString() {
-        return name + " || Size=" + size + ", mimeType=" + mimeType + ", downloadDate=" + downloadDate + ", extension=" + extension + '}';
+        return "ResourceDownloaded{" + "name=" + name + ", route=" + route + ", size=" + size + ", mimeType=" + mimeType + ", downloadDate=" + downloadDate + ", extension=" + extension + ", sourceURL=" + sourceURL + '}';
     }
-    
+
 }
