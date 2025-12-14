@@ -50,10 +50,12 @@ public class MainController {
         if (opt != JOptionPane.YES_OPTION) {
             return; // usuario canceló
         }
-        // Limpiar estado de sesion
-        authManager.clearRememberMe();
-        // Volver a la pantalla login
-        authManager.logout();
+        if (authManager.isRememberEnabled()) {
+            authManager.logoutButKeepEmail();
+        } else {
+            authManager.clearRememberMe();
+        }
+        authManager.logout();   // si este hace algo extra
         mainFrame.showLogin();
     }
 }

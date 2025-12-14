@@ -17,6 +17,7 @@ public class AuthManager {
     private final Preferences prefs;
     private static final String KEY_TOKEN = "auth.token";
     private static final String KEY_EMAIL = "auth.email";
+    private static final String KEY_REMEMBER_ENABLED = "rememberEnabled";
 
     // ---- Dependencias ----
     private LoginPanel loginPanel;
@@ -61,18 +62,41 @@ public class AuthManager {
         // Guardamos el email y el token con las mismas claves que se usan en AuthManager
         prefs.put(KEY_EMAIL, email);
         saveToken(token);
+        System.out.println("SAVE remember: email=" + prefs.get(KEY_EMAIL, "<null>"));
     }
 
     public String getRememberedEmail() {
         return prefs.get(KEY_EMAIL, "");
     }
 
+    public boolean isRememberEnabled() {
+        return prefs.getBoolean(KEY_REMEMBER_ENABLED, false);
+    }
+
+    private void setRememberEnabled(boolean enabled) {
+        prefs.putBoolean(KEY_REMEMBER_ENABLED, enabled);
+    }
+
     public void clearRememberMe() {
         prefs.remove(KEY_EMAIL);
         clearToken();
+        mediaComponent.setToken(null);
 
         if (loginPanel != null) {
             loginPanel.setTxtEmail("");
+            loginPanel.getTxtPassword().setText("");
+        }
+    }
+
+    public void logoutButKeepEmail() {
+        clearToken();
+        mediaComponent.setToken(null);
+
+        if (loginPanel != null) {
+            String email = prefs.get(KEY_EMAIL, "");
+            System.out.println("LOGOUT keep: email=" + prefs.get(KEY_EMAIL, "<null>"));
+            loginPanel.setTxtEmail(email);
+            loginPanel.getTxtPassword().setText("");
         }
     }
 
@@ -141,8 +165,10 @@ public class AuthManager {
             // Guardamos o limpiamos el Remember Me segun el estado del checkbox
             if (loginPanel.isRememberMeSelected()) {
                 saveRememberMe(email, mediaComponent.getToken());
+                setRememberEnabled(true);
             } else {
                 clearRememberMe();
+                setRememberEnabled(false);
             }
 
             // Avisamos de que el login ha sido un exito
@@ -163,6 +189,11 @@ public class AuthManager {
     }
 
     public void logout() {
-        clearRememberMe();
+        clearToken();
+        mediaComponent.setToken(null);
+
+        if (loginPanel != null) {
+            loginPanel.getTxtPassword().setText("");
+        }
     }
 }
