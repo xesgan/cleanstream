@@ -19,6 +19,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JTextArea;
@@ -39,6 +40,7 @@ public class DownloadExecutionController {
     private final JButton btnStop;
     private final JRadioButton rbAudio;
     private final JProgressBar pbDownload;
+    private final DownloadsController downloadsController;
 
     // Estado que antes estaba en MainFrame
     private volatile Process currentProcess;
@@ -52,7 +54,8 @@ public class DownloadExecutionController {
             JButton btnDownload,
             JButton btnStop,
             JRadioButton rbAudio,
-            JProgressBar pbDownload) {
+            JProgressBar pbDownload,
+            DownloadsController downloadsController) {
         this.mainFrame = mainFrame;
         this.preferencesPanel = preferencesPanel;
         this.txtUrl = txtUrl;
@@ -61,6 +64,7 @@ public class DownloadExecutionController {
         this.btnStop = btnStop;
         this.rbAudio = rbAudio;
         this.pbDownload = pbDownload;
+        this.downloadsController = downloadsController;
     }
 
     public void startDownload() {
@@ -424,6 +428,19 @@ public class DownloadExecutionController {
                         } else {
                             logArea.append("Couldn't find the downloaded file.\n");
                         }
+                    }
+
+                    if (exit == 0) {
+                        // ✅ REFRESCAR LISTA LOCAL tras descarga OK
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            // 1) Lee el path que tengas en el preferences panel
+                            String input = preferencesPanel.getTxtScanDownloadsFolder().getText();
+                            String finalDirStr = DetectOS.resolveDownloadDir(input);
+                            java.nio.file.Path downloads = java.nio.file.Paths.get(finalDirStr);
+
+                            // 2) Re-escanea usando tu controlador (sin btnScan)
+                            mainFrame.getDownloadsController().scanDownloads(downloads, null);
+                        });
                     }
 
                 } catch (CancellationException ce) {

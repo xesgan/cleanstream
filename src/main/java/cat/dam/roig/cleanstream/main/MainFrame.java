@@ -77,7 +77,8 @@ public class MainFrame extends javax.swing.JFrame {
                 btnDownload,
                 btnStop,
                 rbAudio,
-                pbDownload
+                pbDownload,
+                downloadsController
         );
     }
 

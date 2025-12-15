@@ -284,7 +284,6 @@ public class DownloadsController {
                 try {
                     get(); // si falló, aquí salta excepción
                     JOptionPane.showMessageDialog(parent, "Uploaded to cloud.", "Upload", JOptionPane.INFORMATION_MESSAGE);
-
                     // Refrescar nube y estados
                     loadCloudMedia(parent);
 
