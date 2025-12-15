@@ -456,7 +456,9 @@ public class DownloadsController {
                     recomputeStates();
                     applyFiltersIfReady();
 
-//                    System.out.println("Cloud media loaded: " + cloudMedia.size() + " items");
+                    System.out.println("[UI] cloudMedia loaded: " + remote.size());
+
+//                    System.out.println("[UI] Cloud media loaded: " + cloudMedia.size() + " items");
 //                    cloudMedia.stream()
 //                            .limit(5)
 //                            .forEach(m -> System.out.println(" - " + m.mediaFileName));

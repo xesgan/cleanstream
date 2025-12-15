@@ -11,7 +11,7 @@ public class CleanStreamApp {
     public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(() -> {
             MainFrame frame = new MainFrame();
-            MainController controller = new MainController(frame, frame.getAuthManager());
+            MainController controller = new MainController(frame, frame.getAuthManager(), frame.getRoigMediaPollingComponent1());
             controller.start();           // decide login/autologin
             frame.setVisible(true);
         });

@@ -67,7 +67,7 @@ public class MainFrame extends javax.swing.JFrame {
         initMetadataTable();
         initFilters();
 
-        this.mainController = new MainController(this, authManager);
+        this.mainController = new MainController(this, authManager, mediaComponent);
 
         downloadExecutionController = new DownloadExecutionController(
                 this,
