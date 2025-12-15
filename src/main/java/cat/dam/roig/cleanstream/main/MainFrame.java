@@ -13,11 +13,16 @@ import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
 import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -39,7 +44,6 @@ public class MainFrame extends javax.swing.JFrame {
     private final LoginPanel loginPanel;
     private final DownloadExecutionController downloadExecutionController;
     private final MainController mainController;
-    
 
     /**
      * Creates new form MainFrame
@@ -108,7 +112,7 @@ public class MainFrame extends javax.swing.JFrame {
         if (ffmpegPath != null) {
             pnlPreferencesPanel.getTxtFfpmegDir().setText(ffmpegPath);
         }
-        
+
         String scanPath = UserPreferences.getScanFolderPath();
         if (scanPath != null) {
             pnlPreferencesPanel.getTxtScanDownloadsFolder().setText(scanPath);
@@ -260,6 +264,11 @@ public class MainFrame extends javax.swing.JFrame {
         txtUrl.setBounds(80, 100, 350, 24);
 
         btnPaste.setLabel("Paste");
+        btnPaste.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPasteActionPerformed(evt);
+            }
+        });
         pnlMainPanel.add(btnPaste);
         btnPaste.setBounds(440, 100, 140, 25);
 
@@ -559,6 +568,29 @@ public class MainFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
         downloadsController.downloadFromCloud(this);
     }//GEN-LAST:event_btnFetchFromCloudActionPerformed
+
+    private void btnPasteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPasteActionPerformed
+        try {
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Transferable t = clipboard.getContents(null);
+
+            if (t != null && t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                String text = (String) t.getTransferData(DataFlavor.stringFlavor);
+
+                txtUrl.setText("");        // limpiar
+                txtUrl.setText(text.trim()); // pegar
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No text found in clipboard.",
+                    "Paste",
+                    JOptionPane.WARNING_MESSAGE
+            );
+        }
+
+    }//GEN-LAST:event_btnPasteActionPerformed
 
     // ----- GETTERS Y SETTERS ------
     public VideoQuality getSelectedQuality() {
