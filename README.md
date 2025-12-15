@@ -173,7 +173,7 @@ Incluye:
 ## 🚀 Instalación
 
 ```bash
-git clone https://github.com/tu-usuario/cleanstream.git
+git clone https://github.com/xesgan/cleanstream.git
 ```
 
 Abrir en NetBeans 27/28 con JDK 24 y ejecutar con Maven.
