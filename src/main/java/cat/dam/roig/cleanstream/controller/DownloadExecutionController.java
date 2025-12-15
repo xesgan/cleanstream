@@ -19,6 +19,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -37,6 +38,7 @@ public class DownloadExecutionController {
     private final JButton btnDownload;
     private final JButton btnStop;
     private final JRadioButton rbAudio;
+    private final JProgressBar pbDownload;
 
     // Estado que antes estaba en MainFrame
     private volatile Process currentProcess;
@@ -49,7 +51,8 @@ public class DownloadExecutionController {
             JTextArea logArea,
             JButton btnDownload,
             JButton btnStop,
-            JRadioButton rbAudio) {
+            JRadioButton rbAudio,
+            JProgressBar pbDownload) {
         this.mainFrame = mainFrame;
         this.preferencesPanel = preferencesPanel;
         this.txtUrl = txtUrl;
@@ -57,6 +60,7 @@ public class DownloadExecutionController {
         this.btnDownload = btnDownload;
         this.btnStop = btnStop;
         this.rbAudio = rbAudio;
+        this.pbDownload = pbDownload;
     }
 
     public void startDownload() {
@@ -98,6 +102,7 @@ public class DownloadExecutionController {
     /**
      * Intenta abrir el último archivo descargado. Si es una playlist (.m3u /
      * .m3u8), usa VLC. En caso contrario, usa Desktop.open().
+     *
      * @param parent
      * @param btnOpenLast
      */
@@ -254,6 +259,10 @@ public class DownloadExecutionController {
         command.add("--print");
         command.add("QUALITY:%(format_id)s|%(resolution)s|%(fps)s|v:%(vcodec)s|a:%(acodec)s");
 
+        // ProgressBar
+        command.add("--progress");
+        command.add("--newline");
+
         // URL al final
         command.add(ctx.url.trim());
 
@@ -267,6 +276,10 @@ public class DownloadExecutionController {
     private void prepareUiBeforeDownload(List<String> command) {
         logArea.setText("");
         logArea.append("CMD: " + String.join(" ", command) + "\n\n");
+
+        pbDownload.setIndeterminate(true);
+        pbDownload.setString("Downloading...");
+        pbDownload.setValue(0);
 
         btnDownload.setEnabled(false);
         btnStop.setEnabled(true);
@@ -329,6 +342,13 @@ public class DownloadExecutionController {
                 for (String line : lines) {
                     logArea.append(line + "\n");
 
+                    Integer p = parseProgressPercent(line);
+                    if (p != null) {
+                        pbDownload.setIndeterminate(false);
+                        pbDownload.setValue(p);
+                        pbDownload.setString(p + "%");
+                    }
+
                     // Captura directa del output de --print after_move:filepath
                     if (!line.isBlank() && new File(line).isAbsolute()) {
                         downloadedFiles.add(line);
@@ -360,25 +380,20 @@ public class DownloadExecutionController {
 
             @Override
             protected void done() {
+                int exit = -1;
+                boolean cancelled = isCancelled();
+
+                try {
+                    if (!cancelled) {
+                        exit = get();
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    System.getLogger(DownloadExecutionController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                }
                 try {
                     if (isCancelled()) {
                         logArea.append("\n[STOP] Cancelled by user.\n");
                         return;
-                    }
-
-                    int exit = get();
-
-                    String allLog = logArea.getText();
-
-                    if (allLog.contains("QUALITY:18|640x360")) {
-                        JOptionPane.showMessageDialog(
-                                null,
-                                "YouTube ha limitado este vídeo a 360p (SABR).\n"
-                                + "Tu selección de calidad no se pudo aplicar.\n\n"
-                                + "Si necesitas 1080p+, añade un PO token en Preferencias.",
-                                "Aviso de calidad YouTube",
-                                JOptionPane.INFORMATION_MESSAGE
-                        );
                     }
 
                     logArea.append("\nProcess ended with code: " + exit + "\n");
@@ -413,13 +428,6 @@ public class DownloadExecutionController {
 
                 } catch (CancellationException ce) {
                     logArea.append("\n[STOP] Cancelled by user.\n");
-                } catch (ExecutionException ee) {
-                    Throwable cause = ee.getCause();
-                    logArea.append("ERROR when finished: "
-                            + (cause != null ? cause.toString() : ee.toString()) + "\n");
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    logArea.append("ERROR when finished: " + ie.toString() + "\n");
                 } catch (IOException ex) {
                     System.getLogger(MainFrame.class.getName())
                             .log(System.Logger.Level.ERROR, (String) null, ex);
@@ -428,6 +436,57 @@ public class DownloadExecutionController {
                     btnStop.setEnabled(false);
                     currentProcess = null;
                     currentDownloadWorker = null;
+                    pbDownload.setIndeterminate(false);
+                    if (!isCancelled() && exit == 0) {
+                        pbDownload.setValue(100);
+                        pbDownload.setString("Completed");
+                    } else {
+                        pbDownload.setValue(0);
+                        pbDownload.setString("Idle");
+                    }
+                }
+            }
+
+            // Helper ProgressBar
+            private static Integer parseProgressPercent(String line) {
+                if (line == null) {
+                    return null;
+                }
+
+                // Ejemplo típico:
+                // [download]  12.3% of 10.00MiB at 1.23MiB/s ETA 00:10
+                int idx = line.indexOf('%');
+                if (idx == -1) {
+                    return null;
+                }
+
+                // Busca hacia atrás el número antes del %
+                int start = idx - 1;
+                while (start >= 0) {
+                    char c = line.charAt(start);
+                    if ((c >= '0' && c <= '9') || c == '.' || c == ' ') {
+                        start--;
+                    } else {
+                        break;
+                    }
+                }
+                String num = line.substring(start + 1, idx).trim();
+                if (num.isEmpty()) {
+                    return null;
+                }
+
+                try {
+                    double d = Double.parseDouble(num);
+                    int p = (int) Math.round(d);
+                    if (p < 0) {
+                        p = 0;
+                    }
+                    if (p > 100) {
+                        p = 100;
+                    }
+                    return p;
+                } catch (NumberFormatException ex) {
+                    return null;
                 }
             }
 
@@ -512,7 +571,6 @@ public class DownloadExecutionController {
         final String downloadDir;
         final String url;
         final boolean audio;
-        final boolean isYouTube;
 
         DownloadContext(String ytDlpPath,
                 String ffmpegPath,
@@ -525,7 +583,6 @@ public class DownloadExecutionController {
             this.downloadDir = downloadDir;
             this.url = url;
             this.audio = audio;
-            this.isYouTube = isYouTube;
         }
     }
 }

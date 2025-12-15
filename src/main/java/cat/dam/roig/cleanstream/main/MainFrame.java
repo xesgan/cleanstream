@@ -9,7 +9,6 @@ import cat.dam.roig.cleanstream.ui.AboutDialog;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
 import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.utils.DetectOS;
-import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
 import cat.dam.roig.cleanstream.services.UserPreferences;
@@ -40,6 +39,7 @@ public class MainFrame extends javax.swing.JFrame {
     private final LoginPanel loginPanel;
     private final DownloadExecutionController downloadExecutionController;
     private final MainController mainController;
+    
 
     /**
      * Creates new form MainFrame
@@ -72,7 +72,8 @@ public class MainFrame extends javax.swing.JFrame {
                 txaLogArea,
                 btnDownload,
                 btnStop,
-                rbAudio
+                rbAudio,
+                pbDownload
         );
     }
 
@@ -200,7 +201,6 @@ public class MainFrame extends javax.swing.JFrame {
         lblUrl = new javax.swing.JLabel();
         txtUrl = new javax.swing.JTextField();
         btnPaste = new java.awt.Button();
-        btnClear = new java.awt.Button();
         lblFormat = new javax.swing.JLabel();
         rbVideo = new javax.swing.JRadioButton();
         rbAudio = new javax.swing.JRadioButton();
@@ -212,8 +212,6 @@ public class MainFrame extends javax.swing.JFrame {
         lblOutput = new javax.swing.JLabel();
         scrLogArea = new javax.swing.JScrollPane();
         txaLogArea = new javax.swing.JTextArea();
-        lblStatus = new javax.swing.JLabel();
-        lblActualDir = new javax.swing.JLabel();
         scpScanListPane = new javax.swing.JScrollPane();
         lstDownloadScanList = new javax.swing.JList<>();
         btnScanDownloadFolder = new javax.swing.JButton();
@@ -229,6 +227,7 @@ public class MainFrame extends javax.swing.JFrame {
         roigMediaPollingComponent = new cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent();
         btnFetchFromCloud = new javax.swing.JButton();
         btnUploadFromLocal = new javax.swing.JButton();
+        pbDownload = new javax.swing.JProgressBar();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniLogout = new javax.swing.JMenuItem();
@@ -258,15 +257,11 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(txtUrl);
-        txtUrl.setBounds(110, 100, 320, 24);
+        txtUrl.setBounds(80, 100, 350, 24);
 
         btnPaste.setLabel("Paste");
         pnlMainPanel.add(btnPaste);
-        btnPaste.setBounds(460, 100, 47, 25);
-
-        btnClear.setLabel("Clear");
-        pnlMainPanel.add(btnClear);
-        btnClear.setBounds(520, 100, 46, 25);
+        btnPaste.setBounds(440, 100, 140, 25);
 
         lblFormat.setText("Format:");
         pnlMainPanel.add(lblFormat);
@@ -281,7 +276,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(rbVideo);
-        rbVideo.setBounds(110, 160, 57, 22);
+        rbVideo.setBounds(110, 160, 70, 22);
 
         bgFormat.add(rbAudio);
         rbAudio.setText("Audio");
@@ -291,15 +286,15 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(rbAudio);
-        rbAudio.setBounds(200, 160, 58, 22);
+        rbAudio.setBounds(200, 160, 80, 22);
 
         lblOptions.setText("Quality:");
         pnlMainPanel.add(lblOptions);
-        lblOptions.setBounds(40, 200, 46, 18);
+        lblOptions.setBounds(40, 200, 60, 18);
 
         lblControls.setText("Controls:");
         pnlMainPanel.add(lblControls);
-        lblControls.setBounds(40, 280, 54, 18);
+        lblControls.setBounds(40, 280, 80, 18);
 
         btnDownload.setText("Download");
         btnDownload.addActionListener(new java.awt.event.ActionListener() {
@@ -339,10 +334,6 @@ public class MainFrame extends javax.swing.JFrame {
 
         pnlMainPanel.add(scrLogArea);
         scrLogArea.setBounds(30, 380, 550, 170);
-        pnlMainPanel.add(lblStatus);
-        lblStatus.setBounds(30, 560, 115, 27);
-        pnlMainPanel.add(lblActualDir);
-        lblActualDir.setBounds(400, 560, 163, 27);
 
         scpScanListPane.setViewportView(lstDownloadScanList);
 
@@ -365,7 +356,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnDeleteDownloadFileFolder);
-        btnDeleteDownloadFileFolder.setBounds(1080, 100, 72, 24);
+        btnDeleteDownloadFileFolder.setBounds(1090, 100, 72, 24);
 
         tblMetaData.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -400,12 +391,12 @@ public class MainFrame extends javax.swing.JFrame {
         jrbBestAvailable.setSelected(true);
         jrbBestAvailable.setText("Best Available");
         pnlMainPanel.add(jrbBestAvailable);
-        jrbBestAvailable.setBounds(50, 230, 105, 22);
+        jrbBestAvailable.setBounds(50, 230, 120, 22);
 
         bgQuality.add(jrb1080p);
         jrb1080p.setText("1080p");
         pnlMainPanel.add(jrb1080p);
-        jrb1080p.setBounds(170, 230, 60, 22);
+        jrb1080p.setBounds(170, 230, 80, 22);
 
         bgQuality.add(jrb720p);
         jrb720p.setText("720p");
@@ -429,7 +420,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnFetchFromCloud);
-        btnFetchFromCloud.setBounds(1002, 100, 70, 24);
+        btnFetchFromCloud.setBounds(1010, 100, 70, 24);
 
         btnUploadFromLocal.setText("Upload");
         btnUploadFromLocal.addActionListener(new java.awt.event.ActionListener() {
@@ -438,7 +429,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnUploadFromLocal);
-        btnUploadFromLocal.setBounds(920, 100, 74, 24);
+        btnUploadFromLocal.setBounds(910, 100, 90, 24);
+
+        pbDownload.setForeground(new java.awt.Color(0, 0, 255));
+        pbDownload.setFocusable(false);
+        pbDownload.setString("50%");
+        pbDownload.setStringPainted(true);
+        pnlMainPanel.add(pbDownload);
+        pbDownload.setBounds(30, 560, 550, 20);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -591,7 +589,6 @@ public class MainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgFormat;
     private javax.swing.ButtonGroup bgQuality;
-    private java.awt.Button btnClear;
     private javax.swing.JButton btnDeleteDownloadFileFolder;
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnFetchFromCloud;
@@ -606,12 +603,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JRadioButton jrb480p;
     private javax.swing.JRadioButton jrb720p;
     private javax.swing.JRadioButton jrbBestAvailable;
-    private javax.swing.JLabel lblActualDir;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;
     private javax.swing.JLabel lblOptions;
     private javax.swing.JLabel lblOutput;
-    private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblUrl;
     private javax.swing.JList<ResourceDownloaded> lstDownloadScanList;
     private javax.swing.JMenuBar mnbBar;
@@ -622,6 +617,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenu mnuEdit;
     private javax.swing.JMenu mnuFile;
     private javax.swing.JMenu mnuHelp;
+    private javax.swing.JProgressBar pbDownload;
     private javax.swing.JPanel pnlContent;
     private javax.swing.JPanel pnlMainPanel;
     private javax.swing.JRadioButton rbAudio;

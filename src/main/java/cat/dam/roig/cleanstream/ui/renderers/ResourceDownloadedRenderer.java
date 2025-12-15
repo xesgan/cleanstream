@@ -51,6 +51,7 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
                 "[LOCAL] ";
         };
         lblTitle.setText(prefix + value.getName());
+        lblTitle.setToolTipText(prefix + value.getName());
 
         // Subtítulo (elige lo que más te sirva)
         String sub = String.format(".%s   —   %s   —   %s",
