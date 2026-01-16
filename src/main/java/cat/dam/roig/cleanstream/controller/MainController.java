@@ -61,6 +61,7 @@ public class MainController {
         mediaComponent.setRunning(false);
         authManager.logout();
         mainFrame.showLogin();
+        
     }
 
     private void initMediaPollingListener() {

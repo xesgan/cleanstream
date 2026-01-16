@@ -191,6 +191,7 @@ public class AuthManager {
     public void logout() {
         clearToken();
         mediaComponent.setToken(null);
+        loginPanel.resetUiState();
 
         if (loginPanel != null) {
             loginPanel.getTxtPassword().setText("");
