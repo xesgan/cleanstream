@@ -7,12 +7,14 @@ import cat.dam.roig.cleanstream.models.VideoQuality;
 import cat.dam.roig.cleanstream.services.AuthManager;
 import cat.dam.roig.cleanstream.ui.AboutDialog;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
+import cat.dam.roig.cleanstream.ui.UiColors;
 import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
 import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -51,6 +53,7 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         // 1. Construye UI base (paneles, botones, menús...)
         initComponents();
+        initUx();
 
         // 3. Configura ventana
         initWindow();
@@ -233,6 +236,7 @@ public class MainFrame extends javax.swing.JFrame {
         btnFetchFromCloud = new javax.swing.JButton();
         btnUploadFromLocal = new javax.swing.JButton();
         pbDownload = new javax.swing.JProgressBar();
+        jLabel1 = new javax.swing.JLabel();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniLogout = new javax.swing.JMenuItem();
@@ -271,7 +275,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnPaste);
-        btnPaste.setBounds(440, 100, 140, 25);
+        btnPaste.setBounds(440, 100, 80, 25);
 
         lblFormat.setText("Format:");
         pnlMainPanel.add(lblFormat);
@@ -331,7 +335,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnOpenLast);
-        btnOpenLast.setBounds(430, 310, 140, 24);
+        btnOpenLast.setBounds(430, 310, 90, 24);
 
         lblOutput.setText("Output:");
         pnlMainPanel.add(lblOutput);
@@ -343,12 +347,12 @@ public class MainFrame extends javax.swing.JFrame {
         scrLogArea.setViewportView(txaLogArea);
 
         pnlMainPanel.add(scrLogArea);
-        scrLogArea.setBounds(30, 380, 550, 170);
+        scrLogArea.setBounds(30, 380, 490, 170);
 
         scpScanListPane.setViewportView(lstDownloadScanList);
 
         pnlMainPanel.add(scpScanListPane);
-        scpScanListPane.setBounds(600, 140, 560, 230);
+        scpScanListPane.setBounds(540, 140, 620, 230);
 
         btnScanDownloadFolder.setText("Scan");
         btnScanDownloadFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -357,7 +361,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnScanDownloadFolder);
-        btnScanDownloadFolder.setBounds(830, 100, 72, 24);
+        btnScanDownloadFolder.setBounds(760, 100, 72, 24);
 
         btnDeleteDownloadFileFolder.setText("Delete");
         btnDeleteDownloadFileFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -366,7 +370,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnDeleteDownloadFileFolder);
-        btnDeleteDownloadFileFolder.setBounds(1090, 100, 72, 24);
+        btnDeleteDownloadFileFolder.setBounds(840, 100, 90, 24);
 
         tblMetaData.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -382,7 +386,7 @@ public class MainFrame extends javax.swing.JFrame {
         scpMetaDataTable.setViewportView(tblMetaData);
 
         pnlMainPanel.add(scpMetaDataTable);
-        scpMetaDataTable.setBounds(600, 380, 560, 170);
+        scpMetaDataTable.setBounds(540, 380, 620, 170);
 
         cmbTipo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Only Video", "Only Audio" }));
         cmbTipo.addActionListener(new java.awt.event.ActionListener() {
@@ -391,11 +395,11 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(cmbTipo);
-        cmbTipo.setBounds(600, 100, 110, 24);
+        cmbTipo.setBounds(540, 100, 110, 24);
 
         chkSemana.setText("This Week");
         pnlMainPanel.add(chkSemana);
-        chkSemana.setBounds(730, 100, 100, 22);
+        chkSemana.setBounds(660, 100, 100, 22);
 
         bgQuality.add(jrbBestAvailable);
         jrbBestAvailable.setSelected(true);
@@ -430,7 +434,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnFetchFromCloud);
-        btnFetchFromCloud.setBounds(1010, 100, 70, 24);
+        btnFetchFromCloud.setBounds(1070, 100, 70, 24);
 
         btnUploadFromLocal.setText("Upload");
         btnUploadFromLocal.addActionListener(new java.awt.event.ActionListener() {
@@ -439,14 +443,19 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnUploadFromLocal);
-        btnUploadFromLocal.setBounds(910, 100, 90, 24);
+        btnUploadFromLocal.setBounds(970, 100, 90, 24);
 
         pbDownload.setForeground(new java.awt.Color(0, 0, 255));
         pbDownload.setFocusable(false);
         pbDownload.setString("50%");
         pbDownload.setStringPainted(true);
         pnlMainPanel.add(pbDownload);
-        pbDownload.setBounds(30, 560, 550, 20);
+        pbDownload.setBounds(30, 560, 490, 20);
+
+        jLabel1.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
+        jLabel1.setText(" |");
+        pnlMainPanel.add(jLabel1);
+        jLabel1.setBounds(940, 100, 20, 20);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -619,6 +628,29 @@ public class MainFrame extends javax.swing.JFrame {
         return downloadsController;
     }
 
+    // ----- GETTERS Y SETTERS ------
+    private void initUx() {
+        // Jerarquía visual
+        btnDownload.setBackground(UiColors.PRIMARY);
+        btnDownload.setForeground(Color.WHITE);
+
+        btnDeleteDownloadFileFolder.setBackground(UiColors.NEUTRAL);
+        btnDeleteDownloadFileFolder.setEnabled(false);
+
+        btnUploadFromLocal.setBackground(UiColors.PRIMARY);
+        btnUploadFromLocal.setForeground(Color.WHITE);
+        btnFetchFromCloud.setBackground(UiColors.PRIMARY);
+        btnFetchFromCloud.setForeground(Color.WHITE);
+
+        // Tooltips
+        btnScanDownloadFolder.setToolTipText("Scan local media library");
+        btnDeleteDownloadFileFolder.setToolTipText("Delete selected local media");
+        btnUploadFromLocal.setToolTipText("Upload selected item to cloud");
+        btnFetchFromCloud.setToolTipText("Download selected item from cloud");
+
+    }
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgFormat;
     private javax.swing.ButtonGroup bgQuality;
@@ -632,6 +664,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnUploadFromLocal;
     private javax.swing.JCheckBox chkSemana;
     private javax.swing.JComboBox<String> cmbTipo;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JRadioButton jrb1080p;
     private javax.swing.JRadioButton jrb480p;
     private javax.swing.JRadioButton jrb720p;
