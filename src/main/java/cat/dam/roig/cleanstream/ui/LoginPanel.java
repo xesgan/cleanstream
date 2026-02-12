@@ -4,6 +4,7 @@ import cat.dam.roig.cleanstream.services.AuthManager;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -13,6 +14,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -114,9 +116,6 @@ public final class LoginPanel extends JPanel {
             // La lógica vive en AuthManager
             authManager.doLogin();
         });
-
-        // EXIT
-        btnExit.addActionListener(e -> System.exit(0));
     }
 
     /**
@@ -127,10 +126,6 @@ public final class LoginPanel extends JPanel {
         txtEmail.setToolTipText("Enter your email (e.g. user@domain.com)");
         txtPassword.setToolTipText("Enter your password");
         chkRememberMe.setToolTipText("Remember this session on this machine");
-
-        // “Exit” menos peligroso: lo hacemos menos protagonista
-        btnExit.setToolTipText("Close the application");
-        btnExit.setFocusable(false);
 
         // Foco inicial
         SwingUtilities.invokeLater(new Runnable() {
@@ -191,7 +186,6 @@ public final class LoginPanel extends JPanel {
         pnlBtnsLogin = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
         btnLogin = new JButton("Login");
-        btnExit = new JButton("Exit");
         chkRememberMe = new JCheckBox("Remember me");
 
         // Jerarquía visual simple: Login más importante
@@ -200,9 +194,8 @@ public final class LoginPanel extends JPanel {
         btnLogin.setForeground(Color.WHITE);
 
         pnlBtnsLogin.add(btnLogin);
-        pnlBtnsLogin.add(btnExit);
         pnlBtnsLogin.add(chkRememberMe);
-
+        
         return pnlBtnsLogin;
     }
 

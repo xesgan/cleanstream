@@ -193,6 +193,15 @@ public class MainFrame extends javax.swing.JFrame {
         showInContentPanel(pnlMainPanel);
     }
 
+    // ------------------- NAVIGATION -------------------
+    public void updateSessionUI(boolean loggedIn) {
+        mniPreferences.setVisible(loggedIn);
+        mniPreferences.setEnabled(loggedIn);
+        mnuEdit.setVisible(loggedIn);
+        mniLogout.setVisible(loggedIn);
+        
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -317,7 +326,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnDownload);
-        btnDownload.setBounds(30, 310, 140, 24);
+        btnDownload.setBounds(60, 310, 140, 24);
 
         btnStop.setText("Stop");
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -326,7 +335,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnStop);
-        btnStop.setBounds(230, 310, 140, 24);
+        btnStop.setBounds(210, 310, 140, 24);
 
         btnOpenLast.setText("Open last");
         btnOpenLast.addActionListener(new java.awt.event.ActionListener() {
@@ -335,7 +344,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         pnlMainPanel.add(btnOpenLast);
-        btnOpenLast.setBounds(430, 310, 90, 24);
+        btnOpenLast.setBounds(360, 310, 140, 24);
 
         lblOutput.setText("Output:");
         pnlMainPanel.add(lblOutput);
@@ -628,14 +637,15 @@ public class MainFrame extends javax.swing.JFrame {
         return downloadsController;
     }
 
-    // ----- GETTERS Y SETTERS ------
     private void initUx() {
         // Jerarquía visual
         btnDownload.setBackground(UiColors.PRIMARY);
         btnDownload.setForeground(Color.WHITE);
 
+        btnStop.setBackground(UiColors.CAREFULL);
+        btnStop.setForeground(Color.WHITE);
+
         btnDeleteDownloadFileFolder.setBackground(UiColors.NEUTRAL);
-        btnDeleteDownloadFileFolder.setEnabled(false);
 
         btnUploadFromLocal.setBackground(UiColors.PRIMARY);
         btnUploadFromLocal.setForeground(Color.WHITE);

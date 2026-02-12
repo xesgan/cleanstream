@@ -25,6 +25,7 @@ public class MainController {
     public void start() {
         // Login manual
         authManager.setOnLoginSuccess(() -> {
+            mainFrame.updateSessionUI(true);  // ✅ habilita/visibiliza menú
             mainFrame.showMainView();
             initMediaPollingListener(); 
             mediaComponent.setRunning(true);
@@ -32,11 +33,13 @@ public class MainController {
 
         // Auto-login
         if (authManager.tryAutoLogin()) {
+            mainFrame.updateSessionUI(true);  
             mainFrame.showMainView();
             initMediaPollingListener(); 
             mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
             mediaComponent.setRunning(true);
         } else {
+            mainFrame.updateSessionUI(false); // ✅ menú “capado”
             mainFrame.showLogin();
         }
     }
