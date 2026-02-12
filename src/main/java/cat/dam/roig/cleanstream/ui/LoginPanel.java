@@ -248,7 +248,6 @@ public final class LoginPanel extends JPanel {
      */
     public void setLoading(boolean loading) {
         btnLogin.setEnabled(!loading);
-        btnExit.setEnabled(!loading);
         txtEmail.setEnabled(!loading);
         txtPassword.setEnabled(!loading);
         chkRememberMe.setEnabled(!loading);

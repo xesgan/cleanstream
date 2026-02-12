@@ -1,6 +1,7 @@
 package cat.dam.roig.cleanstream.services;
 
 import java.util.prefs.Preferences;
+import cat.dam.roig.cleanstream.models.PreferencesData;
 
 /**
  * Gestiona las rutas y ajustes persistentes de la aplicación.
@@ -60,15 +61,32 @@ public class UserPreferences {
     public static String getScanFolderPath() {
         return PREFS.get(KEY_SCAN_PATH, null);
     }
-    
+
     public static void setScanFolderPath(String path) {
         if (path == null || path.isBlank()) {
-            PREFS.remove(KEY_SCAN_PATH); 
+            PREFS.remove(KEY_SCAN_PATH);
         } else {
             PREFS.put(KEY_SCAN_PATH, path);
         }
     }
-    
+
+    // --------- SCAN PATH ---------
+    public static PreferencesData load() {
+        PreferencesData d = new PreferencesData();
+        d.setDownloadDir(getDownloadDir());
+        d.setYtDlpPath(getYtDlpPath());
+        d.setFfmpegPath(getFfmpegPath());
+        d.setScanFolderPath(getScanFolderPath());
+        return d;
+    }
+
+    public static void save(PreferencesData d) {
+        setDownloadDir(d.getDownloadDir());
+        setYtDlpPath(d.getYtDlpPath());
+        setFfmpegPath(d.getFfmpegPath());
+        setScanFolderPath(d.getScanFolderPath());
+    }
+
     private UserPreferences() {
         // evitar instanciación
     }

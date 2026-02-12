@@ -171,6 +171,7 @@ public class MainFrame extends javax.swing.JFrame {
     // ------------------- NAVIGATION -------------------
     public void showPreferences() {
         showInContentPanel(pnlPreferencesPanel);
+        pnlPreferencesPanel.onShow(); 
     }
 
     public void showMain() {
@@ -534,6 +535,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void mniPreferencesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniPreferencesActionPerformed
         showPreferences();
+        pnlPreferencesPanel.onShow(); 
     }//GEN-LAST:event_mniPreferencesActionPerformed
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
