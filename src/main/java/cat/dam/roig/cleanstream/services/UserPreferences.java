@@ -17,6 +17,10 @@ public class UserPreferences {
     private static final String KEY_YTDLP_PATH = "ytDlpPath";
     private static final String KEY_FFMPEG_PATH = "ffmpegPath";
     private static final String KEY_SCAN_PATH = "scanFolderPath";
+    private static final String KEY_OPEN_WHEN_DONE = "openWhenDone";
+    private static final String KEY_LIMIT_SPEED_ENABLED = "limitSpeedEnabled";
+    private static final String KEY_SPEED_KBPS = "speedKbps";
+    private static final String KEY_CREATE_M3U = "createM3u";
 
     // --------- DOWNLOAD DIR ---------
     public static String getDownloadDir() {
@@ -70,13 +74,50 @@ public class UserPreferences {
         }
     }
 
-    // --------- SCAN PATH ---------
+    // --------- CHECK BOXES ---------
+    public static boolean getOpenWhenDone() {
+        return PREFS.getBoolean(KEY_OPEN_WHEN_DONE, false);
+    }
+
+    public static void setOpenWhenDone(boolean v) {
+        PREFS.putBoolean(KEY_OPEN_WHEN_DONE, v);
+    }
+
+    public static boolean getLimitSpeedEnabled() {
+        return PREFS.getBoolean(KEY_LIMIT_SPEED_ENABLED, false);
+    }
+
+    public static int getSpeedKbps() {
+        return PREFS.getInt(KEY_SPEED_KBPS, 0);
+    }
+
+    public static void setLimitSpeedEnabled(boolean v) {
+        PREFS.putBoolean(KEY_LIMIT_SPEED_ENABLED, v);
+    }
+
+    public static void setSpeedKbps(int v) {
+        PREFS.putInt(KEY_SPEED_KBPS, v);
+    }
+
+    public static boolean getCreateM3u() {
+        return PREFS.getBoolean(KEY_CREATE_M3U, false);
+    }
+    
+    public static void setCreateM3u(boolean v) {
+        PREFS.putBoolean(KEY_CREATE_M3U, v);
+    }
+
+    // --------- PREFERENCES PERSISTENCE---------
     public static PreferencesData load() {
         PreferencesData d = new PreferencesData();
         d.setDownloadDir(getDownloadDir());
         d.setYtDlpPath(getYtDlpPath());
         d.setFfmpegPath(getFfmpegPath());
         d.setScanFolderPath(getScanFolderPath());
+        d.setOpenWhenDone(getOpenWhenDone());
+        d.setLimitSpeedEnabled(getLimitSpeedEnabled());
+        d.setSpeedKbps(getSpeedKbps());
+        d.setCreateM3u(getCreateM3u());
         return d;
     }
 
@@ -85,6 +126,10 @@ public class UserPreferences {
         setYtDlpPath(d.getYtDlpPath());
         setFfmpegPath(d.getFfmpegPath());
         setScanFolderPath(d.getScanFolderPath());
+        setOpenWhenDone(d.isOpenWhenDone());
+        setLimitSpeedEnabled(d.isLimitSpeedEnabled());
+        setSpeedKbps(d.getSpeedKbps());
+        setCreateM3u(d.isCreateM3u());
     }
 
     private UserPreferences() {

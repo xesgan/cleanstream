@@ -3,7 +3,10 @@ package cat.dam.roig.cleanstream.ui;
 import cat.dam.roig.cleanstream.main.MainFrame;
 import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.cleanstream.models.PreferencesData;
+import java.awt.event.ActionListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -205,6 +208,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
         txtYtDlpPath.setText(d.getYtDlpPath());
         txtFfmegDir.setText(d.getFfmpegPath());
         txtScanDownloadsFolder.setText(d.getScanFolderPath());
+        chkOpenWhenDone.setSelected(d.isOpenWhenDone());
+        chkLimitSpeed.setSelected(d.isLimitSpeedEnabled());
+        sldLimitSpeed.setValue(d.getSpeedKbps());
+        sldLimitSpeed.setEnabled(d.isLimitSpeedEnabled());
+        chkCreateM3u.setSelected(d.isCreateM3u());
 
         setDirty(false);
         loading = false;
@@ -216,6 +224,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
         d.setYtDlpPath(txtYtDlpPath.getText());
         d.setFfmpegPath(txtFfmegDir.getText());
         d.setScanFolderPath(txtScanDownloadsFolder.getText());
+        d.setOpenWhenDone(chkOpenWhenDone.isSelected());
+        d.setLimitSpeedEnabled(chkLimitSpeed.isSelected());
+        d.setSpeedKbps(sldLimitSpeed.getValue());
+        d.setCreateM3u(chkCreateM3u.isSelected());
+        
         return d;
     }
 
@@ -239,15 +252,20 @@ public class PreferencesPanel extends javax.swing.JPanel {
         if (d.getYtDlpPath() != null && d.getYtDlpPath().isBlank()) {
             return "Ruta yt-dlp vacía.";
         }
-        if (d.getFfmpegPath() != null && d.getFfmpegPath().isBlank()) {
-            return "Ruta ffmpeg vacía.";
-        }
+//        if (d.getFfmpegPath() != null && d.getFfmpegPath().isBlank()) {
+//            return "Ruta ffmpeg vacía.";
+//        }
         if (d.getScanFolderPath() != null && d.getScanFolderPath().isBlank()) {
             return "Ruta scan vacía.";
         }
+        if (d.isLimitSpeedEnabled() && d.getSpeedKbps() <= 0) {
+            return "La velocidad debe ser mayor que 0.";
+        }
 
         // (Opcional) validar que existen como archivo/carpeta
-        // if (d.getYtDlpPath()!=null && !Files.exists(Path.of(d.getYtDlpPath()))) return "yt-dlp no existe.";
+        if (d.getYtDlpPath() != null && !Files.exists(Path.of(d.getYtDlpPath()))) {
+            return "yt-dlp no existe.";
+        }
         return null; // OK
     }
 
@@ -439,11 +457,21 @@ public class PreferencesPanel extends javax.swing.JPanel {
         chkOpenWhenDone.setBounds(680, 70, 150, 22);
 
         chkLimitSpeed.setText("Limit Speed");
+        chkLimitSpeed.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkLimitSpeedActionPerformed(evt);
+            }
+        });
         add(chkLimitSpeed);
         chkLimitSpeed.setBounds(680, 100, 120, 22);
 
         chkCreateM3u.setSelected(true);
         chkCreateM3u.setText("Create .m3u");
+        chkCreateM3u.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkCreateM3uActionPerformed(evt);
+            }
+        });
         add(chkCreateM3u);
         chkCreateM3u.setBounds(680, 210, 100, 22);
 
@@ -451,6 +479,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
         sldLimitSpeed.setMaximum(40);
         sldLimitSpeed.setPaintTicks(true);
         sldLimitSpeed.setAutoscrolls(true);
+        sldLimitSpeed.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sldLimitSpeedStateChanged(evt);
+            }
+        });
         add(sldLimitSpeed);
         sldLimitSpeed.setBounds(680, 130, 470, 40);
 
@@ -466,6 +499,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
         add(lbl2M);
         lbl2M.setBounds(1130, 170, 30, 18);
     }// </editor-fold>//GEN-END:initComponents
+
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
         // TODO add your handling code here:
@@ -508,12 +542,41 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     private void chkOpenWhenDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOpenWhenDoneActionPerformed
         // TODO add your handling code here:
+        if (!loading) {
+            markDirty();
+        }
     }//GEN-LAST:event_chkOpenWhenDoneActionPerformed
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
         // TODO add your handling code here:
         savePreferences();
     }//GEN-LAST:event_btnSaveActionPerformed
+
+    private void chkLimitSpeedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkLimitSpeedActionPerformed
+        // TODO add your handling code here:
+        sldLimitSpeed.setEnabled(chkLimitSpeed.isSelected());
+
+        if (!loading) {
+            markDirty();
+        }
+
+    }//GEN-LAST:event_chkLimitSpeedActionPerformed
+
+    private void sldLimitSpeedStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldLimitSpeedStateChanged
+        // TODO add your handling code here:
+        if (!sldLimitSpeed.getValueIsAdjusting()) {
+            if (!loading) {
+                markDirty();
+            }
+        }
+    }//GEN-LAST:event_sldLimitSpeedStateChanged
+
+    private void chkCreateM3uActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkCreateM3uActionPerformed
+        // TODO add your handling code here:
+        if (!loading) {
+            markDirty();
+        }
+    }//GEN-LAST:event_chkCreateM3uActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
