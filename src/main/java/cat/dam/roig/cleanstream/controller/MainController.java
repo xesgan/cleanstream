@@ -27,15 +27,16 @@ public class MainController {
         authManager.setOnLoginSuccess(() -> {
             mainFrame.updateSessionUI(true);  // ✅ habilita/visibiliza menú
             mainFrame.showMainView();
-            initMediaPollingListener(); 
+            initMediaPollingListener();
+            mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
             mediaComponent.setRunning(true);
         });
 
         // Auto-login
         if (authManager.tryAutoLogin()) {
-            mainFrame.updateSessionUI(true);  
+            mainFrame.updateSessionUI(true);
             mainFrame.showMainView();
-            initMediaPollingListener(); 
+            initMediaPollingListener();
             mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
             mediaComponent.setRunning(true);
         } else {
@@ -64,7 +65,7 @@ public class MainController {
         mediaComponent.setRunning(false);
         authManager.logout();
         mainFrame.showLogin();
-        
+
     }
 
     private void initMediaPollingListener() {
@@ -75,9 +76,7 @@ public class MainController {
         mediaComponent.addMediaListener(evt -> {
             System.out.println("[APP] New cloud media found: " + evt.getNewMedia().size());
 
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
-            });
+            mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
         });
 
         mediaListenerRegistered = true;

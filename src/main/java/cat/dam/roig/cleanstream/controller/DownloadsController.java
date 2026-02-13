@@ -8,6 +8,7 @@ import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,9 +40,14 @@ public class DownloadsController {
 
     private final List<Media> cloudMedia = new ArrayList<>();
 
-    // estado que antes estaba en MainFrame
+    enum ViewMode {
+        LOCAL, CLOUD, ALL
+    }
+    private ViewMode viewMode = ViewMode.ALL;
+
     private boolean hasScanned = false;
     private boolean isScanning = false;
+    private boolean cloudLoading = false;
 
     public DownloadsController(
             DefaultListModel<ResourceDownloaded> downloadsModel,
@@ -72,6 +78,30 @@ public class DownloadsController {
 
         initSelectionListener();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
+    }
+
+    public void appStart(Path downloadsDir, Component parentForDialog) {
+
+        // 1) Cloud siempre
+        loadCloudMedia(parentForDialog);
+
+        boolean localOk = (downloadsDir != null && Files.isDirectory(downloadsDir));
+
+        // 2) Local solo si está configurado y es válido
+        if (localOk) {
+            scanDownloads(downloadsDir, null); // null => no hay botón
+        } else {
+            // limpia “estado local” para no arrastrar basura
+            allResources.clear();
+            stateByFileName.clear();
+
+            // importante: reflejar la vista actual sin local
+            // (si usas viewMode, ponlo aquí)
+            viewMode = ViewMode.CLOUD; // o lo que hayas definido
+            applyFilters();
+            // opcional: status / disable acciones locales
+            // ui.setLocalStatus("Local desactivado...");
+        }
     }
 
     private void initSelectionListener() {
@@ -330,26 +360,39 @@ public class DownloadsController {
     private void applyFilters() {
         downloadsModel.clear();
 
-        // 1) Recursos locales (LOCAL_ONLY o BOTH)
-        for (ResourceDownloaded r : allResources) {
-            if (matchTipo(r) && matchSemana(r)) {
-                downloadsModel.addElement(r);
+        if (viewMode == ViewMode.LOCAL || viewMode == ViewMode.ALL) {
+            for (ResourceDownloaded r : allResources) {
+                if (matchTipo(r) && matchSemana(r)) {
+                    downloadsModel.addElement(r);
+                }
             }
         }
 
-        // 2) Recursos que solo están en la nube (CLOUD_ONLY)
-        for (Media m : cloudMedia) {
-            String name = m.mediaFileName;
-            if (name == null) {
-                continue;
-            }
+        if (viewMode == ViewMode.CLOUD || viewMode == ViewMode.ALL) {
+            for (Media m : cloudMedia) {
+                String name = m.mediaFileName;
+                if (name == null) {
+                    continue;
+                }
 
-            ResourceState state = stateByFileName.get(name);
-            if (state == ResourceState.CLOUD_ONLY) {
-                ResourceDownloaded virtualRes = toVirtualResource(m);
+                ResourceState state = stateByFileName.get(name);
 
-                if (matchTipo(virtualRes) && matchSemana(virtualRes)) {
-                    downloadsModel.addElement(virtualRes);
+                // si estás en CLOUD: quieres cloud-only + both (según prefieras)
+                if (viewMode == ViewMode.CLOUD) {
+                    if (state == ResourceState.CLOUD_ONLY || state == ResourceState.BOTH) {
+                        ResourceDownloaded vr = toVirtualResource(m);
+                        if (matchTipo(vr) && matchSemana(vr)) {
+                            downloadsModel.addElement(vr);
+                        }
+                    }
+                } else {
+                    // ALL: solo añadimos los cloud-only para no duplicar los BOTH
+                    if (state == ResourceState.CLOUD_ONLY) {
+                        ResourceDownloaded vr = toVirtualResource(m);
+                        if (matchTipo(vr) && matchSemana(vr)) {
+                            downloadsModel.addElement(vr);
+                        }
+                    }
                 }
             }
         }
@@ -371,7 +414,11 @@ public class DownloadsController {
         isScanning = false;
 
         recomputeStates();
-        applyFilters();   // aquí ya tenemos datos y filtros
+        if (viewMode == ViewMode.LOCAL || viewMode == ViewMode.ALL) {
+            applyFilters();
+        } else {
+            recomputeStates(); // para flags
+        }
     }
 
     // Extensiones conocidas de audio / vídeo para desambiguar cuando el mimeType no ayuda
@@ -437,6 +484,10 @@ public class DownloadsController {
 
     // ========= CLOUD MEDIA METHODS ==========
     public void loadCloudMedia(java.awt.Component parentForDialog) {
+        if (cloudLoading) {
+            return;
+        }
+        cloudLoading = true;
         SwingWorker<List<Media>, Void> worker = new SwingWorker<>() {
             @Override
             protected List<Media> doInBackground() throws Exception {

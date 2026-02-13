@@ -64,6 +64,7 @@ public class MainFrame extends javax.swing.JFrame {
         authManager.setLoginPanel(loginPanel);
 
         initPreferencesPanel();
+
         loadPreferencesToUi();
 
         initDownloadsList();
@@ -170,8 +171,9 @@ public class MainFrame extends javax.swing.JFrame {
 
     // ------------------- NAVIGATION -------------------
     public void showPreferences() {
-        pnlPreferencesPanel.onShow(); 
+        pnlPreferencesPanel.onShow();
         showInContentPanel(pnlPreferencesPanel);
+        
     }
 
     public void showMain() {
@@ -192,6 +194,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     public void showMainView() {
         showInContentPanel(pnlMainPanel);
+        String ruta = pnlPreferencesPanel.getTxtDownloadsDir().getText();
+        Path dir = (ruta == null || ruta.trim().isEmpty()) ? null : Path.of(ruta.trim());
+
+        downloadsController.appStart(dir, this);
     }
 
     // ------------------- NAVIGATION -------------------
@@ -200,7 +206,7 @@ public class MainFrame extends javax.swing.JFrame {
         mniPreferences.setEnabled(loggedIn);
         mnuEdit.setVisible(loggedIn);
         mniLogout.setVisible(loggedIn);
-        
+
     }
 
     /**
