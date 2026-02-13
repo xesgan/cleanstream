@@ -87,6 +87,12 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     // ------------------- INIT HELPERS -------------------
+
+    public PreferencesPanel getPnlPreferencesPanel() {
+        return pnlPreferencesPanel;
+    }
+
+    // ------------------- INIT HELPERS -------------------
     private void initWindow() {
         setTitle("CleanStream");
         setMinimumSize(new java.awt.Dimension(1200, 700));
@@ -194,10 +200,6 @@ public class MainFrame extends javax.swing.JFrame {
 
     public void showMainView() {
         showInContentPanel(pnlMainPanel);
-        String ruta = pnlPreferencesPanel.getTxtDownloadsDir().getText();
-        Path dir = (ruta == null || ruta.trim().isEmpty()) ? null : Path.of(ruta.trim());
-
-        downloadsController.appStart(dir, this);
     }
 
     // ------------------- NAVIGATION -------------------
@@ -420,6 +422,8 @@ public class MainFrame extends javax.swing.JFrame {
         bgQuality.add(jrbBestAvailable);
         jrbBestAvailable.setSelected(true);
         jrbBestAvailable.setText("Best Available");
+        jrbBestAvailable.setToolTipText("Under Manteinance");
+        jrbBestAvailable.setEnabled(false);
         pnlMainPanel.add(jrbBestAvailable);
         jrbBestAvailable.setBounds(50, 230, 120, 22);
 
@@ -466,7 +470,7 @@ public class MainFrame extends javax.swing.JFrame {
         pbDownload.setString("50%");
         pbDownload.setStringPainted(true);
         pnlMainPanel.add(pbDownload);
-        pbDownload.setBounds(30, 560, 490, 20);
+        pbDownload.setBounds(30, 560, 1130, 20);
 
         jLabel1.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
         jLabel1.setText(" |");

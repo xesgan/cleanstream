@@ -3,6 +3,7 @@ package cat.dam.roig.cleanstream.controller;
 import cat.dam.roig.cleanstream.main.MainFrame;
 import cat.dam.roig.cleanstream.services.AuthManager;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.nio.file.Path;
 import javax.swing.JOptionPane;
 
 /**
@@ -25,24 +26,36 @@ public class MainController {
     public void start() {
         // Login manual
         authManager.setOnLoginSuccess(() -> {
-            mainFrame.updateSessionUI(true);  // ✅ habilita/visibiliza menú
-            mainFrame.showMainView();
-            initMediaPollingListener();
-            mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
-            mediaComponent.setRunning(true);
+            startSession();
         });
 
         // Auto-login
         if (authManager.tryAutoLogin()) {
-            mainFrame.updateSessionUI(true);
-            mainFrame.showMainView();
-            initMediaPollingListener();
-            mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
-            mediaComponent.setRunning(true);
+            startSession();
         } else {
             mainFrame.updateSessionUI(false); // ✅ menú “capado”
             mainFrame.showLogin();
         }
+    }
+
+    private void startSession() {
+
+        mainFrame.updateSessionUI(true);
+        mainFrame.showMainView();
+
+        // Obtener ruta actual de preferencias
+        String ruta = mainFrame.getPnlPreferencesPanel()
+                .getTxtScanDownloadsFolder()
+                .getText()
+                .trim();
+
+        Path dir = ruta.isEmpty() ? null : Path.of(ruta);
+
+        // 👇 ahora usamos tu método nuevo
+        mainFrame.getDownloadsController().appStart(dir, mainFrame);
+
+        initMediaPollingListener();
+        mediaComponent.setRunning(true);
     }
 
     public void doLogout() {

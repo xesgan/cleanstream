@@ -97,8 +97,8 @@ public class DownloadsController {
 
             // importante: reflejar la vista actual sin local
             // (si usas viewMode, ponlo aquí)
-            viewMode = ViewMode.CLOUD; // o lo que hayas definido
-            applyFilters();
+            viewMode = ViewMode.ALL; // o lo que hayas definido
+            applyFiltersPreservingSelection();
             // opcional: status / disable acciones locales
             // ui.setLocalStatus("Local desactivado...");
         }
@@ -351,7 +351,13 @@ public class DownloadsController {
         if (isScanning) {
             return;
         }
-        applyFilters();
+        applyFiltersPreservingSelection();
+    }
+
+    private void applyFiltersPreservingSelection() {
+        SelectionSnapshot snap = captureSelection();
+        applyFilters();              // tu método actual (ya modificado con ViewMode)
+        restoreSelection(snap);
     }
 
     /**
@@ -414,11 +420,143 @@ public class DownloadsController {
         isScanning = false;
 
         recomputeStates();
+
         if (viewMode == ViewMode.LOCAL || viewMode == ViewMode.ALL) {
-            applyFilters();
+            applyFiltersPreservingSelection();
         } else {
-            recomputeStates(); // para flags
+            // Estamos en CLOUD: no reconstruimos la lista,
+            // pero sí refrescamos el renderer/estados visibles
+            downloadsList.repaint();
         }
+    }
+
+    // --------- HELPERS FOCO LISTA ----------
+    private String normalize(String name) {
+        if (name == null) {
+            return null;
+        }
+        String s = name.trim();
+        return s.isEmpty() ? null : s.toLowerCase();
+    }
+
+    private String keyOf(ResourceDownloaded r) {
+        if (r == null) {
+            return null;
+        }
+        String name = r.getName(); // o el getter que tengas
+        return (name == null) ? null : name.trim();
+    }
+
+    private static class SelectionSnapshot {
+
+        final String key;   // nombre de archivo (estable)
+        final int index;    // índice actual (fallback)
+
+        SelectionSnapshot(String key, int index) {
+            this.key = key;
+            this.index = index;
+        }
+    }
+
+    private SelectionSnapshot captureSelection() {
+        int idx = downloadsList.getSelectedIndex();
+        ResourceDownloaded sel = downloadsList.getSelectedValue();
+        return new SelectionSnapshot(keyOf(sel), idx);
+    }
+
+    private void restoreSelection(SelectionSnapshot snap) {
+        if (snap == null || downloadsModel.isEmpty()) {
+            downloadsList.clearSelection();
+            return;
+        }
+
+        // 1) Buscar por key
+        if (snap.key != null) {
+            for (int i = 0; i < downloadsModel.size(); i++) {
+                ResourceDownloaded r = downloadsModel.getElementAt(i);
+                if (snap.key.equals(keyOf(r))) {
+                    downloadsList.setSelectedIndex(i);
+                    downloadsList.ensureIndexIsVisible(i);
+                    return;
+                }
+            }
+        }
+
+        // 2) Fallback por índice
+        int i = snap.index;
+        if (i < 0) {
+            i = 0;
+        }
+        if (i >= downloadsModel.size()) {
+            i = downloadsModel.size() - 1;
+        }
+
+        downloadsList.setSelectedIndex(i);
+        downloadsList.ensureIndexIsVisible(i);
+    }
+
+    private void selectAfterDelete(int deletedIndex) {
+        if (downloadsModel.isEmpty()) {
+            downloadsList.clearSelection();
+            return;
+        }
+        int newIndex = Math.max(0, deletedIndex - 1); // “posición anterior”
+        if (newIndex >= downloadsModel.size()) {
+            newIndex = downloadsModel.size() - 1;
+        }
+
+        downloadsList.setSelectedIndex(newIndex);
+        downloadsList.ensureIndexIsVisible(newIndex);
+    }
+
+    public void deleteSelected() {
+        int idx = downloadsList.getSelectedIndex();
+        if (idx < 0) {
+            return;
+        }
+
+        ResourceDownloaded sel = downloadsList.getSelectedValue();
+        String key = keyOf(sel);
+
+        // ... borrar en disco / lista allResources / cloud si aplica ...
+        recomputeStates();
+        applyFilters();            // reconstruyes
+        selectAfterDelete(idx);    // mantienes zona
+    }
+
+    public void onDeleteClicked() {
+        int idx = downloadsList.getSelectedIndex();
+        if (idx < 0) {
+            return;
+        }
+
+        ResourceDownloaded selected = downloadsList.getSelectedValue();
+        // ... borrar de disco / borrar de allResources ...
+        // ... recomputeStates ...
+
+        applyFilters();              // reconstruyes lista
+        selectAfterDelete(idx);      // mantienes “zona”
+    }
+
+    private void selectByKey(String key) {
+        String k = normalize(key);
+        if (k == null) {
+            return;
+        }
+
+        for (int i = 0; i < downloadsModel.size(); i++) {
+            if (k.equals(keyOf(downloadsModel.getElementAt(i)))) {
+                downloadsList.setSelectedIndex(i);
+                downloadsList.ensureIndexIsVisible(i);
+                return;
+            }
+        }
+    }
+
+    public void onDownloadCompleted(String fileNameJustDownloaded) {
+        recomputeStates();
+        applyFilters(); // o applyFiltersPreservingSelection()
+        selectByKey(fileNameJustDownloaded);
     }
 
     // Extensiones conocidas de audio / vídeo para desambiguar cuando el mimeType no ayuda
@@ -527,31 +665,39 @@ public class DownloadsController {
     }
 
     private void recomputeStates() {
+
         stateByFileName.clear();
 
-        // 1) Todos los locales empiezan como LOCAL_ONLY
+        // 1️ Primero procesamos locales
         for (ResourceDownloaded local : allResources) {
-            String name = local.getName();
-            if (name != null) {
-                stateByFileName.put(name, ResourceState.LOCAL_ONLY);
+
+            String name = normalize(local.getName());
+            if (name == null) {
+                continue;
             }
+
+            stateByFileName.put(name, ResourceState.LOCAL_ONLY);
         }
 
-        // 2) Para cada cloud:
+        // 2️ Luego procesamos cloud
         for (Media m : cloudMedia) {
-            String name = m.mediaFileName;
+
+            String name = normalize(m.mediaFileName);
             if (name == null) {
                 continue;
             }
 
             ResourceState current = stateByFileName.get(name);
+
             if (current == null) {
-                // No existe en local → solo cloud
+                // Solo está en cloud
                 stateByFileName.put(name, ResourceState.CLOUD_ONLY);
+
             } else if (current == ResourceState.LOCAL_ONLY) {
-                // Existe en local → ahora es BOTH
+                // Está en ambos
                 stateByFileName.put(name, ResourceState.BOTH);
             }
+            // Si ya estaba en BOTH no hacemos nada
         }
     }
 
