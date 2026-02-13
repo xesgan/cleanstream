@@ -193,12 +193,18 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
         String error = PreferencesValidator.validate(data);
         if (error != null) {
-            JOptionPane.showMessageDialog(this, error, "Preferences", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this,
+                    error,
+                    "Preferences",
+                    JOptionPane.ERROR_MESSAGE
+            );
             return;
         }
 
         UserPreferences.save(data);
         setDirty(false);
+        showStatusMessage("[ Preferences saved ✓ ]");
     }
 
     private void loadUI() {
@@ -245,6 +251,20 @@ public class PreferencesPanel extends javax.swing.JPanel {
         setDirty(true);
     }
 
+    // --------- LBL STATUS ----------
+    private void showStatusMessage(String message) {
+
+        lblStatus.setText(message);
+        lblStatus.setForeground(new java.awt.Color(0, 128, 0)); // verde
+
+        javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
+            lblStatus.setText("");
+        });
+
+        timer.setRepeats(false);
+        timer.start();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -286,6 +306,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lbl512K = new javax.swing.JLabel();
         lbl1M = new javax.swing.JLabel();
         lbl2M = new javax.swing.JLabel();
+        lblStatus = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(590, 518));
         setLayout(null);
@@ -393,7 +414,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
             }
         });
         add(btnSave);
-        btnSave.setBounds(50, 460, 72, 24);
+        btnSave.setBounds(680, 290, 72, 24);
 
         btnCancel.setText("Back");
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -402,11 +423,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
             }
         });
         add(btnCancel);
-        btnCancel.setBounds(450, 460, 72, 24);
+        btnCancel.setBounds(1080, 290, 72, 24);
 
         btnReset.setText("Reset");
         add(btnReset);
-        btnReset.setBounds(130, 460, 72, 24);
+        btnReset.setBounds(760, 290, 72, 24);
 
         lblScanDownloads.setText("Scan Files:");
         add(lblScanDownloads);
@@ -474,6 +495,8 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lbl2M.setText("2M");
         add(lbl2M);
         lbl2M.setBounds(1130, 170, 30, 18);
+        add(lblStatus);
+        lblStatus.setBounds(990, 250, 150, 20);
     }// </editor-fold>//GEN-END:initComponents
 
 
@@ -608,6 +631,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblQuality;
     private javax.swing.JLabel lblRoutes;
     private javax.swing.JLabel lblScanDownloads;
+    private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblTemp;
     private javax.swing.JLabel lblYtDlp;
     private javax.swing.JSlider sldLimitSpeed;
