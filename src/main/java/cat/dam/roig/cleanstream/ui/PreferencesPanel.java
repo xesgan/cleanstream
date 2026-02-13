@@ -2,6 +2,7 @@ package cat.dam.roig.cleanstream.ui;
 
 import cat.dam.roig.cleanstream.main.MainFrame;
 import cat.dam.roig.cleanstream.services.UserPreferences;
+import cat.dam.roig.cleanstream.services.PreferencesValidator;
 import cat.dam.roig.cleanstream.models.PreferencesData;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -33,8 +34,8 @@ public class PreferencesPanel extends javax.swing.JPanel {
         UserPreferences.load();
         loading = false;
         dirty = false;
-//        btnSave.setEnabled(false);
         initComponents();
+        initCustoms();
     }
 
     // ------- GETTERS --------
@@ -190,7 +191,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private void savePreferences() {
         PreferencesData data = readFromUI();
 
-        String error = validate(data);
+        String error = PreferencesValidator.validate(data);
         if (error != null) {
             JOptionPane.showMessageDialog(this, error, "Preferences", JOptionPane.ERROR_MESSAGE);
             return;
@@ -228,7 +229,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
         d.setLimitSpeedEnabled(chkLimitSpeed.isSelected());
         d.setSpeedKbps(sldLimitSpeed.getValue());
         d.setCreateM3u(chkCreateM3u.isSelected());
-        
+
         return d;
     }
 
@@ -241,32 +242,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
         if (loading) {
             return;
         }
-        dirty = true;
-        btnSave.setEnabled(true);
-    }
-
-    private String validate(PreferencesData d) {
-        if (d.getDownloadDir() != null && d.getDownloadDir().isBlank()) {
-            return "Download dir vacío.";
-        }
-        if (d.getYtDlpPath() != null && d.getYtDlpPath().isBlank()) {
-            return "Ruta yt-dlp vacía.";
-        }
-//        if (d.getFfmpegPath() != null && d.getFfmpegPath().isBlank()) {
-//            return "Ruta ffmpeg vacía.";
-//        }
-        if (d.getScanFolderPath() != null && d.getScanFolderPath().isBlank()) {
-            return "Ruta scan vacía.";
-        }
-        if (d.isLimitSpeedEnabled() && d.getSpeedKbps() <= 0) {
-            return "La velocidad debe ser mayor que 0.";
-        }
-
-        // (Opcional) validar que existen como archivo/carpeta
-        if (d.getYtDlpPath() != null && !Files.exists(Path.of(d.getYtDlpPath()))) {
-            return "yt-dlp no existe.";
-        }
-        return null; // OK
+        setDirty(true);
     }
 
     /**
@@ -554,12 +530,6 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     private void chkLimitSpeedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkLimitSpeedActionPerformed
         // TODO add your handling code here:
-        sldLimitSpeed.setEnabled(chkLimitSpeed.isSelected());
-
-        if (!loading) {
-            markDirty();
-        }
-
     }//GEN-LAST:event_chkLimitSpeedActionPerformed
 
     private void sldLimitSpeedStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldLimitSpeedStateChanged
@@ -573,10 +543,45 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     private void chkCreateM3uActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkCreateM3uActionPerformed
         // TODO add your handling code here:
-        if (!loading) {
-            markDirty();
-        }
+
     }//GEN-LAST:event_chkCreateM3uActionPerformed
+
+    private void hookDirty(javax.swing.JTextField tf) {
+        tf.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                markDirty();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                markDirty();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                markDirty();
+            }
+        });
+    }
+
+    private void initCustoms() {
+        hookDirty(txtDownloadsDir);
+        hookDirty(txtYtDlpPath);
+        hookDirty(txtFfmegDir);
+        hookDirty(txtScanDownloadsFolder);
+        chkOpenWhenDone.addActionListener(e -> markDirty());
+        chkCreateM3u.addActionListener(e -> markDirty());
+        chkLimitSpeed.addActionListener(e -> {
+            sldLimitSpeed.setEnabled(chkLimitSpeed.isSelected());
+            markDirty();
+        });
+        if (!sldLimitSpeed.getValueIsAdjusting()) {
+            if (!loading) {
+                markDirty();
+            }
+        }
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -613,4 +618,5 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private javax.swing.JTextField txtTempDir;
     private javax.swing.JTextField txtYtDlpPath;
     // End of variables declaration//GEN-END:variables
+
 }
