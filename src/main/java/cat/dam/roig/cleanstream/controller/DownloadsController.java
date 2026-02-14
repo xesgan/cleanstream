@@ -9,6 +9,7 @@ import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.awt.Component;
+import java.awt.Container;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,8 +20,10 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DownloadsController {
 
@@ -37,8 +40,14 @@ public class DownloadsController {
     private final JButton btnDelete;
     private final JButton btnDownloadFromCloud;
     private final JButton btnUploadFromLocal;
+    private JLabel lblStatusScan;
+    private final JProgressBar pbDownload;
 
     private final List<Media> cloudMedia = new ArrayList<>();
+    private Set<String> lastScanKeys = new HashSet<>();
+    private boolean hasScannedOnce = false;
+
+    private String pendingSelectKey = null;
 
     enum ViewMode {
         LOCAL, CLOUD, ALL
@@ -59,7 +68,9 @@ public class DownloadsController {
             JButton btnDelete,
             JButton btnDownloadFromCloud,
             JButton btnUploadFromLocal,
-            RoigMediaPollingComponent mediaComponent
+            RoigMediaPollingComponent mediaComponent,
+            JLabel lblStatusScan,
+            JProgressBar pbDownload
     ) {
         if (mediaComponent == null) {
             throw new IllegalArgumentException("mediaComponent no puede ser null");
@@ -75,6 +86,8 @@ public class DownloadsController {
         this.btnDelete = btnDelete;
         this.btnDownloadFromCloud = btnDownloadFromCloud;
         this.btnUploadFromLocal = btnUploadFromLocal;
+        this.lblStatusScan = lblStatusScan;
+        this.pbDownload = pbDownload;
 
         initSelectionListener();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
@@ -187,6 +200,9 @@ public class DownloadsController {
             return;
         }
 
+        String key = keyOf(selected);
+        int oldIdx = idx;
+
         Path file = Paths.get(selected.getRoute());
 
         if (!confirmDeletion(parentForDialog, file)) {
@@ -195,9 +211,14 @@ public class DownloadsController {
 
         try {
             boolean deleted = Files.deleteIfExists(file);
+            ResourceState state = stateByFileName.get(normalize(selected.getName()));
+            boolean isInCloud = state == ResourceState.CLOUD_ONLY || state == ResourceState.BOTH;
+
 
             if (deleted) {
-                downloadsModel.remove(idx);
+                if (!isInCloud) {
+                    downloadsModel.remove(idx);
+                }
 
                 // Re-scan local
                 String scanDir = UserPreferences.getScanFolderPath();
@@ -206,6 +227,8 @@ public class DownloadsController {
                 }
 
                 loadCloudMedia(parentForDialog);
+
+                SwingUtilities.invokeLater(() -> restoreSelectionAfterDelete(key, oldIdx));
 
                 JOptionPane.showMessageDialog(
                         parentForDialog,
@@ -233,21 +256,59 @@ public class DownloadsController {
         }
     }
 
-    public void downloadFromCloud(java.awt.Component parent) {
+    private void restoreSelectionAfterDelete(String key, int oldIdx) {
+        ListModel<ResourceDownloaded> m = downloadsList.getModel();
+        int size = m.getSize();
+        if (size == 0) {
+            downloadsList.clearSelection();
+            return;
+        }
+
+        // 1) Mantener el mismo recurso si sigue existiendo (BOTH -> CLOUD)
+        int same = -1;
+        for (int i = 0; i < size; i++) {
+            if (key.equals(keyOf(m.getElementAt(i)))) {
+                same = i;
+                break;
+            }
+        }
+        if (same >= 0) {
+            downloadsList.setSelectedIndex(same);
+            downloadsList.ensureIndexIsVisible(same);
+            downloadsList.requestFocusInWindow();
+            return;
+        }
+
+        // 2) Si ya no existe, ir al anterior
+        int target = oldIdx - 1;
+        if (target < 0) {
+            target = 0;
+        }
+        if (target >= size) {
+            target = size - 1;
+        }
+
+        downloadsList.setSelectedIndex(target);
+        downloadsList.ensureIndexIsVisible(target);
+        downloadsList.requestFocusInWindow();
+    }
+
+    public void downloadFromCloud(Component parent) {
 
         ResourceDownloaded sel = downloadsList.getSelectedValue();
         if (sel == null) {
             return;
         }
 
-        ResourceState state = stateByFileName.get(sel.getName());
+        String key = normalize(sel.getName());
+        ResourceState state = stateByFileName.get(key);
         if (state != ResourceState.CLOUD_ONLY) {
             return;
         }
 
-        // Buscar el Media real
+        // Buscar el Media real (por nombre normalizado)
         Media media = cloudMedia.stream()
-                .filter(m -> sel.getName().equals(m.mediaFileName))
+                .filter(m -> normalize(m.mediaFileName).equals(key))
                 .findFirst()
                 .orElse(null);
 
@@ -265,8 +326,14 @@ public class DownloadsController {
 
         File dest = new File(baseDir, media.mediaFileName);
 
-        // Descargar en background
+        // ✅ UX: iniciar barra + deshabilitar botones
+        startBusy("Descargando desde la nube…");
+        if (btnDownloadFromCloud != null) {
+            btnDownloadFromCloud.setEnabled(false);
+        }
+
         new SwingWorker<Void, Void>() {
+
             @Override
             protected Void doInBackground() throws Exception {
                 mediaComponent.download(media.id, dest);
@@ -275,23 +342,42 @@ public class DownloadsController {
 
             @Override
             protected void done() {
-                // Re-scan local y refresco
-                scanDownloads(Paths.get(baseDir), null);
+                try {
+                    get(); // ✅ captura error real si falla
+                    stopBusy("Descarga completada ✔");
+
+                    // Re-scan local y refresco (esto ya aplica filtros)
+                    scanDownloads(Paths.get(baseDir), null);
+
+                    // (Opcional) dejar seleccionado el item descargado:
+                    pendingSelectKey = key;
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    stopBusy("Descarga fallida ✖");
+                    JOptionPane.showMessageDialog(parent, "Download failed.", "Fetch", JOptionPane.ERROR_MESSAGE);
+
+                } finally {
+                    if (btnDownloadFromCloud != null) {
+                        btnDownloadFromCloud.setEnabled(true);
+                    }
+                }
             }
         }.execute();
     }
 
-    public void uploadToCloud(java.awt.Component parent) {
+    public void uploadToCloud(Component parent) {
 
         ResourceDownloaded sel = downloadsList.getSelectedValue();
         if (sel == null) {
             return;
         }
 
-        ResourceState state = stateByFileName.getOrDefault(sel.getName(), ResourceState.LOCAL_ONLY);
+        String key = normalize(sel.getName());
+        ResourceState state = stateByFileName.getOrDefault(key, ResourceState.LOCAL_ONLY);
+
         String fromUrl = (sel.getSourceURL() != null) ? sel.getSourceURL() : "";
 
-        // Solo subimos si es local-only y existe en disco
         if (state != ResourceState.LOCAL_ONLY || sel.getRoute() == null || sel.getRoute().isBlank()) {
             return;
         }
@@ -302,6 +388,9 @@ public class DownloadsController {
             return;
         }
 
+        // ✅ barra “busy”
+        startBusy("Subiendo a la nube…");
+        btnUploadFromLocal.setEnabled(false);
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -312,13 +401,13 @@ public class DownloadsController {
             @Override
             protected void done() {
                 try {
-                    get(); // si falló, aquí salta excepción
-                    JOptionPane.showMessageDialog(parent, "Uploaded to cloud.", "Upload", JOptionPane.INFORMATION_MESSAGE);
-                    // Refrescar nube y estados
-                    loadCloudMedia(parent);
-
+                    get();
+                    stopBusy("Upload completado ✔");
+                    loadCloudMedia(parent); // refresca nube/estados
+                    btnUploadFromLocal.setEnabled(true);
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                    stopBusy("Upload fallido ✖");
                     JOptionPane.showMessageDialog(parent, "Upload failed.", "Upload", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -348,10 +437,16 @@ public class DownloadsController {
      * un escaneo y no hay uno en curso.
      */
     public void applyFiltersIfReady() {
-        if (isScanning) {
+        // Si el usuario está viendo cloud o all, siempre podemos refrescar
+        if (viewMode == ViewMode.CLOUD || viewMode == ViewMode.ALL) {
+            applyFiltersPreservingSelection();
             return;
         }
-        applyFiltersPreservingSelection();
+
+        // Si está en LOCAL, solo refrescamos si tenemos scan local válido
+        if (viewMode == ViewMode.LOCAL && hasScanned && !isScanning) {
+            applyFiltersPreservingSelection();
+        }
     }
 
     private void applyFiltersPreservingSelection() {
@@ -366,6 +461,7 @@ public class DownloadsController {
     private void applyFilters() {
         downloadsModel.clear();
 
+        // 1) Local (LOCAL o ALL)
         if (viewMode == ViewMode.LOCAL || viewMode == ViewMode.ALL) {
             for (ResourceDownloaded r : allResources) {
                 if (matchTipo(r) && matchSemana(r)) {
@@ -374,17 +470,22 @@ public class DownloadsController {
             }
         }
 
+        // 2) Cloud (CLOUD o ALL)
         if (viewMode == ViewMode.CLOUD || viewMode == ViewMode.ALL) {
             for (Media m : cloudMedia) {
-                String name = m.mediaFileName;
-                if (name == null) {
+                String key = normalize(m.mediaFileName); // ✅ CLAVE NORMALIZADA
+                if (key == null) {
                     continue;
                 }
 
-                ResourceState state = stateByFileName.get(name);
+                ResourceState state = stateByFileName.get(key); // ✅ BUSQUEDA CORRECTA
+                if (state == null) {
+                    // por seguridad, si no está en el map, lo tratamos como cloud-only
+                    state = ResourceState.CLOUD_ONLY;
+                }
 
-                // si estás en CLOUD: quieres cloud-only + both (según prefieras)
                 if (viewMode == ViewMode.CLOUD) {
+                    // En CLOUD mostramos cloud-only y BOTH (si quieres BOTH visibles aquí)
                     if (state == ResourceState.CLOUD_ONLY || state == ResourceState.BOTH) {
                         ResourceDownloaded vr = toVirtualResource(m);
                         if (matchTipo(vr) && matchSemana(vr)) {
@@ -392,7 +493,7 @@ public class DownloadsController {
                         }
                     }
                 } else {
-                    // ALL: solo añadimos los cloud-only para no duplicar los BOTH
+                    // En ALL solo añadimos cloud-only para no duplicar los BOTH (que ya están en local)
                     if (state == ResourceState.CLOUD_ONLY) {
                         ResourceDownloaded vr = toVirtualResource(m);
                         if (matchTipo(vr) && matchSemana(vr)) {
@@ -411,9 +512,37 @@ public class DownloadsController {
 
     public void onScanStarted() {
         isScanning = true;
+        if (lblStatusScan != null) {
+            lblStatusScan.setText("Escaneando carpeta local…");
+        }
     }
 
     public void onScanFinished(List<ResourceDownloaded> lista) {
+        // snapshot actual
+        Set<String> nowKeys = new HashSet<>();
+        for (ResourceDownloaded r : lista) {
+            String k = keyOf(r);
+            if (k != null) {
+                nowKeys.add(k);
+            }
+        }
+
+        // diferencias
+        int added = 0;
+        for (String k : nowKeys) {
+            if (!lastScanKeys.contains(k)) {
+                added++;
+            }
+        }
+
+        int removed = 0;
+        for (String k : lastScanKeys) {
+            if (!nowKeys.contains(k)) {
+                removed++;
+            }
+        }
+
+        // actualiza tus datos como ya haces
         allResources.clear();
         allResources.addAll(lista);
         hasScanned = true;
@@ -424,10 +553,72 @@ public class DownloadsController {
         if (viewMode == ViewMode.LOCAL || viewMode == ViewMode.ALL) {
             applyFiltersPreservingSelection();
         } else {
-            // Estamos en CLOUD: no reconstruimos la lista,
-            // pero sí refrescamos el renderer/estados visibles
             downloadsList.repaint();
         }
+
+        // mensaje no invasivo
+        if (lblStatusScan != null) {
+            if (!hasScannedOnce) {
+                setScanStatus("Scan completado: " + nowKeys.size() + " archivos.");
+            } else if (added == 0 && removed == 0) {
+                setScanStatus("Scan completado: sin cambios.");
+            } else {
+                setScanStatus("Scan completado: +" + added + " nuevos, -" + removed + " eliminados.");
+            }
+        }
+
+        hasScannedOnce = true;
+        lastScanKeys = nowKeys;
+    }
+
+    private String lastScanMessage = "";
+
+    private void setScanStatus(String msg) {
+        lastScanMessage = msg;
+        if (lblStatusScan == null) {
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            lblStatusScan.setText(lastScanMessage);
+            Container p = lblStatusScan.getParent();
+            if (p != null) {
+                p.revalidate();
+                p.repaint();
+            }
+        });
+    }
+
+    public void refreshScanStatusLabel() {
+        setScanStatus(lastScanMessage);
+    }
+
+    // --------- HELPERS PROGRESS BAR----------
+    private void startBusy(String msg) {
+        SwingUtilities.invokeLater(() -> {
+            if (pbDownload != null) {
+                pbDownload.setIndeterminate(true);
+                pbDownload.setStringPainted(true);
+                pbDownload.setString(msg);
+            }
+            if (lblStatusScan != null) {
+                lblStatusScan.setText(msg);
+            }
+        });
+    }
+
+    private void stopBusy(String msg) {
+        SwingUtilities.invokeLater(() -> {
+            if (pbDownload != null) {
+                pbDownload.setIndeterminate(false);
+                pbDownload.setStringPainted(true);
+                pbDownload.setValue(100);
+                pbDownload.setString("100%");
+            }
+            if (lblStatusScan != null) {
+                lblStatusScan.setText(msg);
+            }
+        });
     }
 
     // --------- HELPERS FOCO LISTA ----------
@@ -443,8 +634,7 @@ public class DownloadsController {
         if (r == null) {
             return null;
         }
-        String name = r.getName(); // o el getter que tengas
-        return (name == null) ? null : name.trim();
+        return normalize(r.getName());
     }
 
     private static class SelectionSnapshot {
@@ -495,21 +685,46 @@ public class DownloadsController {
         downloadsList.ensureIndexIsVisible(i);
     }
 
-    private void selectAfterDelete(int deletedIndex) {
+    private void selectAfterDelete(String deletedKey, int deletedIndex) {
         if (downloadsModel.isEmpty()) {
             downloadsList.clearSelection();
             return;
         }
-        int newIndex = Math.max(0, deletedIndex - 1); // “posición anterior”
+
+        // 1️⃣ Intentar encontrar el mismo recurso por key
+        int sameIdx = indexOfKeyInListModel(deletedKey);
+        if (sameIdx >= 0) {
+            downloadsList.setSelectedIndex(sameIdx);
+            downloadsList.ensureIndexIsVisible(sameIdx);
+            downloadsList.requestFocusInWindow();
+            return;
+        }
+
+        // 2️⃣ Si ya no existe, entonces ir al anterior
+        int newIndex = Math.max(0, deletedIndex - 1);
         if (newIndex >= downloadsModel.size()) {
             newIndex = downloadsModel.size() - 1;
         }
 
         downloadsList.setSelectedIndex(newIndex);
         downloadsList.ensureIndexIsVisible(newIndex);
+        downloadsList.requestFocusInWindow();
+    }
+
+    private int indexOfKeyInListModel(String key) {
+        ListModel<ResourceDownloaded> m = downloadsList.getModel();
+        for (int i = 0; i < m.getSize(); i++) {
+            ResourceDownloaded it = m.getElementAt(i);
+            if (key.equals(keyOf(it))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public void deleteSelected() {
+        System.err.println(">>> deleteSelected() CALLED");
+
         int idx = downloadsList.getSelectedIndex();
         if (idx < 0) {
             return;
@@ -518,25 +733,34 @@ public class DownloadsController {
         ResourceDownloaded sel = downloadsList.getSelectedValue();
         String key = keyOf(sel);
 
-        // ... borrar en disco / lista allResources / cloud si aplica ...
+        System.out.println("Before delete key=" + key);
+
+        // borrar en disco / actualizar estructuras
         recomputeStates();
-        applyFilters();            // reconstruyes
-        selectAfterDelete(idx);    // mantienes zona
+        applyFilters();
+
+        // 👇 AQUÍ lo pones
+        System.out.println(
+                "deletedKey=" + key
+                + " existsAfter=" + (indexOfKeyInListModel(key) >= 0)
+        );
+
+        selectAfterDelete(key, idx);
     }
 
-    public void onDeleteClicked() {
-        int idx = downloadsList.getSelectedIndex();
-        if (idx < 0) {
-            return;
-        }
-
-        ResourceDownloaded selected = downloadsList.getSelectedValue();
-        // ... borrar de disco / borrar de allResources ...
-        // ... recomputeStates ...
-
-        applyFilters();              // reconstruyes lista
-        selectAfterDelete(idx);      // mantienes “zona”
-    }
+//    public void onDeleteClicked() {
+//        int idx = downloadsList.getSelectedIndex();
+//        if (idx < 0) {
+//            return;
+//        }
+//
+//        ResourceDownloaded selected = downloadsList.getSelectedValue();
+//        // ... borrar de disco / borrar de allResources ...
+//        // ... recomputeStates ...
+//
+//        applyFilters();              // reconstruye lista
+    ////        selectAfterDelete(idx);      // mantiene “zona”
+//    }
 
     private void selectByKey(String key) {
         String k = normalize(key);
@@ -626,10 +850,11 @@ public class DownloadsController {
             return;
         }
         cloudLoading = true;
+
         SwingWorker<List<Media>, Void> worker = new SwingWorker<>() {
+
             @Override
             protected List<Media> doInBackground() throws Exception {
-                // El componente ya tiene el token después del login
                 return mediaComponent.getAllMedia();
             }
 
@@ -637,30 +862,34 @@ public class DownloadsController {
             protected void done() {
                 try {
                     List<Media> remote = get();
+
+                    System.out.println("[cloud] remoteSize=" + remote.size()
+                            + " viewMode=" + viewMode
+                            + " hasScanned=" + hasScanned
+                            + " modelBefore=" + downloadsModel.size()
+                            + " cloudMediaBefore=" + cloudMedia.size());
+
                     cloudMedia.clear();
                     cloudMedia.addAll(remote);
 
-                    // Merge Cloud + local
                     recomputeStates();
-                    applyFiltersIfReady();
 
-                    System.out.println("[UI] cloudMedia loaded: " + remote.size());
+                    applyFiltersPreservingSelection(); // o applyFiltersIfReady() si lo tienes bien
 
-//                    System.out.println("[UI] Cloud media loaded: " + cloudMedia.size() + " items");
-//                    cloudMedia.stream()
-//                            .limit(5)
-//                            .forEach(m -> System.out.println(" - " + m.mediaFileName));
+                    System.out.println("[cloud] modelAfter=" + downloadsModel.size()
+                            + " cloudMediaAfter=" + cloudMedia.size());
+
+                    downloadsList.repaint();
+
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(
-                            parentForDialog,
-                            "Error al cargar los medios de la nube.",
-                            "Cloud sync error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
+                } finally {
+                    cloudLoading = false;
                 }
             }
+
         };
+
         worker.execute();
     }
 

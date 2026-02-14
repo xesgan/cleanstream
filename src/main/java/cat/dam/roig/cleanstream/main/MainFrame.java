@@ -14,7 +14,11 @@ import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
 import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -23,8 +27,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 /**
  *
@@ -53,6 +61,11 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         // 1. Construye UI base (paneles, botones, menús...)
         initComponents();
+
+        lblStatusScan.setText(" ");                 // texto vacío pero no null
+        lblStatusScan.setPreferredSize(new Dimension(250, 18));
+        lblStatusScan.setMinimumSize(new Dimension(50, 18));
+
         initUx();
 
         // 3. Configura ventana
@@ -85,8 +98,6 @@ public class MainFrame extends javax.swing.JFrame {
                 downloadsController
         );
     }
-
-    // ------------------- INIT HELPERS -------------------
 
     public PreferencesPanel getPnlPreferencesPanel() {
         return pnlPreferencesPanel;
@@ -168,8 +179,11 @@ public class MainFrame extends javax.swing.JFrame {
                 btnDeleteDownloadFileFolder,
                 btnFetchFromCloud,
                 btnUploadFromLocal,
-                getRoigMediaPollingComponent1()
+                getRoigMediaPollingComponent1(),
+                lblStatusScan,
+                pbDownload
         );
+
         cmbTipo.addActionListener(e -> downloadsController.applyFiltersIfReady());
         chkSemana.addActionListener(e -> downloadsController.applyFiltersIfReady());
         cmbTipo.setSelectedItem("Todo");
@@ -179,11 +193,11 @@ public class MainFrame extends javax.swing.JFrame {
     public void showPreferences() {
         pnlPreferencesPanel.onShow();
         showInContentPanel(pnlPreferencesPanel);
-        
     }
 
     public void showMain() {
         showMainView();
+        downloadsController.refreshScanStatusLabel();
     }
 
     public void showLogin() {
@@ -255,6 +269,7 @@ public class MainFrame extends javax.swing.JFrame {
         btnUploadFromLocal = new javax.swing.JButton();
         pbDownload = new javax.swing.JProgressBar();
         jLabel1 = new javax.swing.JLabel();
+        lblStatusScan = new javax.swing.JLabel();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniLogout = new javax.swing.JMenuItem();
@@ -420,7 +435,6 @@ public class MainFrame extends javax.swing.JFrame {
         chkSemana.setBounds(660, 100, 100, 22);
 
         bgQuality.add(jrbBestAvailable);
-        jrbBestAvailable.setSelected(true);
         jrbBestAvailable.setText("Best Available");
         jrbBestAvailable.setToolTipText("Under Manteinance");
         jrbBestAvailable.setEnabled(false);
@@ -428,6 +442,7 @@ public class MainFrame extends javax.swing.JFrame {
         jrbBestAvailable.setBounds(50, 230, 120, 22);
 
         bgQuality.add(jrb1080p);
+        jrb1080p.setSelected(true);
         jrb1080p.setText("1080p");
         pnlMainPanel.add(jrb1080p);
         jrb1080p.setBounds(170, 230, 80, 22);
@@ -476,6 +491,8 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel1.setText(" |");
         pnlMainPanel.add(jLabel1);
         jLabel1.setBounds(940, 100, 20, 20);
+        pnlMainPanel.add(lblStatusScan);
+        lblStatusScan.setBounds(970, 590, 190, 22);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -695,6 +712,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblFormat;
     private javax.swing.JLabel lblOptions;
     private javax.swing.JLabel lblOutput;
+    private javax.swing.JLabel lblStatusScan;
     private javax.swing.JLabel lblUrl;
     private javax.swing.JList<ResourceDownloaded> lstDownloadScanList;
     private javax.swing.JMenuBar mnbBar;

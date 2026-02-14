@@ -41,7 +41,10 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
             boolean isSelected, boolean cellHasFocus) {
 
         // Título
-        ResourceState state = stateByFileName.getOrDefault(value.getName(), ResourceState.LOCAL_ONLY);
+        String key = normalize(value != null ? value.getName() : null);
+        ResourceState state = (key == null) ? ResourceState.LOCAL_ONLY
+                : stateByFileName.getOrDefault(key, ResourceState.LOCAL_ONLY);
+
         String prefix = switch (state) {
             case BOTH ->
                 "[LOCAL + CLOUD] ";
@@ -100,4 +103,13 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         Image img = src.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
         return new ImageIcon(img);
     }
+
+    private String normalize(String s) {
+        if (s == null) {
+            return null;
+        }
+        s = s.trim();
+        return s.isEmpty() ? null : s.toLowerCase();
+    }
+
 }
