@@ -5,6 +5,7 @@ import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.ResourceState;
 import cat.dam.roig.cleanstream.services.DownloadsScanner;
 import cat.dam.roig.cleanstream.services.UserPreferences;
+import cat.dam.roig.cleanstream.services.UploaderResolver;
 import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
@@ -42,6 +43,8 @@ public class DownloadsController {
     private final JButton btnUploadFromLocal;
     private JLabel lblStatusScan;
     private final JProgressBar pbDownload;
+
+    private UploaderResolver uploaderResolver;
 
     private final List<Media> cloudMedia = new ArrayList<>();
     private Set<String> lastScanKeys = new HashSet<>();
@@ -89,6 +92,9 @@ public class DownloadsController {
         this.lblStatusScan = lblStatusScan;
         this.pbDownload = pbDownload;
 
+        uploaderResolver = new UploaderResolver(
+                userId -> this.mediaComponent.getNickName(userId)
+        );
         initSelectionListener();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
     }
@@ -526,6 +532,37 @@ public class DownloadsController {
                 }
             }
         }
+        resolveUploadersForCurrentModel();
+    }
+
+    private void resolveUploadersForCurrentModel() {
+        for (int i = 0; i < downloadsModel.size(); i++) {
+            ResourceDownloaded r = downloadsModel.get(i);
+
+            Integer uid = r.getUploaderId();
+            if (uid == null) {
+                continue;
+            }
+
+            String current = r.getUploaderNick();
+            if (current != null && !current.isBlank() && !current.equals("…")) {
+                continue;
+            }
+
+            String cached = uploaderResolver.getCachedNick(uid);
+            if (cached != null) {
+                r.setUploaderNick(cached);
+                continue;
+            }
+
+            uploaderResolver.fetchNickAsync(uid, () -> {
+                String nick = uploaderResolver.getCachedNick(uid);
+                if (nick != null) {
+                    r.setUploaderNick(nick);
+                    downloadsList.repaint();
+                }
+            });
+        }
     }
 
     // ---- helpers de filtro ----
@@ -897,6 +934,8 @@ public class DownloadsController {
 
         // Fecha de descarga local: null (no está descargado)
         r.setDownloadDate(null);
+
+        r.setUploaderId(m.userId); // o m.ownerId, el campo real
 
         return r;
     }

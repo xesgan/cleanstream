@@ -15,6 +15,8 @@ public class ResourceDownloaded {
     private LocalDateTime downloadDate;
     private String extension;
     private String sourceURL;
+    private Integer uploaderId;
+    private String uploaderNick;
 
     public ResourceDownloaded() {
     }
@@ -83,6 +85,22 @@ public class ResourceDownloaded {
 
     public void setSourceURL(String sourceURL) {
         this.sourceURL = sourceURL;
+    }
+
+    public Integer getUploaderId() {
+        return uploaderId;
+    }
+
+    public void setUploaderId(Integer uploaderId) {
+        this.uploaderId = uploaderId;
+    }
+
+    public String getUploaderNick() {
+        return uploaderNick;
+    }
+
+    public void setUploaderNick(String uploaderNick) {
+        this.uploaderNick = uploaderNick;
     }
 
     @Override

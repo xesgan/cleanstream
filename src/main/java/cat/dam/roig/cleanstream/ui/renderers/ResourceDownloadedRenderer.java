@@ -45,7 +45,9 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         txtTitle.setMargin(new Insets(0, 0, 0, 0));
 
         Font base = UIManager.getFont("Label.font");
-        if (base == null) base = new Font("SansSerif", Font.PLAIN, 12);
+        if (base == null) {
+            base = new Font("SansSerif", Font.PLAIN, 12);
+        }
         txtTitle.setFont(base.deriveFont(Font.BOLD));
 
         // Subtitle
@@ -85,21 +87,27 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
                 : stateByFileName.getOrDefault(key, ResourceState.LOCAL_ONLY);
 
         String prefix = switch (state) {
-            case BOTH -> "[LOCAL + CLOUD] ";
-            case CLOUD_ONLY -> "[CLOUD] ";
-            case LOCAL_ONLY -> "[LOCAL] ";
+            case BOTH ->
+                "[LOCAL + CLOUD] ";
+            case CLOUD_ONLY ->
+                "[CLOUD] ";
+            case LOCAL_ONLY ->
+                "[LOCAL] ";
         };
 
         // Icono
         lblIcon.setIcon(loadThumbOrFallback(value));
 
-        // Subtítulo (aquí luego metes uploader)
-        String sub = String.format(".%s   —   %s   —   %s",
-                safe(value != null ? value.getExtension() : ""),
-                humanReadable(value != null ? value.getSize() : 0),
-                (value != null && value.getDownloadDate() != null)
-                        ? value.getDownloadDate().toLocalDate().toString()
-                        : ""
+        // Subtítulo 
+        String uploader = safe(value.getUploaderNick());
+        if (uploader.isBlank()) {
+            uploader = "…"; // mientras carga
+        }
+        String sub = String.format(".%s   —   %s   —   %s   —   Subido por: %s",
+                safe(value.getExtension()),
+                humanReadable(value.getSize()),
+                value.getDownloadDate() != null ? value.getDownloadDate().toLocalDate().toString() : "",
+                uploader
         );
         lblSub.setText(sub);
 
@@ -108,7 +116,9 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
 
         int iconW = 36;
         Icon ic = lblIcon.getIcon();
-        if (ic != null) iconW = ic.getIconWidth();
+        if (ic != null) {
+            iconW = ic.getIconWidth();
+        }
 
         int hgap = 8;          // BorderLayout(8,0)
         int paddingLR = 8 + 8; // EmptyBorder(6,8,6,8)
@@ -159,10 +169,14 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         Container p = list.getParent();
         if (p instanceof JViewport vp) {
             int w = vp.getWidth();
-            if (w > 0) return w;
+            if (w > 0) {
+                return w;
+            }
         }
         int w = list.getWidth();
-        if (w > 0) return w;
+        if (w > 0) {
+            return w;
+        }
         return 600;
     }
 
@@ -182,7 +196,9 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
     }
 
     private Icon loadThumbOrFallback(ResourceDownloaded r) {
-        if (r == null) return UIManager.getIcon("FileView.fileIcon");
+        if (r == null) {
+            return UIManager.getIcon("FileView.fileIcon");
+        }
 
         String mime = r.getMimeType();
         if (mime != null && mime.startsWith("video/")) {
@@ -195,7 +211,9 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
     }
 
     private String normalize(String s) {
-        if (s == null) return null;
+        if (s == null) {
+            return null;
+        }
         s = s.trim();
         return s.isEmpty() ? null : s.toLowerCase();
     }
