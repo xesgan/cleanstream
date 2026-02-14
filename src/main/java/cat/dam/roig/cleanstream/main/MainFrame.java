@@ -155,7 +155,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void initDownloadsList() {
         lstDownloadScanList.setModel(downloadsModel);
-        lstDownloadScanList.setFixedCellHeight(56);
+        lstDownloadScanList.setFixedCellHeight(68);
     }
 
     private void initMetadataTable() {
@@ -382,6 +382,13 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(scrLogArea);
         scrLogArea.setBounds(30, 380, 490, 170);
 
+        scpScanListPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        lstDownloadScanList.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                lstDownloadScanListComponentResized(evt);
+            }
+        });
         lstDownloadScanList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 lstDownloadScanListValueChanged(evt);
@@ -648,7 +655,6 @@ public class MainFrame extends javax.swing.JFrame {
                     JOptionPane.WARNING_MESSAGE
             );
         }
-
     }//GEN-LAST:event_btnPasteActionPerformed
 
     private void lstDownloadScanListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstDownloadScanListValueChanged
@@ -658,6 +664,12 @@ public class MainFrame extends javax.swing.JFrame {
             btnUploadFromLocal.setEnabled(downloadsController.canUpload(sel));
         }
     }//GEN-LAST:event_lstDownloadScanListValueChanged
+
+    private void lstDownloadScanListComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_lstDownloadScanListComponentResized
+        // TODO add your handling code here:
+        lstDownloadScanList.revalidate();
+        lstDownloadScanList.repaint();
+    }//GEN-LAST:event_lstDownloadScanListComponentResized
 
     // ----- GETTERS Y SETTERS ------
     public VideoQuality getSelectedQuality() {

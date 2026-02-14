@@ -283,6 +283,9 @@
               </SubComponents>
             </Container>
             <Container class="javax.swing.JScrollPane" name="scpScanListPane">
+              <Properties>
+                <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
+              </Properties>
               <AuxValues>
                 <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
               </AuxValues>
@@ -301,6 +304,7 @@
                     </Property>
                   </Properties>
                   <Events>
+                    <EventHandler event="componentResized" listener="java.awt.event.ComponentListener" parameters="java.awt.event.ComponentEvent" handler="lstDownloadScanListComponentResized"/>
                     <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="lstDownloadScanListValueChanged"/>
                   </Events>
                   <AuxValues>

@@ -2,6 +2,7 @@ package cat.dam.roig.cleanstream.ui.renderers;
 
 import cat.dam.roig.cleanstream.models.ResourceDownloaded;
 import cat.dam.roig.cleanstream.models.ResourceState;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
@@ -9,68 +10,164 @@ import java.util.Map;
 public class ResourceDownloadedRenderer extends JPanel implements ListCellRenderer<ResourceDownloaded> {
 
     private final JLabel lblIcon = new JLabel();
-    private final JLabel lblTitle = new JLabel();
+
+    // Título con wrap real
+    private final JTextArea txtTitle = new JTextArea();
+
+    // Subtítulo en una línea (puedes poner uploader aquí)
     private final JLabel lblSub = new JLabel();
 
+    private final JPanel textPanel = new JPanel();
+
     private final Map<String, ResourceState> stateByFileName;
+
+    private static final Color SUB_FG = new Color(120, 120, 120);
 
     public ResourceDownloadedRenderer(Map<String, ResourceState> stateByFileName) {
         this.stateByFileName = stateByFileName;
 
         setLayout(new BorderLayout(8, 0));
-        lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD));
-        lblSub.setFont(lblSub.getFont().deriveFont(Font.PLAIN, 11f));
-        lblSub.setForeground(new Color(120, 120, 120));
+        setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        setOpaque(true);
 
-        var textPanel = new JPanel(new GridLayout(0, 1));
+        // Icon
+        lblIcon.setPreferredSize(new Dimension(36, 36));
+        lblIcon.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcon.setVerticalAlignment(SwingConstants.TOP);
+
+        // Title (wrap)
+        txtTitle.setLineWrap(true);
+        txtTitle.setWrapStyleWord(true);
+        txtTitle.setEditable(false);
+        txtTitle.setFocusable(false);
+        txtTitle.setOpaque(false);
+        txtTitle.setBorder(null);
+        txtTitle.setMargin(new Insets(0, 0, 0, 0));
+
+        Font base = UIManager.getFont("Label.font");
+        if (base == null) base = new Font("SansSerif", Font.PLAIN, 12);
+        txtTitle.setFont(base.deriveFont(Font.BOLD));
+
+        // Subtitle
+        lblSub.setFont(base.deriveFont(Font.PLAIN, 11f));
+        lblSub.setForeground(SUB_FG);
+
+        // Text panel vertical
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setOpaque(false);
-        textPanel.add(lblTitle);
+
+        txtTitle.setAlignmentX(LEFT_ALIGNMENT);
+        lblSub.setAlignmentX(LEFT_ALIGNMENT);
+        textPanel.setAlignmentX(LEFT_ALIGNMENT);
+
+        textPanel.add(txtTitle);
+        textPanel.add(Box.createVerticalStrut(2));
         textPanel.add(lblSub);
 
         add(lblIcon, BorderLayout.WEST);
         add(textPanel, BorderLayout.CENTER);
-
-        setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
-        setOpaque(true);
     }
 
     @Override
     public Component getListCellRendererComponent(
             JList<? extends ResourceDownloaded> list,
-            ResourceDownloaded value, int index,
-            boolean isSelected, boolean cellHasFocus) {
+            ResourceDownloaded value,
+            int index,
+            boolean isSelected,
+            boolean cellHasFocus) {
 
-        // Título
+        String name = (value != null && value.getName() != null) ? value.getName() : "";
+
+        // Estado / prefijo
         String key = normalize(value != null ? value.getName() : null);
-        ResourceState state = (key == null) ? ResourceState.LOCAL_ONLY
+        ResourceState state = (key == null)
+                ? ResourceState.LOCAL_ONLY
                 : stateByFileName.getOrDefault(key, ResourceState.LOCAL_ONLY);
 
         String prefix = switch (state) {
-            case BOTH ->
-                "[LOCAL + CLOUD] ";
-            case CLOUD_ONLY ->
-                "[CLOUD] ";
-            case LOCAL_ONLY ->
-                "[LOCAL] ";
+            case BOTH -> "[LOCAL + CLOUD] ";
+            case CLOUD_ONLY -> "[CLOUD] ";
+            case LOCAL_ONLY -> "[LOCAL] ";
         };
-        lblTitle.setText(prefix + value.getName());
-        lblTitle.setToolTipText(prefix + value.getName());
 
-        // Subtítulo (elige lo que más te sirva)
-        String sub = String.format(".%s   —   %s   —   %s",
-                value.getExtension(),
-                humanReadable(value.getSize()),
-                value.getDownloadDate() != null ? value.getDownloadDate().toLocalDate().toString() : "");
-        lblSub.setText(sub);
-
-        // Miniatura (opcional): intenta cargarla; si no, icono por MIME
+        // Icono
         lblIcon.setIcon(loadThumbOrFallback(value));
 
+        // Subtítulo (aquí luego metes uploader)
+        String sub = String.format(".%s   —   %s   —   %s",
+                safe(value != null ? value.getExtension() : ""),
+                humanReadable(value != null ? value.getSize() : 0),
+                (value != null && value.getDownloadDate() != null)
+                        ? value.getDownloadDate().toLocalDate().toString()
+                        : ""
+        );
+        lblSub.setText(sub);
+
+        // Ancho real del viewport
+        int viewportW = getViewportWidth(list);
+
+        int iconW = 36;
+        Icon ic = lblIcon.getIcon();
+        if (ic != null) iconW = ic.getIconWidth();
+
+        int hgap = 8;          // BorderLayout(8,0)
+        int paddingLR = 8 + 8; // EmptyBorder(6,8,6,8)
+        int extra = iconW + hgap + paddingLR;
+
+        int textW = Math.max(180, viewportW - extra);
+
+        // ===== TÍTULO: wrap + limitar a 2 líneas =====
+        txtTitle.setText(prefix + name);
+
+        // Forzar cálculo
+        txtTitle.setSize(new Dimension(textW, Integer.MAX_VALUE));
+        Dimension pref = txtTitle.getPreferredSize();
+
+        FontMetrics fm = txtTitle.getFontMetrics(txtTitle.getFont());
+        int lineH = fm.getHeight();
+        int insetsTB = txtTitle.getInsets().top + txtTitle.getInsets().bottom;
+
+        int maxTitleH = insetsTB + (2 * lineH); // 2 líneas
+        int finalTitleH = Math.min(pref.height, maxTitleH);
+
+        txtTitle.setPreferredSize(new Dimension(textW, finalTitleH));
+        txtTitle.setMaximumSize(new Dimension(Integer.MAX_VALUE, finalTitleH));
+
+        // ===== ALTURA MÍNIMA DE CELDA (evita pisado sí o sí) =====
+        // si el título ocupa 2 líneas, damos más alto
+        boolean twoLines = pref.height > (insetsTB + lineH + 1);
+        int minH = twoLines ? 70 : 56;
+
+        Dimension cellPref = getPreferredSize();
+        setPreferredSize(new Dimension(cellPref.width, Math.max(cellPref.height, minH)));
+
         // Selección
-        setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
-        lblTitle.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
-        lblSub.setForeground(isSelected ? list.getSelectionForeground().darker() : new Color(120, 120, 120));
+        if (isSelected) {
+            setBackground(list.getSelectionBackground());
+            txtTitle.setForeground(list.getSelectionForeground());
+            lblSub.setForeground(list.getSelectionForeground().darker());
+        } else {
+            setBackground(list.getBackground());
+            txtTitle.setForeground(list.getForeground());
+            lblSub.setForeground(SUB_FG);
+        }
+
         return this;
+    }
+
+    private int getViewportWidth(JList<?> list) {
+        Container p = list.getParent();
+        if (p instanceof JViewport vp) {
+            int w = vp.getWidth();
+            if (w > 0) return w;
+        }
+        int w = list.getWidth();
+        if (w > 0) return w;
+        return 600;
+    }
+
+    private static String safe(String s) {
+        return (s == null) ? "" : s;
     }
 
     private static String humanReadable(long bytes) {
@@ -85,31 +182,21 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
     }
 
     private Icon loadThumbOrFallback(ResourceDownloaded r) {
-        // Si en el futuro generas thumbnails (con ffmpeg), pon aquí la ruta:
-        // Path thumb = Paths.get(r.getRoute() + ".jpg"); // ejemplo
-        // if (Files.exists(thumb)) return scaledIcon(new ImageIcon(thumb.toString()), 36, 36);
+        if (r == null) return UIManager.getIcon("FileView.fileIcon");
 
-        // Fallback por MIME:
-        if (r.getMimeType() != null && r.getMimeType().startsWith("video/")) {
-            return UIManager.getIcon("FileView.hardDriveIcon"); // cámbialo por tu icono
+        String mime = r.getMimeType();
+        if (mime != null && mime.startsWith("video/")) {
+            return UIManager.getIcon("FileView.fileIcon");
         }
-        if (r.getMimeType() != null && r.getMimeType().startsWith("audio/")) {
+        if (mime != null && mime.startsWith("audio/")) {
             return UIManager.getIcon("FileView.fileIcon");
         }
         return UIManager.getIcon("FileView.directoryIcon");
     }
 
-    private Icon scaledIcon(ImageIcon src, int w, int h) {
-        Image img = src.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-        return new ImageIcon(img);
-    }
-
     private String normalize(String s) {
-        if (s == null) {
-            return null;
-        }
+        if (s == null) return null;
         s = s.trim();
         return s.isEmpty() ? null : s.toLowerCase();
     }
-
 }
