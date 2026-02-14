@@ -382,6 +382,11 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(scrLogArea);
         scrLogArea.setBounds(30, 380, 490, 170);
 
+        lstDownloadScanList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                lstDownloadScanListValueChanged(evt);
+            }
+        });
         scpScanListPane.setViewportView(lstDownloadScanList);
 
         pnlMainPanel.add(scpScanListPane);
@@ -492,7 +497,7 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(jLabel1);
         jLabel1.setBounds(940, 100, 20, 20);
         pnlMainPanel.add(lblStatusScan);
-        lblStatusScan.setBounds(970, 590, 190, 22);
+        lblStatusScan.setBounds(890, 590, 270, 22);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -610,6 +615,12 @@ public class MainFrame extends javax.swing.JFrame {
     private void btnUploadFromLocalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUploadFromLocalActionPerformed
         // TODO add your handling code here:
         downloadsController.uploadToCloud(this);
+
+        ResourceDownloaded sel = lstDownloadScanList.getSelectedValue();
+        System.err.println("UPLOAD clicked name=" + sel.getName()
+                + " route=" + sel.getRoute()
+                + " routeExists=" + (sel.getRoute() != null && !sel.getRoute().isBlank() && java.nio.file.Files.exists(java.nio.file.Paths.get(sel.getRoute()))));
+
     }//GEN-LAST:event_btnUploadFromLocalActionPerformed
 
     private void btnFetchFromCloudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFetchFromCloudActionPerformed
@@ -639,6 +650,14 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
     }//GEN-LAST:event_btnPasteActionPerformed
+
+    private void lstDownloadScanListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstDownloadScanListValueChanged
+        // TODO add your handling code here
+        if (!evt.getValueIsAdjusting()) {
+            ResourceDownloaded sel = lstDownloadScanList.getSelectedValue();
+            btnUploadFromLocal.setEnabled(downloadsController.canUpload(sel));
+        }
+    }//GEN-LAST:event_lstDownloadScanListValueChanged
 
     // ----- GETTERS Y SETTERS ------
     public VideoQuality getSelectedQuality() {

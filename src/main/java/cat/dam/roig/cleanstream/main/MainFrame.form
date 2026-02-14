@@ -300,6 +300,9 @@
                       <StringArray count="0"/>
                     </Property>
                   </Properties>
+                  <Events>
+                    <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="lstDownloadScanListValueChanged"/>
+                  </Events>
                   <AuxValues>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ResourceDownloaded&gt;"/>
                   </AuxValues>
@@ -513,7 +516,7 @@
             <Component class="javax.swing.JLabel" name="lblStatusScan">
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                  <AbsoluteConstraints x="970" y="590" width="190" height="22"/>
+                  <AbsoluteConstraints x="890" y="590" width="270" height="22"/>
                 </Constraint>
               </Constraints>
             </Component>

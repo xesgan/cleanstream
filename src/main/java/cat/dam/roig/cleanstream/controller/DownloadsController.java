@@ -214,7 +214,6 @@ public class DownloadsController {
             ResourceState state = stateByFileName.get(normalize(selected.getName()));
             boolean isInCloud = state == ResourceState.CLOUD_ONLY || state == ResourceState.BOTH;
 
-
             if (deleted) {
                 if (!isInCloud) {
                     downloadsModel.remove(idx);
@@ -412,6 +411,30 @@ public class DownloadsController {
                 }
             }
         }.execute();
+    }
+
+    public boolean canUpload(ResourceDownloaded r) {
+        if (r == null) {
+            return false;
+        }
+
+        String route = r.getRoute();
+        if (route == null || route.isBlank()) {
+            return false;
+        }
+
+        try {
+            if (!java.nio.file.Files.exists(java.nio.file.Paths.get(route))) {
+                return false;
+            }
+        } catch (Exception ex) {
+            return false;
+        }
+
+        ResourceState state = stateByFileName.get(normalize(r.getName()));
+        boolean inCloud = state == ResourceState.CLOUD_ONLY || state == ResourceState.BOTH;
+
+        return !inCloud;
     }
 
     /**
@@ -684,83 +707,6 @@ public class DownloadsController {
         downloadsList.setSelectedIndex(i);
         downloadsList.ensureIndexIsVisible(i);
     }
-
-    private void selectAfterDelete(String deletedKey, int deletedIndex) {
-        if (downloadsModel.isEmpty()) {
-            downloadsList.clearSelection();
-            return;
-        }
-
-        // 1️⃣ Intentar encontrar el mismo recurso por key
-        int sameIdx = indexOfKeyInListModel(deletedKey);
-        if (sameIdx >= 0) {
-            downloadsList.setSelectedIndex(sameIdx);
-            downloadsList.ensureIndexIsVisible(sameIdx);
-            downloadsList.requestFocusInWindow();
-            return;
-        }
-
-        // 2️⃣ Si ya no existe, entonces ir al anterior
-        int newIndex = Math.max(0, deletedIndex - 1);
-        if (newIndex >= downloadsModel.size()) {
-            newIndex = downloadsModel.size() - 1;
-        }
-
-        downloadsList.setSelectedIndex(newIndex);
-        downloadsList.ensureIndexIsVisible(newIndex);
-        downloadsList.requestFocusInWindow();
-    }
-
-    private int indexOfKeyInListModel(String key) {
-        ListModel<ResourceDownloaded> m = downloadsList.getModel();
-        for (int i = 0; i < m.getSize(); i++) {
-            ResourceDownloaded it = m.getElementAt(i);
-            if (key.equals(keyOf(it))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    public void deleteSelected() {
-        System.err.println(">>> deleteSelected() CALLED");
-
-        int idx = downloadsList.getSelectedIndex();
-        if (idx < 0) {
-            return;
-        }
-
-        ResourceDownloaded sel = downloadsList.getSelectedValue();
-        String key = keyOf(sel);
-
-        System.out.println("Before delete key=" + key);
-
-        // borrar en disco / actualizar estructuras
-        recomputeStates();
-        applyFilters();
-
-        // 👇 AQUÍ lo pones
-        System.out.println(
-                "deletedKey=" + key
-                + " existsAfter=" + (indexOfKeyInListModel(key) >= 0)
-        );
-
-        selectAfterDelete(key, idx);
-    }
-
-//    public void onDeleteClicked() {
-//        int idx = downloadsList.getSelectedIndex();
-//        if (idx < 0) {
-//            return;
-//        }
-//
-//        ResourceDownloaded selected = downloadsList.getSelectedValue();
-//        // ... borrar de disco / borrar de allResources ...
-//        // ... recomputeStates ...
-//
-//        applyFilters();              // reconstruye lista
-    ////        selectAfterDelete(idx);      // mantiene “zona”
-//    }
 
     private void selectByKey(String key) {
         String k = normalize(key);
