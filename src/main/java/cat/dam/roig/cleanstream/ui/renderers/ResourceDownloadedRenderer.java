@@ -124,7 +124,7 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         applyBadge(state);
 
         // Icono
-        lblIcon.setIcon(loadThumbOrFallback(value));
+        lblIcon.setIcon(loadThumbOrFallback(value, state));
 
         // Subtítulo (con uploader)
         String uploader = safe(value != null ? value.getUploaderNick() : null);
@@ -241,20 +241,30 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         return String.format("%.1f %s", v, u[i]);
     }
 
-    private Icon loadThumbOrFallback(ResourceDownloaded r) {
-        if (r == null) {
-            return UIManager.getIcon("FileView.fileIcon");
-        }
+private Icon loadThumbOrFallback(ResourceDownloaded r, ResourceState state) {
+    // Icono base por tipo
+    Icon base;
+    String mime = (r != null) ? r.getMimeType() : null;
 
-        String mime = r.getMimeType();
-        if (mime != null && mime.startsWith("video/")) {
-            return UIManager.getIcon("FileView.fileIcon");
-        }
-        if (mime != null && mime.startsWith("audio/")) {
-            return UIManager.getIcon("FileView.fileIcon");
-        }
-        return UIManager.getIcon("FileView.directoryIcon");
+    if (mime != null && mime.startsWith("video/")) {
+        base = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/video.png", 25);
+    } else if (mime != null && mime.startsWith("audio/")) {
+        base = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/audio.png", 25);
+    } else {
+        base = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/file.png", 25);
     }
+
+    // Overlay nube si es CLOUD_ONLY (opcional)
+    if (state == ResourceState.CLOUD_ONLY) {
+        Icon cloud = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/cloud.png", 14);
+        int x = base.getIconWidth() - cloud.getIconWidth();
+        int y = base.getIconHeight() - cloud.getIconHeight();
+        return cat.dam.roig.cleanstream.ui.utils.Icons.overlay(base, cloud, x, y);
+    }
+
+    return base;
+}
+
 
     private String normalize(String s) {
         if (s == null) {
