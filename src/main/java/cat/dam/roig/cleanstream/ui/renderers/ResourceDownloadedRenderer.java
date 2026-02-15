@@ -28,6 +28,7 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
     // ===== Dark palette =====
     private static final Color BG = new Color(0x121212);
     private static final Color BG_SEL = new Color(0x2A2A2A);
+    private static final Color BG_HOVER = new Color(0x1A1A2A); 
     private static final Color FG = new Color(0xE6E6E6);
     private static final Color SUB_FG = new Color(0xA0A0A0);
     private static final Color DIV = new Color(0x2C2C2C);
@@ -179,8 +180,13 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         setPreferredSize(new Dimension(cellPref.width, Math.max(cellPref.height, minH)));
 
         // Fondo / selección
+        int hoverIndex = cat.dam.roig.cleanstream.ui.utils.ListHoverSupport.getHoverIndex(list);
+        boolean isHover = (index == hoverIndex);
+
         if (isSelected) {
             setBackground(BG_SEL);
+        } else if (isHover) {
+            setBackground(BG_HOVER);
         } else {
             setBackground(BG);
         }

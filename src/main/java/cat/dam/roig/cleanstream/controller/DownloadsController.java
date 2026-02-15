@@ -98,6 +98,7 @@ public class DownloadsController {
         initSelectionListener();
         initDoubleClickOpen();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
+        cat.dam.roig.cleanstream.ui.utils.ListHoverSupport.install(downloadsList);
     }
 
     public void appStart(Path downloadsDir, Component parentForDialog) {
