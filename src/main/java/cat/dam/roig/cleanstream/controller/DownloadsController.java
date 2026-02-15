@@ -96,6 +96,7 @@ public class DownloadsController {
                 userId -> this.mediaComponent.getNickName(userId)
         );
         initSelectionListener();
+        initDoubleClickOpen();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
     }
 
@@ -148,6 +149,50 @@ public class DownloadsController {
                 btnUploadFromLocal.setEnabled(state == ResourceState.LOCAL_ONLY && sel.getRoute() != null);
             }
         });
+    }
+
+    private void initDoubleClickOpen() {
+        downloadsList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() != 2) {
+                    return;
+                }
+
+                int idx = downloadsList.locationToIndex(e.getPoint());
+                if (idx < 0) {
+                    return;
+                }
+
+                ResourceDownloaded r = downloadsModel.get(idx);
+                if (r == null) {
+                    return;
+                }
+
+                // Solo si existe en disco (local)
+                if (r.getRoute() == null || r.getRoute().isBlank()) {
+                    return;
+                }
+
+                // Opcional: si quieres bloquear también cloud-only aunque tenga route null
+                 ResourceState st = stateByFileName.getOrDefault(normalize(r.getName()), ResourceState.LOCAL_ONLY);
+                 if (st == ResourceState.CLOUD_ONLY) return;
+                openWithSystemPlayer(r.getRoute());
+            }
+        });
+    }
+
+    private void openWithSystemPlayer(String path) {
+        try {
+            java.awt.Desktop.getDesktop().open(new java.io.File(path));
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(
+                    downloadsList,
+                    "No se ha podido abrir el reproductor.\n" + ex.getMessage(),
+                    "Abrir archivo",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
 
     public void scanDownloads(Path downloadsDir, JButton btnScan) {
