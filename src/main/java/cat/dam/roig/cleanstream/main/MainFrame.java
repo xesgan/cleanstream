@@ -155,7 +155,14 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void initDownloadsList() {
         lstDownloadScanList.setModel(downloadsModel);
-        lstDownloadScanList.setFixedCellHeight(68);
+        lstDownloadScanList.setFixedCellHeight(78);
+        scpScanListPane.getViewport().setBackground(new Color(0x121212));
+        scpScanListPane.setBorder(BorderFactory.createEmptyBorder());
+        lstDownloadScanList.setBackground(new Color(0x121212));
+        lstDownloadScanList.setForeground(new Color(0xE6E6E6));
+        lstDownloadScanList.setSelectionBackground(new Color(0x2A2A2A));
+        lstDownloadScanList.setSelectionForeground(Color.WHITE);
+
     }
 
     private void initMetadataTable() {

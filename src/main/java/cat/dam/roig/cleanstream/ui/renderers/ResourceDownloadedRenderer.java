@@ -11,29 +11,54 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
 
     private final JLabel lblIcon = new JLabel();
 
-    // Título con wrap real
+    // Badge estado (LOCAL/CLOUD/BOTH)
+    private final JLabel lblBadge = new JLabel();
+
+    // Título con wrap real (2 líneas máx)
     private final JTextArea txtTitle = new JTextArea();
 
-    // Subtítulo en una línea (puedes poner uploader aquí)
+    // Subtítulo (1 línea)
     private final JLabel lblSub = new JLabel();
 
+    private final JPanel titleRow = new JPanel();
     private final JPanel textPanel = new JPanel();
 
     private final Map<String, ResourceState> stateByFileName;
 
-    private static final Color SUB_FG = new Color(120, 120, 120);
+    // ===== Dark palette =====
+    private static final Color BG = new Color(0x121212);
+    private static final Color BG_SEL = new Color(0x2A2A2A);
+    private static final Color FG = new Color(0xE6E6E6);
+    private static final Color SUB_FG = new Color(0xA0A0A0);
+    private static final Color DIV = new Color(0x2C2C2C);
+
+    // Badge colors
+    private static final Color BADGE_LOCAL = new Color(0x2F855A);
+    private static final Color BADGE_CLOUD = new Color(0x805AD5);
+    private static final Color BADGE_BOTH = new Color(0x2B6CB0);
 
     public ResourceDownloadedRenderer(Map<String, ResourceState> stateByFileName) {
         this.stateByFileName = stateByFileName;
 
-        setLayout(new BorderLayout(8, 0));
-        setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        setLayout(new BorderLayout(10, 0));
         setOpaque(true);
+
+        // Separador suave + padding
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, DIV),
+                BorderFactory.createEmptyBorder(10, 12, 10, 12)
+        ));
 
         // Icon
         lblIcon.setPreferredSize(new Dimension(36, 36));
         lblIcon.setHorizontalAlignment(SwingConstants.CENTER);
         lblIcon.setVerticalAlignment(SwingConstants.TOP);
+
+        // Badge
+        lblBadge.setOpaque(true);
+        lblBadge.setForeground(Color.WHITE);
+        lblBadge.setFont(lblBadge.getFont().deriveFont(Font.BOLD, 11f));
+        lblBadge.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
 
         // Title (wrap)
         txtTitle.setLineWrap(true);
@@ -49,21 +74,30 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
             base = new Font("SansSerif", Font.PLAIN, 12);
         }
         txtTitle.setFont(base.deriveFont(Font.BOLD));
+        txtTitle.setForeground(FG);
 
         // Subtitle
         lblSub.setFont(base.deriveFont(Font.PLAIN, 11f));
         lblSub.setForeground(SUB_FG);
 
+        // Title row: badge + title
+        titleRow.setLayout(new BoxLayout(titleRow, BoxLayout.X_AXIS));
+        titleRow.setOpaque(false);
+        titleRow.setAlignmentX(LEFT_ALIGNMENT);
+
+        titleRow.add(lblBadge);
+        titleRow.add(Box.createHorizontalStrut(8));
+        titleRow.add(txtTitle);
+
         // Text panel vertical
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setOpaque(false);
-
-        txtTitle.setAlignmentX(LEFT_ALIGNMENT);
-        lblSub.setAlignmentX(LEFT_ALIGNMENT);
         textPanel.setAlignmentX(LEFT_ALIGNMENT);
 
-        textPanel.add(txtTitle);
-        textPanel.add(Box.createVerticalStrut(2));
+        lblSub.setAlignmentX(LEFT_ALIGNMENT);
+
+        textPanel.add(titleRow);
+        textPanel.add(Box.createVerticalStrut(4));
         textPanel.add(lblSub);
 
         add(lblIcon, BorderLayout.WEST);
@@ -80,34 +114,31 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
 
         String name = (value != null && value.getName() != null) ? value.getName() : "";
 
-        // Estado / prefijo
+        // Estado
         String key = normalize(value != null ? value.getName() : null);
         ResourceState state = (key == null)
                 ? ResourceState.LOCAL_ONLY
                 : stateByFileName.getOrDefault(key, ResourceState.LOCAL_ONLY);
 
-        String prefix = switch (state) {
-            case BOTH ->
-                "[LOCAL + CLOUD] ";
-            case CLOUD_ONLY ->
-                "[CLOUD] ";
-            case LOCAL_ONLY ->
-                "[LOCAL] ";
-        };
+        applyBadge(state);
 
         // Icono
         lblIcon.setIcon(loadThumbOrFallback(value));
 
-        // Subtítulo 
-        String uploader = safe(value.getUploaderNick());
+        // Subtítulo (con uploader)
+        String uploader = safe(value != null ? value.getUploaderNick() : null);
         if (uploader.isBlank()) {
-            uploader = "…"; // mientras carga
+            uploader = "…";
         }
+
+        String ext = safe(value != null ? value.getExtension() : null);
+        String sizeTxt = (value != null && value.getSize() > 0) ? humanReadable(value.getSize()) : "—";
+        String dateTxt = (value != null && value.getDownloadDate() != null)
+                ? value.getDownloadDate().toLocalDate().toString()
+                : "—";
+
         String sub = String.format(".%s   —   %s   —   %s   —   Subido por: %s",
-                safe(value.getExtension()),
-                humanReadable(value.getSize()),
-                value.getDownloadDate() != null ? value.getDownloadDate().toLocalDate().toString() : "",
-                uploader
+                ext, sizeTxt, dateTxt, uploader
         );
         lblSub.setText(sub);
 
@@ -120,16 +151,13 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
             iconW = ic.getIconWidth();
         }
 
-        int hgap = 8;          // BorderLayout(8,0)
-        int paddingLR = 8 + 8; // EmptyBorder(6,8,6,8)
-        int extra = iconW + hgap + paddingLR;
-
-        int textW = Math.max(180, viewportW - extra);
+        // extra: icon + gap + padding + (badge aprox)
+        int extra = iconW + 10 + 12 + 12 + 90; // icon + hgap + left+right padding + badge area approx
+        int textW = Math.max(220, viewportW - extra);
 
         // ===== TÍTULO: wrap + limitar a 2 líneas =====
-        txtTitle.setText(prefix + name);
+        txtTitle.setText(name);
 
-        // Forzar cálculo
         txtTitle.setSize(new Dimension(textW, Integer.MAX_VALUE));
         Dimension pref = txtTitle.getPreferredSize();
 
@@ -137,32 +165,44 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         int lineH = fm.getHeight();
         int insetsTB = txtTitle.getInsets().top + txtTitle.getInsets().bottom;
 
-        int maxTitleH = insetsTB + (2 * lineH); // 2 líneas
+        int maxTitleH = insetsTB + (2 * lineH);
         int finalTitleH = Math.min(pref.height, maxTitleH);
 
         txtTitle.setPreferredSize(new Dimension(textW, finalTitleH));
         txtTitle.setMaximumSize(new Dimension(Integer.MAX_VALUE, finalTitleH));
 
-        // ===== ALTURA MÍNIMA DE CELDA (evita pisado sí o sí) =====
-        // si el título ocupa 2 líneas, damos más alto
+        // ===== ALTURA MÍNIMA (por seguridad) =====
         boolean twoLines = pref.height > (insetsTB + lineH + 1);
-        int minH = twoLines ? 70 : 56;
+        int minH = twoLines ? 86 : 72; // más “air” en dark
 
         Dimension cellPref = getPreferredSize();
         setPreferredSize(new Dimension(cellPref.width, Math.max(cellPref.height, minH)));
 
-        // Selección
+        // Fondo / selección
         if (isSelected) {
-            setBackground(list.getSelectionBackground());
-            txtTitle.setForeground(list.getSelectionForeground());
-            lblSub.setForeground(list.getSelectionForeground().darker());
+            setBackground(BG_SEL);
         } else {
-            setBackground(list.getBackground());
-            txtTitle.setForeground(list.getForeground());
-            lblSub.setForeground(SUB_FG);
+            setBackground(BG);
         }
 
         return this;
+    }
+
+    private void applyBadge(ResourceState st) {
+        switch (st) {
+            case LOCAL_ONLY -> {
+                lblBadge.setText("LOCAL");
+                lblBadge.setBackground(BADGE_LOCAL);
+            }
+            case CLOUD_ONLY -> {
+                lblBadge.setText("CLOUD");
+                lblBadge.setBackground(BADGE_CLOUD);
+            }
+            case BOTH -> {
+                lblBadge.setText("LOCAL+CLOUD");
+                lblBadge.setBackground(BADGE_BOTH);
+            }
+        }
     }
 
     private int getViewportWidth(JList<?> list) {
@@ -177,7 +217,7 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         if (w > 0) {
             return w;
         }
-        return 600;
+        return 700;
     }
 
     private static String safe(String s) {
