@@ -1,11 +1,15 @@
 package cat.dam.roig.cleanstream.ui;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+
 /**
  *
  * @author metku
  */
 public class AboutDialog extends javax.swing.JDialog {
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(AboutDialog.class.getName());
 
     /**
@@ -16,6 +20,114 @@ public class AboutDialog extends javax.swing.JDialog {
         initComponents();
         setLocationRelativeTo(parent);
         setAlwaysOnTop(true);
+        
+        initUI(parent);
+    }
+
+    private void initUI(Frame parent) {
+
+        setResizable(false);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        // Fondo del dialog
+        getContentPane().setBackground(AppTheme.BACKGROUND);
+        setLayout(new BorderLayout());
+
+        // Root centrado
+        JPanel root = new JPanel(new GridBagLayout());
+        root.setOpaque(false);
+
+        // Card
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(AppTheme.CARD);
+        card.setBorder(new EmptyBorder(20, 24, 20, 24));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+
+        // ===== HEADER =====
+        JLabel lblTitle = new JLabel("CleanStream");
+        lblTitle.setForeground(AppTheme.TEXT);
+        lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD, 18f));
+
+        JLabel lblVersion = new JLabel("Version 1.0");
+        lblVersion.setForeground(AppTheme.MUTED);
+
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 4, 0);
+        card.add(lblTitle, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 14, 0);
+        card.add(lblVersion, gbc);
+
+        // ===== AUTHOR =====
+        JLabel lblAuthor = new JLabel("Elias Roig Alcon");
+        lblAuthor.setForeground(AppTheme.TEXT);
+
+        JLabel lblCourse = new JLabel("FP 2 DAM - Desarrollo Interfaces");
+        lblCourse.setForeground(AppTheme.MUTED);
+
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 4, 0);
+        card.add(lblAuthor, gbc);
+
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 14, 0);
+        card.add(lblCourse, gbc);
+
+        // ===== RESOURCES =====
+        JLabel lblResources = new JLabel("Resources used:");
+        lblResources.setForeground(AppTheme.TEXT);
+        lblResources.setFont(lblResources.getFont().deriveFont(Font.BOLD));
+
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        card.add(lblResources, gbc);
+
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setOpaque(false);
+
+        listPanel.add(createMutedLabel("• ChatGPT"));
+        listPanel.add(createMutedLabel("• Videos del profesor"));
+        listPanel.add(createMutedLabel("• yt-dlp"));
+
+        gbc.gridy = 5;
+        gbc.insets = new Insets(0, 0, 16, 0);
+        card.add(listPanel, gbc);
+
+        // ===== CLOSE BUTTON =====
+        JButton btnClose = new JButton("Close");
+        btnClose.setFocusPainted(false);
+        btnClose.setBackground(AppTheme.PRIMARY);
+        btnClose.setForeground(Color.WHITE);
+        btnClose.setBorder(new EmptyBorder(8, 18, 8, 18));
+        btnClose.setPreferredSize(new Dimension(100, 36));
+
+        btnClose.addActionListener(e -> dispose());
+
+        gbc.gridy = 6;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        card.add(btnClose, gbc);
+
+        root.add(card);
+        add(root, BorderLayout.CENTER);
+
+        setSize(420, 360);
+        setLocationRelativeTo(parent);
+    }
+
+    private JLabel createMutedLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setForeground(AppTheme.MUTED);
+        lbl.setBorder(new EmptyBorder(2, 0, 2, 0));
+        return lbl;
     }
 
     /**
@@ -27,105 +139,16 @@ public class AboutDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblName = new javax.swing.JLabel();
-        lblCursoInfo = new javax.swing.JLabel();
-        lblRecursos = new javax.swing.JLabel();
-        lblRecursoGtp = new javax.swing.JLabel();
-        lblRecursoProfesor = new javax.swing.JLabel();
-        lblRecursoYtdlp = new javax.swing.JLabel();
-        btnClose = new javax.swing.JButton();
-
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("About - CleanStream");
         setMinimumSize(new java.awt.Dimension(420, 300));
         setResizable(false);
         getContentPane().setLayout(null);
 
-        lblName.setText("Elias Roig Alcon");
-        getContentPane().add(lblName);
-        lblName.setBounds(152, 69, 92, 18);
-
-        lblCursoInfo.setText("FP 2 DAM Desarrollo Interfaces");
-        getContentPane().add(lblCursoInfo);
-        lblCursoInfo.setBounds(109, 115, 183, 18);
-
-        lblRecursos.setText("Recursos utilizados:");
-        getContentPane().add(lblRecursos);
-        lblRecursos.setBounds(50, 151, 117, 18);
-
-        lblRecursoGtp.setText("Chat GPT");
-        getContentPane().add(lblRecursoGtp);
-        lblRecursoGtp.setBounds(60, 180, 70, 18);
-
-        lblRecursoProfesor.setText("Videos del profesor");
-        getContentPane().add(lblRecursoProfesor);
-        lblRecursoProfesor.setBounds(60, 210, 140, 18);
-
-        lblRecursoYtdlp.setText("Yt-DLP");
-        getContentPane().add(lblRecursoYtdlp);
-        lblRecursoYtdlp.setBounds(60, 240, 42, 18);
-
-        btnClose.setText("Close");
-        btnClose.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCloseActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnClose);
-        btnClose.setBounds(270, 240, 72, 24);
-
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCloseActionPerformed
-        // TODO add your handling code here:
-        dispose();
-    }//GEN-LAST:event_btnCloseActionPerformed
-
-    /**
-     * @param args the command line arguments
-     */
-//    public static void main(String args[]) {
-//        /* Set the Nimbus look and feel */
-//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-//         */
-//        try {
-//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-//                if ("Nimbus".equals(info.getName())) {
-//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-//        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-//            logger.log(java.util.logging.Level.SEVERE, null, ex);
-//        }
-//        //</editor-fold>
-//
-//        /* Create and display the dialog */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            @Override
-//            public void run() {
-//                AboutDialog dialog = new AboutDialog(new javax.swing.JFrame(), true);
-//                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-//                    @Override
-//                    public void windowClosing(java.awt.event.WindowEvent e) {
-//                        System.exit(0);
-//                    }
-//                });
-//                dialog.setVisible(true);
-//            }
-//        });
-//    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnClose;
-    private javax.swing.JLabel lblCursoInfo;
-    private javax.swing.JLabel lblName;
-    private javax.swing.JLabel lblRecursoGtp;
-    private javax.swing.JLabel lblRecursoProfesor;
-    private javax.swing.JLabel lblRecursoYtdlp;
-    private javax.swing.JLabel lblRecursos;
     // End of variables declaration//GEN-END:variables
 }
