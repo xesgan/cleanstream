@@ -4,10 +4,7 @@ import cat.dam.roig.cleanstream.main.MainFrame;
 import cat.dam.roig.cleanstream.services.UserPreferences;
 import cat.dam.roig.cleanstream.services.PreferencesValidator;
 import cat.dam.roig.cleanstream.models.PreferencesData;
-import java.awt.event.ActionListener;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -210,6 +207,9 @@ public class PreferencesPanel extends javax.swing.JPanel {
     private void loadUI() {
         loading = true;
         PreferencesData d = UserPreferences.load();
+
+        setBackground(AppTheme.BACKGROUND);
+        setOpaque(true);
 
         txtDownloadsDir.setText(d.getDownloadDir());
         txtYtDlpPath.setText(d.getYtDlpPath());

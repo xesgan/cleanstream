@@ -13,12 +13,12 @@ import cat.dam.roig.cleanstream.utils.DetectOS;
 import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
 import cat.dam.roig.cleanstream.services.UserPreferences;
+import cat.dam.roig.cleanstream.ui.AppTheme;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -28,11 +28,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 
 /**
  *
@@ -162,7 +164,6 @@ public class MainFrame extends javax.swing.JFrame {
         lstDownloadScanList.setForeground(new Color(0xE6E6E6));
         lstDownloadScanList.setSelectionBackground(new Color(0x2A2A2A));
         lstDownloadScanList.setSelectionForeground(Color.WHITE);
-
     }
 
     private void initMetadataTable() {
@@ -173,6 +174,9 @@ public class MainFrame extends javax.swing.JFrame {
         col0.setPreferredWidth(120);
         col0.setMinWidth(100);
         col0.setMaxWidth(180);
+
+        styleMetadataTable(tblMetaData);
+        installZebra(tblMetaData);
     }
 
     private void initFilters() {
@@ -220,6 +224,8 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public void showMainView() {
+        pnlMainPanel.setBackground(AppTheme.BACKGROUND);
+        pnlMainPanel.setOpaque(true);
         showInContentPanel(pnlMainPanel);
     }
 
@@ -229,7 +235,6 @@ public class MainFrame extends javax.swing.JFrame {
         mniPreferences.setEnabled(loggedIn);
         mnuEdit.setVisible(loggedIn);
         mniLogout.setVisible(loggedIn);
-
     }
 
     /**
@@ -257,7 +262,7 @@ public class MainFrame extends javax.swing.JFrame {
         btnStop = new javax.swing.JButton();
         btnOpenLast = new javax.swing.JButton();
         lblOutput = new javax.swing.JLabel();
-        scrLogArea = new javax.swing.JScrollPane();
+        scpLogArea = new javax.swing.JScrollPane();
         txaLogArea = new javax.swing.JTextArea();
         scpScanListPane = new javax.swing.JScrollPane();
         lstDownloadScanList = new javax.swing.JList<>();
@@ -384,10 +389,10 @@ public class MainFrame extends javax.swing.JFrame {
         txaLogArea.setEditable(false);
         txaLogArea.setColumns(20);
         txaLogArea.setRows(5);
-        scrLogArea.setViewportView(txaLogArea);
+        scpLogArea.setViewportView(txaLogArea);
 
-        pnlMainPanel.add(scrLogArea);
-        scrLogArea.setBounds(30, 380, 490, 170);
+        pnlMainPanel.add(scpLogArea);
+        scpLogArea.setBounds(30, 380, 490, 170);
 
         scpScanListPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -629,12 +634,6 @@ public class MainFrame extends javax.swing.JFrame {
     private void btnUploadFromLocalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUploadFromLocalActionPerformed
         // TODO add your handling code here:
         downloadsController.uploadToCloud(this);
-
-        ResourceDownloaded sel = lstDownloadScanList.getSelectedValue();
-        System.err.println("UPLOAD clicked name=" + sel.getName()
-                + " route=" + sel.getRoute()
-                + " routeExists=" + (sel.getRoute() != null && !sel.getRoute().isBlank() && java.nio.file.Files.exists(java.nio.file.Paths.get(sel.getRoute()))));
-
     }//GEN-LAST:event_btnUploadFromLocalActionPerformed
 
     private void btnFetchFromCloudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFetchFromCloudActionPerformed
@@ -705,15 +704,15 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void initUx() {
+        getContentPane().setBackground(AppTheme.BACKGROUND);
+
         // Jerarquía visual
-        btnDownload.setBackground(UiColors.PRIMARY);
-        btnDownload.setForeground(Color.WHITE);
+        styleButtons();
+        styleTopButtons();
 
-        btnStop.setBackground(UiColors.CAREFULL);
-        btnStop.setForeground(Color.WHITE);
+        btnDownload.setPreferredSize(new Dimension(140, 36));
 
-        btnDeleteDownloadFileFolder.setBackground(UiColors.NEUTRAL);
-
+//        btnDeleteDownloadFileFolder.setBackground(UiColors.NEUTRAL);
         btnUploadFromLocal.setBackground(UiColors.PRIMARY);
         btnUploadFromLocal.setForeground(Color.WHITE);
         btnFetchFromCloud.setBackground(UiColors.PRIMARY);
@@ -725,6 +724,134 @@ public class MainFrame extends javax.swing.JFrame {
         btnUploadFromLocal.setToolTipText("Upload selected item to cloud");
         btnFetchFromCloud.setToolTipText("Download selected item from cloud");
 
+        styleLogArea(txaLogArea);
+        scpLogArea.setBorder(BorderFactory.createEmptyBorder());
+        scpLogArea.getViewport().setBackground(new Color(0x0F0F0F));
+        txaLogArea.setCaretPosition(txaLogArea.getDocument().getLength());
+    }
+
+    private void styleButtons() {
+        stylePrimary(btnDownload);
+        styleSecondary(btnStop);
+        styleNeutral(btnOpenLast);
+    }
+
+    private void styleTopButtons() {
+
+        // Primario
+        stylePrimary(btnScanDownloadFolder);
+
+        // Secundarios
+        styleSecondary(btnUploadFromLocal);
+        styleSecondary(btnFetchFromCloud);
+
+        // Danger
+        styleDanger(btnDeleteDownloadFileFolder);
+
+        // Si tienes separadores o botones mini:
+        // styleGhost(btnPaste);
+    }
+
+    private void stylePrimary(JButton b) {
+        if (b == null) {
+            return;
+        }
+        b.putClientProperty("FlatLaf.style",
+                "font: bold; background: #2B6CB0; foreground: #FFFFFF; arc: 10");
+    }
+
+    private void styleSecondary(JButton b) {
+        if (b == null) {
+            return;
+        }
+        b.putClientProperty("FlatLaf.style",
+                "background: #2A2A2A; foreground: #E6E6E6; arc: 10");
+    }
+
+    private void styleNeutral(JButton b) {
+        if (b == null) {
+            return;
+        }
+        b.putClientProperty("FlatLaf.style",
+                "font: bold; background: #2A2A2A; foreground: #E6E6E6; arc: 10");
+    }
+
+    private void styleDanger(JButton b) {
+        if (b == null) {
+            return;
+        }
+        b.putClientProperty("FlatLaf.style",
+                "background: #4A1F1F; foreground: #FFFFFF; arc: 10");
+    }
+
+    private void styleGhost(JButton b) {
+        if (b == null) {
+            return;
+        }
+        b.putClientProperty("FlatLaf.style",
+                "background: #00000000; foreground: #E6E6E6; arc: 10");
+    }
+
+    private void styleMetadataTable(JTable table) {
+
+        // Altura filas
+        table.setRowHeight(28);
+
+        // Quitar grid clásico
+        table.setShowHorizontalLines(false);
+        table.setShowVerticalLines(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
+
+        table.setFillsViewportHeight(true);
+
+        // Header más alto
+        JTableHeader header = table.getTableHeader();
+        header.setReorderingAllowed(false);
+        header.setPreferredSize(
+                new Dimension(header.getPreferredSize().width, 34)
+        );
+    }
+
+    private void installZebra(JTable table) {
+
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable t, Object value,
+                    boolean isSelected,
+                    boolean hasFocus,
+                    int row, int column) {
+
+                Component c = super.getTableCellRendererComponent(
+                        t, value, isSelected, hasFocus, row, column
+                );
+
+                if (!isSelected) {
+                    if (row % 2 == 0) {
+                        c.setBackground(t.getBackground());
+                    } else {
+                        c.setBackground(new Color(0x161616));
+                    }
+                }
+
+                return c;
+            }
+        });
+    }
+
+    private void styleLogArea(JTextArea ta) {
+        ta.setEditable(false);
+        ta.setLineWrap(true);
+        ta.setWrapStyleWord(true);
+
+        ta.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        ta.setBackground(new Color(0x0F0F0F));   // un pelín más oscuro que el resto
+        ta.setForeground(new Color(0xD0D0D0));
+        ta.setCaretColor(new Color(0xD0D0D0));
+
+        // sensación "consola"
+        ta.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
 
 
@@ -767,9 +894,9 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JRadioButton rbAudio;
     private javax.swing.JRadioButton rbVideo;
     private cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent roigMediaPollingComponent;
+    private javax.swing.JScrollPane scpLogArea;
     private javax.swing.JScrollPane scpMetaDataTable;
     private javax.swing.JScrollPane scpScanListPane;
-    private javax.swing.JScrollPane scrLogArea;
     private javax.swing.JTable tblMetaData;
     private javax.swing.JTextArea txaLogArea;
     private javax.swing.JTextField txtUrl;

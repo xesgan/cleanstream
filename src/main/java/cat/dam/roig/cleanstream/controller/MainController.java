@@ -77,6 +77,7 @@ public class MainController {
         }
         mediaComponent.setRunning(false);
         authManager.logout();
+        mainFrame.updateSessionUI(false); 
         mainFrame.showLogin();
 
     }

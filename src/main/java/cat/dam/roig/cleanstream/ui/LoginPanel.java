@@ -2,29 +2,25 @@ package cat.dam.roig.cleanstream.ui;
 
 import cat.dam.roig.cleanstream.services.AuthManager;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
- * Panel de Login.
+ * LoginPanelV2 (limpio y controlado)
  *
- * Solo UI, la lógica de login la gestiona AuthManager.
+ * Objetivo: evitar layouts "raros" y asegurar márgenes visibles.
+ * - Card centrada con padding real
+ * - Form con GridBagLayout simple
+ * - Actions con GridBagLayout (margen garantizado)
+ * - Placeholders, show password, validación, loading y error label
  *
  * @author metku
  */
@@ -32,23 +28,46 @@ public final class LoginPanel extends JPanel {
 
     private final AuthManager authManager;
 
-    private JPanel pnlPrincipal;
-    private JPanel pnlFormulario;
-    private JPanel pnlBtnsLogin;
+    // ===== Root & Card =====
+    private JPanel pnlRoot;
+    private JPanel pnlCard;
 
-    private JLabel lblUser;
+    // ===== Header =====
+    private JLabel lblTitle;
+    private JLabel lblSubtitle;
+
+    // ===== Form =====
+    private JLabel lblEmail;
     private JLabel lblPassword;
-    private JLabel lblError;
-
     private JTextField txtEmail;
     private JPasswordField txtPassword;
+    private JCheckBox chkShowPassword;
 
-    private JButton btnLogin;
-    private JButton btnExit;
+    // ===== Actions =====
     private JCheckBox chkRememberMe;
+    private JButton btnLogin;
 
-    // Estado UI
+    // ===== Feedback =====
+    private JLabel lblError;
+    private JProgressBar pb;
+    private JLabel lblStatus;
+
+    // ===== State =====
     private String loginBtnOriginalText = "Login";
+
+    // ===== Placeholders =====
+    private static final String PH_EMAIL = "user@domain.com";
+    private static final String PH_PASS = "••••••••";
+
+    // ===== Colors =====
+    private static final Color BG = new Color(45, 45, 45);
+    private static final Color CARD_BG = new Color(56, 56, 56);
+    private static final Color TEXT = new Color(230, 230, 230);
+    private static final Color MUTED = new Color(170, 170, 170);
+    private static final Color ERROR = new Color(231, 76, 60);
+
+    private static final Color BTN_BG = new Color(46, 134, 193);
+    private static final Color BTN_BG_DISABLED = new Color(85, 105, 120);
 
     public LoginPanel(AuthManager authManager) {
         this.authManager = authManager;
@@ -57,77 +76,258 @@ public final class LoginPanel extends JPanel {
         initComponents();
         initEvents();
         initUxDefaults();
+        refreshLoginEnabled();
     }
 
     private void initComponents() {
-        // Layout base del propio panel
         setLayout(new BorderLayout());
-        setSize(1000, 700);
+        setOpaque(true);
+        setBackground(BG);
 
-        // Panel principal con GridBagLayout para centrar el contenido
-        pnlPrincipal = new JPanel(new GridBagLayout());
+        pnlRoot = new JPanel(new GridBagLayout());
+        pnlRoot.setOpaque(true);
+        pnlRoot.setBackground(BG);
 
-        // --- Formulario + botones envueltos en "wrapper" ---
-        pnlFormulario = buildFormulario();
-        pnlBtnsLogin = buildBtnLogin();
+        pnlCard = new JPanel(new GridBagLayout());
+        pnlCard.setOpaque(true);
+        pnlCard.setBackground(CARD_BG);
+        pnlCard.setBorder(new CompoundBorder(
+                BorderFactory.createLineBorder(new Color(85, 85, 85)),
+                new EmptyBorder(18, 18, 18, 18)
+        ));
 
-        JPanel wrapper = new JPanel();
-        wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.Y_AXIS));
-        wrapper.add(pnlFormulario);
+        // Construimos bloques
+        JPanel header = buildHeader();
+        JPanel form = buildForm();
+        JPanel actions = buildActions();
+        JPanel footer = buildFooter();
 
-        // Error label (feedback)
-        lblError = new JLabel(" "); // espacio para mantener altura
-        lblError.setForeground(new Color(192, 57, 43));
-        lblError.setVisible(false);
-        lblError.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        // Layout vertical dentro de la card con GridBag
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        wrapper.add(lblError);
-        wrapper.add(Box.createVerticalStrut(15));
-        wrapper.add(pnlBtnsLogin);
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        pnlCard.add(header, gbc);
 
-        // Un pequeño margen alrededor, sin romper el centrado
-        wrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        pnlCard.add(form, gbc);
 
-        // Centramos el wrapper dentro de pnlPrincipal
-        GridBagConstraints gbcCenter = new GridBagConstraints();
-        gbcCenter.gridx = 0;
-        gbcCenter.gridy = 0;
-        gbcCenter.anchor = GridBagConstraints.CENTER;
-        pnlPrincipal.add(wrapper, gbcCenter);
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        pnlCard.add(lblError, gbc);
 
-        // Añadimos pnlPrincipal al centro del LoginPanel
-        add(pnlPrincipal, BorderLayout.CENTER);
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        pnlCard.add(actions, gbc);
 
-        setVisible(true);
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        pnlCard.add(footer, gbc);
+
+        // Centrado card en root
+        GridBagConstraints center = new GridBagConstraints();
+        center.gridx = 0;
+        center.gridy = 0;
+        center.anchor = GridBagConstraints.CENTER;
+        pnlRoot.add(pnlCard, center);
+
+        // Tamaño agradable (fijo)
+        pnlCard.setPreferredSize(new Dimension(460, 340));
+
+        add(pnlRoot, BorderLayout.CENTER);
     }
 
-    private void initEvents() {
-        // LOGIN
-        btnLogin.addActionListener(e -> {
-            clearError();
+    private JPanel buildHeader() {
+        JPanel p = new JPanel();
+        p.setOpaque(false);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
-            if (!validateInputs()) {
-                return;
-            }
+        lblTitle = new JLabel("CleanStream");
+        lblTitle.setForeground(TEXT);
+        lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD, 20f));
+        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            // UX: estado cargando + evitar doble click
-            setLoading(true);
+        lblSubtitle = new JLabel("Sign in to continue");
+        lblSubtitle.setForeground(MUTED);
+        lblSubtitle.setFont(lblSubtitle.getFont().deriveFont(Font.PLAIN, 12f));
+        lblSubtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            // La lógica vive en AuthManager
-            authManager.doLogin();
-        });
+        p.add(lblTitle);
+        p.add(Box.createVerticalStrut(4));
+        p.add(lblSubtitle);
+
+        return p;
+    }
+
+    private JPanel buildForm() {
+        JPanel p = new JPanel(new GridBagLayout());
+        p.setOpaque(false);
+
+        lblEmail = new JLabel("Email");
+        lblEmail.setForeground(MUTED);
+
+        lblPassword = new JLabel("Password");
+        lblPassword.setForeground(MUTED);
+
+        txtEmail = new JTextField();
+        txtPassword = new JPasswordField();
+
+        styleTextField(txtEmail);
+        stylePasswordField(txtPassword);
+
+        installPlaceholder(txtEmail, PH_EMAIL);
+        installPasswordPlaceholder(txtPassword, PH_PASS);
+
+        chkShowPassword = new JCheckBox("Show password");
+        chkShowPassword.setOpaque(false);
+        chkShowPassword.setForeground(MUTED);
+
+        lblError = new JLabel(" ");
+        lblError.setForeground(ERROR);
+        lblError.setVisible(false);
+        lblError.setBorder(new EmptyBorder(4, 0, 0, 0));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 4, 0);
+        p.add(lblEmail, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        p.add(txtEmail, gbc);
+
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 4, 0);
+        p.add(lblPassword, gbc);
+
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        p.add(txtPassword, gbc);
+
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        p.add(chkShowPassword, gbc);
+
+        return p;
     }
 
     /**
-     * Ajustes UX sin tocar lógica: - Enter = Login - Tooltips - Foco inicial
+     * Actions: GridBagLayout para controlar MÁRGENES y que el botón nunca pegue al borde.
      */
+    private JPanel buildActions() {
+        JPanel p = new JPanel(new GridBagLayout());
+        p.setOpaque(false);
+
+        chkRememberMe = new JCheckBox("Remember me");
+        chkRememberMe.setOpaque(false);
+        chkRememberMe.setForeground(MUTED);
+
+        btnLogin = new JButton("Login");
+        btnLogin.setFocusPainted(false);
+        btnLogin.setFont(btnLogin.getFont().deriveFont(Font.BOLD, 13f));
+        btnLogin.setForeground(Color.WHITE);
+        btnLogin.setBackground(BTN_BG);
+        btnLogin.setBorder(new EmptyBorder(10, 18, 10, 18));
+        btnLogin.setPreferredSize(new Dimension(140, 38));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // izquierda: remember
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        p.add(chkRememberMe, gbc);
+
+        // derecha: botón con margen derecho extra
+        gbc.gridx = 1;
+        gbc.weightx = 0.0;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.insets = new Insets(0, 0, 0, 6); // ✅ margen derecho visible
+        p.add(btnLogin, gbc);
+
+        return p;
+    }
+
+    private JPanel buildFooter() {
+        JPanel p = new JPanel();
+        p.setOpaque(false);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+
+        pb = new JProgressBar();
+        pb.setIndeterminate(true);
+        pb.setVisible(false);
+
+        lblStatus = new JLabel(" ");
+        lblStatus.setForeground(MUTED);
+        lblStatus.setBorder(new EmptyBorder(6, 0, 0, 0));
+
+        p.add(pb);
+        p.add(lblStatus);
+        return p;
+    }
+
+    private void initEvents() {
+        // Click login
+        btnLogin.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                clearError();
+
+                if (!validateInputs()) {
+                    refreshLoginEnabled();
+                    return;
+                }
+
+                setLoading(true);
+                authManager.doLogin();
+            }
+        });
+
+        // Validación viva
+        txtEmail.getDocument().addDocumentListener(new SimpleDocListener() {
+            @Override
+            public void onChange() {
+                clearError();
+                refreshLoginEnabled();
+            }
+        });
+        txtPassword.getDocument().addDocumentListener(new SimpleDocListener() {
+            @Override
+            public void onChange() {
+                clearError();
+                refreshLoginEnabled();
+            }
+        });
+
+        // Show password
+        chkShowPassword.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                boolean show = (e.getStateChange() == ItemEvent.SELECTED);
+                if (isPasswordPlaceholderActive()) {
+                    return;
+                }
+                txtPassword.setEchoChar(show ? (char) 0 : '\u2022');
+            }
+        });
+    }
+
     private void initUxDefaults() {
-        // Tooltips
         txtEmail.setToolTipText("Enter your email (e.g. user@domain.com)");
         txtPassword.setToolTipText("Enter your password");
         chkRememberMe.setToolTipText("Remember this session on this machine");
 
-        // Foco inicial
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -135,74 +335,36 @@ public final class LoginPanel extends JPanel {
             }
         });
 
-        // Enter = Login (default button)
-        // Se hace aquí para no depender del JFrame.
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (SwingUtilities.getRootPane(LoginPanel.this) != null) {
-                    SwingUtilities.getRootPane(LoginPanel.this).setDefaultButton(btnLogin);
+                JRootPane rp = SwingUtilities.getRootPane(LoginPanel.this);
+                if (rp != null) {
+                    rp.setDefaultButton(btnLogin);
                 }
             }
         });
     }
 
-    // ================ BUILDINGS ================
-    private JPanel buildFormulario() {
-        pnlFormulario = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
+    // ===== Validation & Enabled =====
 
-        lblUser = new JLabel("Email: ");
-        lblPassword = new JLabel("Password: ");
-        txtEmail = new JTextField(15);
-        txtPassword = new JPasswordField(15);
+    private void refreshLoginEnabled() {
+        if (!btnLogin.isEnabled() && "Logging in...".equals(btnLogin.getText())) {
+            return;
+        }
 
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.EAST;   // labels alineados a la derecha
+        String email = readEmail();
+        String pass = readPassword();
 
-        // Fila 1: Email
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        pnlFormulario.add(lblUser, gbc);
+        boolean enabled = isValidEmailBasic(email) && pass.length() > 0;
 
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        pnlFormulario.add(txtEmail, gbc);
-
-        // Fila 2: Password
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.EAST;
-        pnlFormulario.add(lblPassword, gbc);
-
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        pnlFormulario.add(txtPassword, gbc);
-
-        return pnlFormulario;
+        btnLogin.setEnabled(enabled);
+        btnLogin.setBackground(enabled ? BTN_BG : BTN_BG_DISABLED);
     }
 
-    private JPanel buildBtnLogin() {
-        pnlBtnsLogin = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-
-        btnLogin = new JButton("Login");
-        chkRememberMe = new JCheckBox("Remember me");
-
-        // Jerarquía visual simple: Login más importante
-        btnLogin.setFont(btnLogin.getFont().deriveFont(java.awt.Font.BOLD));
-        btnLogin.setBackground(new Color(46, 134, 193));
-        btnLogin.setForeground(Color.WHITE);
-
-        pnlBtnsLogin.add(btnLogin);
-        pnlBtnsLogin.add(chkRememberMe);
-        
-        return pnlBtnsLogin;
-    }
-
-    // ================ UX HELPERS ================
     private boolean validateInputs() {
-        String email = txtEmail.getText() != null ? txtEmail.getText().trim() : "";
-        String pass = new String(txtPassword.getPassword()).trim();
+        String email = readEmail();
+        String pass = readPassword();
 
         if (email.isEmpty() && pass.isEmpty()) {
             showError("Email and password are required.");
@@ -212,6 +374,10 @@ public final class LoginPanel extends JPanel {
             showError("Email is required.");
             return false;
         }
+        if (!isValidEmailBasic(email)) {
+            showError("Please enter a valid email.");
+            return false;
+        }
         if (pass.isEmpty()) {
             showError("Password is required.");
             return false;
@@ -219,22 +385,46 @@ public final class LoginPanel extends JPanel {
         return true;
     }
 
-    /**
-     * Muestra error en rojo (feedback).
-     */
+    private boolean isValidEmailBasic(String email) {
+        if (email == null) return false;
+        String s = email.trim();
+        int at = s.indexOf('@');
+        int dot = s.lastIndexOf('.');
+        return at > 0 && dot > at + 1 && dot < s.length() - 1;
+    }
+
+    private String readEmail() {
+        String t = txtEmail.getText() != null ? txtEmail.getText().trim() : "";
+        if (PH_EMAIL.equals(t) && txtEmail.getForeground().equals(MUTED)) {
+            return "";
+        }
+        return t;
+    }
+
+    private String readPassword() {
+        if (isPasswordPlaceholderActive()) {
+            return "";
+        }
+        char[] pwd = txtPassword.getPassword();
+        return pwd != null ? new String(pwd).trim() : "";
+    }
+
+    private boolean isPasswordPlaceholderActive() {
+        String t = new String(txtPassword.getPassword());
+        return PH_PASS.equals(t) && txtPassword.getForeground().equals(MUTED);
+    }
+
+    // ===== Feedback =====
+
     public void showError(String message) {
         lblError.setText(message != null ? message : "Unknown error.");
         lblError.setVisible(true);
-        // Re-layout por si cambia altura
+        lblStatus.setText(" ");
+        setLoading(false);
         revalidate();
         repaint();
-        // UX: devolvemos control al usuario
-        setLoading(false);
     }
 
-    /**
-     * Oculta error.
-     */
     public void clearError() {
         if (lblError != null) {
             lblError.setText(" ");
@@ -242,43 +432,127 @@ public final class LoginPanel extends JPanel {
         }
     }
 
-    /**
-     * Activa/desactiva estado "cargando". Llamar con false cuando AuthManager
-     * termine (ok o error).
-     */
     public void setLoading(boolean loading) {
-        btnLogin.setEnabled(!loading);
         txtEmail.setEnabled(!loading);
         txtPassword.setEnabled(!loading);
         chkRememberMe.setEnabled(!loading);
+        chkShowPassword.setEnabled(!loading);
 
         if (loading) {
             loginBtnOriginalText = btnLogin.getText();
             btnLogin.setText("Logging in...");
+            btnLogin.setEnabled(false);
+            btnLogin.setBackground(BTN_BG_DISABLED);
+
+            pb.setVisible(true);
+            lblStatus.setText("Signing in...");
         } else {
             btnLogin.setText(loginBtnOriginalText != null ? loginBtnOriginalText : "Login");
+            pb.setVisible(false);
+            lblStatus.setText(" ");
+            refreshLoginEnabled();
         }
     }
 
-    /**
-     * Resetea la Ui para que no quede la pantalla completamente deshabilitada
-     * por el modo Loading agregado.
-     */
     public void resetUiState() {
         clearError();
         setLoading(false);
+
         txtPassword.setText("");
-        // opcional:
-        // txtEmail.setText("");
+        installPasswordPlaceholder(txtPassword, PH_PASS);
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 txtEmail.requestFocusInWindow();
             }
         });
+
+        refreshLoginEnabled();
     }
 
-    // ================ GETTERS / SETTERS ================
+    // ===== Styling =====
+
+    private void styleTextField(JTextField tf) {
+        tf.setBackground(new Color(66, 66, 66));
+        tf.setForeground(TEXT);
+        tf.setCaretColor(TEXT);
+        tf.setBorder(new CompoundBorder(
+                BorderFactory.createLineBorder(new Color(90, 90, 90)),
+                new EmptyBorder(8, 10, 8, 10)
+        ));
+    }
+
+    private void stylePasswordField(JPasswordField pf) {
+        pf.setBackground(new Color(66, 66, 66));
+        pf.setForeground(TEXT);
+        pf.setCaretColor(TEXT);
+        pf.setBorder(new CompoundBorder(
+                BorderFactory.createLineBorder(new Color(90, 90, 90)),
+                new EmptyBorder(8, 10, 8, 10)
+        ));
+        pf.setEchoChar('\u2022');
+    }
+
+    private void installPlaceholder(final JTextField tf, final String placeholder) {
+        if (tf.getText() == null || tf.getText().trim().isEmpty()) {
+            tf.setText(placeholder);
+            tf.setForeground(MUTED);
+        }
+
+        tf.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (placeholder.equals(tf.getText()) && tf.getForeground().equals(MUTED)) {
+                    tf.setText("");
+                    tf.setForeground(TEXT);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                String t = tf.getText() != null ? tf.getText().trim() : "";
+                if (t.isEmpty()) {
+                    tf.setText(placeholder);
+                    tf.setForeground(MUTED);
+                }
+            }
+        });
+    }
+
+    private void installPasswordPlaceholder(final JPasswordField pf, final String placeholder) {
+        String t = new String(pf.getPassword());
+        if (t.trim().isEmpty()) {
+            pf.setText(placeholder);
+            pf.setForeground(MUTED);
+            pf.setEchoChar((char) 0);
+        }
+
+        pf.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                String val = new String(pf.getPassword());
+                if (placeholder.equals(val) && pf.getForeground().equals(MUTED)) {
+                    pf.setText("");
+                    pf.setForeground(TEXT);
+                    pf.setEchoChar(chkShowPassword != null && chkShowPassword.isSelected() ? (char) 0 : '\u2022');
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                String val = new String(pf.getPassword()).trim();
+                if (val.isEmpty()) {
+                    pf.setText(placeholder);
+                    pf.setForeground(MUTED);
+                    pf.setEchoChar((char) 0);
+                }
+            }
+        });
+    }
+
+    // ===== Getters =====
+
     public boolean isRememberMeSelected() {
         return chkRememberMe.isSelected();
     }
@@ -291,7 +565,23 @@ public final class LoginPanel extends JPanel {
         return txtPassword;
     }
 
-    public void setTxtEmail(String txtEmail) {
-        this.txtEmail.setText(txtEmail);
+    public void setTxtEmail(String email) {
+        if (email != null && !email.trim().isEmpty()) {
+            txtEmail.setForeground(TEXT);
+            txtEmail.setText(email.trim());
+        } else {
+            txtEmail.setText("");
+            installPlaceholder(txtEmail, PH_EMAIL);
+        }
+        refreshLoginEnabled();
+    }
+
+    // ===== Simple DocumentListener =====
+    private static abstract class SimpleDocListener implements DocumentListener {
+        public abstract void onChange();
+
+        @Override public void insertUpdate(DocumentEvent e) { onChange(); }
+        @Override public void removeUpdate(DocumentEvent e) { onChange(); }
+        @Override public void changedUpdate(DocumentEvent e) { onChange(); }
     }
 }

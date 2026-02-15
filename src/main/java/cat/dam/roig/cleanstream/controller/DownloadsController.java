@@ -99,6 +99,8 @@ public class DownloadsController {
         initDoubleClickOpen();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
         cat.dam.roig.cleanstream.ui.utils.ListHoverSupport.install(downloadsList);
+        styleProgressBar();
+
     }
 
     public void appStart(Path downloadsDir, Component parentForDialog) {
@@ -176,8 +178,10 @@ public class DownloadsController {
                 }
 
                 // Opcional: si quieres bloquear también cloud-only aunque tenga route null
-                 ResourceState st = stateByFileName.getOrDefault(normalize(r.getName()), ResourceState.LOCAL_ONLY);
-                 if (st == ResourceState.CLOUD_ONLY) return;
+                ResourceState st = stateByFileName.getOrDefault(normalize(r.getName()), ResourceState.LOCAL_ONLY);
+                if (st == ResourceState.CLOUD_ONLY) {
+                    return;
+                }
                 openWithSystemPlayer(r.getRoute());
             }
         });
@@ -725,6 +729,21 @@ public class DownloadsController {
                 lblStatusScan.setText(msg);
             }
         });
+    }
+
+    private void styleProgressBar() {
+        if (pbDownload == null) {
+            return;
+        }
+
+        pbDownload.setBorderPainted(false);
+        pbDownload.setStringPainted(true);
+
+        // verde sobrio (queda muy bien en dark)
+        pbDownload.setForeground(new java.awt.Color(0x2F, 0x85, 0x5A));
+
+        // opcional: un pelín más oscuro el fondo del track
+        pbDownload.setBackground(new java.awt.Color(0x1A, 0x1A, 0x1A));
     }
 
     // --------- HELPERS FOCO LISTA ----------

@@ -261,7 +261,7 @@
                 </Constraint>
               </Constraints>
             </Component>
-            <Container class="javax.swing.JScrollPane" name="scrLogArea">
+            <Container class="javax.swing.JScrollPane" name="scpLogArea">
               <AuxValues>
                 <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
               </AuxValues>
