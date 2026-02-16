@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -69,7 +71,8 @@ public class MainFrame extends javax.swing.JFrame {
         lblStatusScan.setMinimumSize(new Dimension(50, 18));
 
         initUx();
-
+        loadLogo();
+        
         // 3. Configura ventana
         initWindow();
 
@@ -276,12 +279,13 @@ public class MainFrame extends javax.swing.JFrame {
         jrb1080p = new javax.swing.JRadioButton();
         jrb720p = new javax.swing.JRadioButton();
         jrb480p = new javax.swing.JRadioButton();
-        roigMediaPollingComponent = new cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent();
         btnFetchFromCloud = new javax.swing.JButton();
         btnUploadFromLocal = new javax.swing.JButton();
         pbDownload = new javax.swing.JProgressBar();
         jLabel1 = new javax.swing.JLabel();
         lblStatusScan = new javax.swing.JLabel();
+        roigMediaPollingComponent = new cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent();
+        lblLogo = new javax.swing.JLabel();
         mnbBar = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mniLogout = new javax.swing.JMenuItem();
@@ -481,11 +485,6 @@ public class MainFrame extends javax.swing.JFrame {
         pnlMainPanel.add(jrb480p);
         jrb480p.setBounds(320, 230, 60, 22);
 
-        roigMediaPollingComponent.setApiUrl("https://dimedianetapi9.azurewebsites.net");
-        roigMediaPollingComponent.setPollingInterval(3);
-        pnlMainPanel.add(roigMediaPollingComponent);
-        roigMediaPollingComponent.setBounds(1120, 0, 100, 70);
-
         btnFetchFromCloud.setText("Fetch");
         btnFetchFromCloud.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -517,6 +516,15 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel1.setBounds(940, 100, 20, 20);
         pnlMainPanel.add(lblStatusScan);
         lblStatusScan.setBounds(890, 590, 270, 22);
+
+        roigMediaPollingComponent.setApiUrl("https://dimedianetapi9.azurewebsites.net");
+        roigMediaPollingComponent.setPollingInterval(3);
+        pnlMainPanel.add(roigMediaPollingComponent);
+        roigMediaPollingComponent.setBounds(590, 590, 10, 10);
+
+        lblLogo.setText(" ");
+        pnlMainPanel.add(lblLogo);
+        lblLogo.setBounds(330, -70, 520, 270);
 
         pnlContent.add(pnlMainPanel, "card3");
 
@@ -730,6 +738,21 @@ public class MainFrame extends javax.swing.JFrame {
         txaLogArea.setCaretPosition(txaLogArea.getDocument().getLength());
     }
 
+    private void loadLogo() {
+        ImageIcon icon = new ImageIcon(
+                getClass().getResource("/images/logoCleanStream.png")
+        );
+
+        // Escalar si quieres que encaje perfecto
+        Image img = icon.getImage().getScaledInstance(
+                lblLogo.getWidth(),
+                lblLogo.getHeight(),
+                Image.SCALE_SMOOTH
+        );
+
+        lblLogo.setIcon(new ImageIcon(img));
+    }
+
     private void styleButtons() {
         stylePrimary(btnDownload);
         styleSecondary(btnStop);
@@ -875,6 +898,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JRadioButton jrbBestAvailable;
     private javax.swing.JLabel lblControls;
     private javax.swing.JLabel lblFormat;
+    private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblOptions;
     private javax.swing.JLabel lblOutput;
     private javax.swing.JLabel lblStatusScan;

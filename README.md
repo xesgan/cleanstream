@@ -1,183 +1,127 @@
 # 🧩 CleanStream
 
-**Desarrollo de Interfaces** — DI01 · DI01_2 · DI03
+**Autor:** Elias Roig  
+**Módulo:** Desarrollo de Interfaces — FP DAM 2025-26  
+**Entregas:** `DI01` · `DI01_2` · `DI03` · `DI04`
 
-## 📋 Descripción general
+---
 
-CleanStream es una aplicación de escritorio desarrollada en Java Swing que actúa como interfaz gráfica avanzada para yt-dlp y que integra sincronización bidireccional con la DI Media NET API, permitiendo gestionar contenidos multimedia tanto en local como en la nube.
+## 📋 Descripción del Proyecto
+**CleanStream** es una aplicación de escritorio desarrollada en **Java Swing** que actúa como interfaz gráfica avanzada para la gestión multimedia. El proyecto ha evolucionado desde un prototipo GUI básico hasta una aplicación modular, sincronizada con la nube y centrada en la experiencia de usuario.
 
-### 🛠️ Tecnologías utilizadas
+### Funcionalidades principales:
+* 🎬 **Descarga de medios:** Integración con `yt-dlp`.
+* ☁️ **Sincronización Cloud:** Conexión con la *DI Media NET API*.
+* 📚 **Gestión Local:** Biblioteca multimedia con filtros avanzados.
+* 🔄 **Componente JavaBean:** Integración de un componente personalizado para polling de datos.
+* 🎨 **UX/UI Optimizada:** Mejora completa de usabilidad bajo principios de diseño profesional.
 
-- **NetBeans** 27 / 28
-- **JDK** 24
-- **Maven**
-- **Java Swing** (con y sin Designer)
+---
 
-## 📌 Estado del Proyecto
+## 🛠️ Tecnologías utilizadas
+* **IDE:** NetBeans 27 / 28
+* **JDK:** 24
+* **Build Tool:** Maven
+* **GUI:** Java Swing (EDT, SwingWorker)
+* **Networking:** `java.net.http.HttpClient`
+* **JSON:** Jackson Databind 3.0.0
+* **CLI Tools:** `yt-dlp`, `ffmpeg`, `ffprobe`
 
-### ✔ DI01
-- Interfaz gráfica inicial
-- Configuración de rutas
-- Descarga de audio y vídeo con yt-dlp
+---
 
-### ✔ DI01_2
-- Biblioteca local multimedia
-- Escaneo de carpetas
-- Filtros dinámicos
-- Renderers personalizados
-- Visualización de metadatos
-- Uso de JList, JComboBox y JTable con AbstractTableModel
+## 📌 Evolución por Unidades
 
-### ✔ DI03 — COMPLETADO
-Integración completa con la DI Media NET API mediante un componente externo, con sincronización local ↔ cloud y acciones desde la interfaz gráfica.
+### ✔️ DI01 — Prototipo inicial
+* GUI creada con **NetBeans Designer** usando *Null layout*.
+* Invocación del reproductor del sistema y gestión de preferencias.
+* **Resolución de problemas:**
+    | Problema | Solución |
+    | :--- | :--- |
+    | Bloqueo de UI al descargar | Uso de `ProcessBuilder` + `SwingWorker` |
+    | Rutas inválidas | Validaciones previas y `JOptionPane` |
+    | Acceso a recursos Maven | Uso correcto de `src/main/resources` |
 
-## 🚀 Funcionalidades Principales
+### ✔️ DI01_2 — Gestión de Biblioteca
+* Implementación de `JList`, `JComboBox` y `JTable` (vía `AbstractTableModel`).
+* **Aprendizaje clave:** Gestión de eventos duplicados mediante `getValueIsAdjusting()`.
 
-### 🔐 Autenticación (JWT)
-- Login con email y contraseña
-- Autenticación contra la API (JWT)
-- Carga de datos del usuario
-- Sistema Remember Me con expiración automática (72h)
-- Auto-login seguro con validación del token
-- Logout con limpieza de sesión y conservación opcional del email
+### ✔️ DI03 — Integración Cloud + JavaBean
+* **Auth:** Login manual con persistencia de token JWT (72h) y "Remember Me".
+* **Media Polling Component:** Creación de un componente independiente (JPanel) con `javax.swing.Timer` y eventos personalizados.
+* **Arquitectura:** Eliminación de lógica de API del proyecto principal para delegarla en el componente.
 
-### ☁️ Sincronización Local ↔ Cloud (DI03 Parte 3)
-- Carga de medios desde la nube (getAllMedia)
-- Escaneo de biblioteca local
-- Identificación automática del estado de cada recurso:
-  - `LOCAL`
-  - `CLOUD`
-  - `LOCAL + CLOUD`
-- Visualización unificada de recursos locales y cloud
-- Renderizado personalizado con estado visible
+### ✔️ DI04 — Mejora de Usabilidad y UX
+Enfoque en los 5 pilares de diseño: *Colour & Style, Feedback, Affordance, Restricciones y Consistencia*.
 
-### 🔁 Acciones sobre recursos
-Desde la interfaz gráfica:
-- **Download** → Cloud → Local
-- **Upload** → Local → Cloud
-- **Delete** → Eliminación local + refresco de estado
-- Refresco automático tras cada acción
-- Sincronización consistente usando SwingWorker
+---
 
-### ⚙️ Persistencia de preferencias
-Mediante `java.util.prefs.Preferences`:
-- Carpeta de descargas
-- Carpeta de escaneo
-- Rutas de yt-dlp y ffmpeg
-- Email recordado (Remember Me)
+## 🎨 Sección UX (Obligatoria DI04)
 
-Las preferencias se mantienen entre ejecuciones.
+### 1️⃣ Aspecto, color e iconografía
+* **Cambios:** Paleta de colores oscura coherente, iconos consistentes y tooltips descriptivos.
+* **Justificación:** Aplicación de principios de **Consistencia** y **Mínima sorpresa** para reducir la carga cognitiva.
 
-### 🎬 Descarga avanzada con yt-dlp
-- Descarga de audio o vídeo
-- Selector de calidad
-- Botón Stop para detener descargas activas
-- Logs en tiempo real
-- Creación automática de playlists `.m3u`
-- Validación de rutas y binarios
-- Uso de flags avanzados para estabilidad
+### 2️⃣ Affordance y Feedback
+* **Implementación:** Botones deshabilitados contextualmente, barras de progreso reales, confirmación de Logout y spinners de carga.
+* **Justificación:** Mejora la **Visibility** del sistema y permite la **Recuperabilidad** ante acciones accidentales.
+
+### 3️⃣ Gestión de errores
+* Manejo de errores HTTP 401 (Token expirado).
+* Protección ante `NullPointerException` en el procesamiento de listas.
+* Logs estructurados para depuración rápida.
+
+---
 
 ## 🧱 Arquitectura del Proyecto
 
-```
-└── cleanstream
-    ├── app
-    │   └── CleanStreamApp.java
-    ├── controller
-    │   ├── DownloadExecutionController.java
-    │   ├── DownloadsController.java
-    │   └── MainController.java
-    ├── main
-    │   ├── MainFrame.form
-    │   └── MainFrame.java
-    ├── models
-    │   ├── MetadataTableModel.java
-    │   ├── ResourceDownloaded.java
-    │   ├── ResourceState.java
-    │   └── VideoQuality.java
-    ├── services
-    │   ├── AuthManager.java
-    │   ├── DownloadsScanner.java
-    │   └── UserPreferences.java
-    ├── ui
-    │   ├── AboutDialog.form
-    │   ├── AboutDialog.java
-    │   ├── LoginPanel.java
-    │   ├── PreferencesPanel.form
-    │   ├── PreferencesPanel.java
-    │   └── renderers
-    │       └── ResourceDownloadedRenderer.java
-    └── utils
-        ├── CommandExecutor.java
-        └── DetectOS.java
-```
+```text
+cleanstream
+├── app          # Punto de entrada
+├── controller   # Lógica de control y eventos
+├── models       # POJOs y Modelos de tablas
+├── services     # Lógica de negocio y yt-dlp
+├── ui           # Interfaz gráfica
+│   ├── panels   # Paneles modulares
+│   ├── dialogs  # Ventanas modales (About, etc)
+│   └── renderers # Renderizado personalizado de celdas
+└── utils        # Clases de apoyo y constantes
+🔌 Integración con DI Media NET API
+Endpoints principales consumidos por el componente JavaBean:
 
-La arquitectura separa claramente UI, lógica de negocio y servicios, facilitando mantenimiento y escalabilidad.
+POST /api/Auth/login
 
-## 🔌 Integración con DI Media NET API
+GET /api/Users/me
 
-Se utiliza el componente proporcionado por el profesor (`ApiClient`) y un wrapper propio.
+GET /api/Files/all
 
-### Endpoints utilizados:
-- `/api/Auth/login`
-- `/api/Users/me`
-- `/api/Files/all`
-- `/api/Files/upload`
-- `/api/Files/{id}`
+POST /api/Files/upload
 
-## 🔎 Pruebas con Postman
+📚 Recursos externos utilizados
+Documentación: yt-dlp, Jackson Project.
 
-Colección completa incluida:
+Comunidad: StackOverflow (Eventos JList, Custom Events en Swing).
 
-📁 `postman/DI03_DI_Media_NET_EliasRoig.postman_collection.json`
+IA (ChatGPT): Utilizada para asistencia conceptual, revisión de arquitectura y optimización de diseño UX. Todo el código ha sido adaptado y comprendido íntegramente.
 
-Incluye:
-- Login
-- Upload
-- Listado de archivos
-- Descarga por ID
-- Verificación de endpoints
+🚀 Instalación y Uso
+Clonar el repositorio:
 
-## 🧠 Concurrencia y estabilidad
+Bash
 
-- Uso de `SwingWorker` para operaciones de red y disco
-- La UI nunca se bloquea
-- Gestión correcta de errores (401, rutas inválidas, archivos inexistentes)
+git clone [https://github.com/xesgan/cleanstream.git](https://github.com/xesgan/cleanstream.git)
+Abrir el proyecto en NetBeans 27/28.
 
-## 🧪 Problemas relevantes resueltos
+Asegurarse de tener configurado el JDK 24.
 
-| Problema | Solución |
-|----------|----------|
-| UI bloqueada | Uso de SwingWorker |
-| Token caducado | Validación previa y limpieza automática |
-| Lista no seleccionable | Corrección de enable/disable en JList |
-| Estados desincronizados | Refresco automático tras acciones |
-| Persistencia inconsistente | Centralización en UserPreferences |
+Compilar con Maven para descargar las dependencias.
 
-## 🧠 Estado final del proyecto
+🏁 Estado final
+[x] Cumple requisitos DI01, DI01_2, DI03 y DI04.
 
-- ✔ Cumple todos los requisitos de DI03
-- ✔ Integra componente externo
-- ✔ Permite interacción real con la nube
-- ✔ Arquitectura limpia y mantenible
-- ✔ Preparado para ampliaciones futuras
+[x] Arquitectura modular y limpia.
 
-## 👨‍💻 Créditos
+[x] Componente independiente funcional.
 
-**Autor:** Elias Roig  
-**Curso:** Desarrollo de Interfaces — FP DAM 2025-26  
-**Asistencia técnica:** ChatGPT (OpenAI), GitHub Copilot
+[x] UX/UI profesional.
 
-> Todo el código asistido ha sido comprendido, adaptado y documentado conforme a las normas del módulo.
-
-## 🚀 Instalación
-
-```bash
-git clone https://github.com/xesgan/cleanstream.git
-```
-
-Abrir en NetBeans 27/28 con JDK 24 y ejecutar con Maven.
-
-## 📝 Licencia
-
-Proyecto de uso educativo para el módulo de Desarrollo de Interfaces.
+Licencia: Proyecto educativo para el módulo Desarrollo de Interfaces.
