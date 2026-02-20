@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.models;
+package cat.dam.roig.cleanstream.domain;
 
 /**
  *

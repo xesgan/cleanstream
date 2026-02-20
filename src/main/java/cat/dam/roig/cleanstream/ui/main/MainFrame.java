@@ -1,18 +1,18 @@
-package cat.dam.roig.cleanstream.main;
+package cat.dam.roig.cleanstream.ui.main;
 
 import cat.dam.roig.cleanstream.controller.DownloadsController;
-import cat.dam.roig.cleanstream.models.MetadataTableModel;
-import cat.dam.roig.cleanstream.models.ResourceDownloaded;
-import cat.dam.roig.cleanstream.models.VideoQuality;
-import cat.dam.roig.cleanstream.services.AuthManager;
+import cat.dam.roig.cleanstream.ui.model.MetadataTableModel;
+import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
+import cat.dam.roig.cleanstream.domain.VideoQuality;
+import cat.dam.roig.cleanstream.services.auth.AuthManager;
 import cat.dam.roig.cleanstream.ui.AboutDialog;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
 import cat.dam.roig.cleanstream.ui.UiColors;
 import cat.dam.roig.cleanstream.ui.PreferencesPanel;
-import cat.dam.roig.cleanstream.utils.DetectOS;
+import cat.dam.roig.cleanstream.util.DetectOS;
 import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
-import cat.dam.roig.cleanstream.services.UserPreferences;
+import cat.dam.roig.cleanstream.services.prefs.UserPreferences;
 import cat.dam.roig.cleanstream.ui.AppTheme;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.awt.Color;

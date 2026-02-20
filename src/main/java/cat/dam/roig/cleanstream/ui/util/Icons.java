@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.ui.utils;
+package cat.dam.roig.cleanstream.ui.util;
 
 import javax.swing.*;
 import java.awt.*;

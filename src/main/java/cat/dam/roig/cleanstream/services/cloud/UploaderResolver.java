@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.services;
+package cat.dam.roig.cleanstream.services.cloud;
 
 import javax.swing.*;
 import java.util.Map;

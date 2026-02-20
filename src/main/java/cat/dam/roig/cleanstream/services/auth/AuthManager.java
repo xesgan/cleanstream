@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.services;
+package cat.dam.roig.cleanstream.services.auth;
 
 import cat.dam.roig.cleanstream.ui.LoginPanel;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;

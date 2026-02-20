@@ -1,6 +1,6 @@
 package cat.dam.roig.cleanstream.app;
 
-import cat.dam.roig.cleanstream.main.MainFrame;
+import cat.dam.roig.cleanstream.ui.main.MainFrame;
 import cat.dam.roig.cleanstream.controller.MainController;
 import com.formdev.flatlaf.FlatDarkLaf;
 

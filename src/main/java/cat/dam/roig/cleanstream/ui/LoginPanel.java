@@ -1,6 +1,6 @@
 package cat.dam.roig.cleanstream.ui;
 
-import cat.dam.roig.cleanstream.services.AuthManager;
+import cat.dam.roig.cleanstream.services.auth.AuthManager;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;

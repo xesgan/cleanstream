@@ -1,6 +1,6 @@
-package cat.dam.roig.cleanstream.utils;
+package cat.dam.roig.cleanstream.util;
 
-import cat.dam.roig.cleanstream.models.VideoQuality;
+import cat.dam.roig.cleanstream.domain.VideoQuality;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;

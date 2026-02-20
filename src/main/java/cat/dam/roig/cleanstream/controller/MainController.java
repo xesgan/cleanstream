@@ -1,7 +1,7 @@
 package cat.dam.roig.cleanstream.controller;
 
-import cat.dam.roig.cleanstream.main.MainFrame;
-import cat.dam.roig.cleanstream.services.AuthManager;
+import cat.dam.roig.cleanstream.ui.main.MainFrame;
+import cat.dam.roig.cleanstream.services.auth.AuthManager;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.nio.file.Path;
 import javax.swing.JOptionPane;

@@ -1,6 +1,6 @@
-package cat.dam.roig.cleanstream.services;
+package cat.dam.roig.cleanstream.services.prefs;
 
-import cat.dam.roig.cleanstream.models.PreferencesData;
+import cat.dam.roig.cleanstream.config.PreferencesData;
 import java.nio.file.Files;
 import java.nio.file.Path;
 

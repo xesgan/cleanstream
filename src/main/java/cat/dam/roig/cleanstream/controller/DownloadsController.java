@@ -1,11 +1,11 @@
 package cat.dam.roig.cleanstream.controller;
 
-import cat.dam.roig.cleanstream.models.MetadataTableModel;
-import cat.dam.roig.cleanstream.models.ResourceDownloaded;
-import cat.dam.roig.cleanstream.models.ResourceState;
-import cat.dam.roig.cleanstream.services.DownloadsScanner;
-import cat.dam.roig.cleanstream.services.UserPreferences;
-import cat.dam.roig.cleanstream.services.UploaderResolver;
+import cat.dam.roig.cleanstream.ui.model.MetadataTableModel;
+import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
+import cat.dam.roig.cleanstream.domain.ResourceState;
+import cat.dam.roig.cleanstream.services.scan.DownloadsScanner;
+import cat.dam.roig.cleanstream.services.prefs.UserPreferences;
+import cat.dam.roig.cleanstream.services.cloud.UploaderResolver;
 import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
@@ -98,7 +98,7 @@ public class DownloadsController {
         initSelectionListener();
         initDoubleClickOpen();
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
-        cat.dam.roig.cleanstream.ui.utils.ListHoverSupport.install(downloadsList);
+        cat.dam.roig.cleanstream.ui.util.ListHoverSupport.install(downloadsList);
         styleProgressBar();
 
     }

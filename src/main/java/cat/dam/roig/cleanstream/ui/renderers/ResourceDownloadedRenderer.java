@@ -1,7 +1,7 @@
 package cat.dam.roig.cleanstream.ui.renderers;
 
-import cat.dam.roig.cleanstream.models.ResourceDownloaded;
-import cat.dam.roig.cleanstream.models.ResourceState;
+import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
+import cat.dam.roig.cleanstream.domain.ResourceState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -180,7 +180,7 @@ public class ResourceDownloadedRenderer extends JPanel implements ListCellRender
         setPreferredSize(new Dimension(cellPref.width, Math.max(cellPref.height, minH)));
 
         // Fondo / selección
-        int hoverIndex = cat.dam.roig.cleanstream.ui.utils.ListHoverSupport.getHoverIndex(list);
+        int hoverIndex = cat.dam.roig.cleanstream.ui.util.ListHoverSupport.getHoverIndex(list);
         boolean isHover = (index == hoverIndex);
 
         if (isSelected) {
@@ -247,19 +247,19 @@ private Icon loadThumbOrFallback(ResourceDownloaded r, ResourceState state) {
     String mime = (r != null) ? r.getMimeType() : null;
 
     if (mime != null && mime.startsWith("video/")) {
-        base = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/video.png", 25);
+        base = cat.dam.roig.cleanstream.ui.util.Icons.icon("/icons/video.png", 25);
     } else if (mime != null && mime.startsWith("audio/")) {
-        base = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/audio.png", 25);
+        base = cat.dam.roig.cleanstream.ui.util.Icons.icon("/icons/audio.png", 25);
     } else {
-        base = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/file.png", 25);
+        base = cat.dam.roig.cleanstream.ui.util.Icons.icon("/icons/file.png", 25);
     }
 
     // Overlay nube si es CLOUD_ONLY (opcional)
     if (state == ResourceState.CLOUD_ONLY) {
-        Icon cloud = cat.dam.roig.cleanstream.ui.utils.Icons.icon("/icons/cloud.png", 14);
+        Icon cloud = cat.dam.roig.cleanstream.ui.util.Icons.icon("/icons/cloud.png", 14);
         int x = base.getIconWidth() - cloud.getIconWidth();
         int y = base.getIconHeight() - cloud.getIconHeight();
-        return cat.dam.roig.cleanstream.ui.utils.Icons.overlay(base, cloud, x, y);
+        return cat.dam.roig.cleanstream.ui.util.Icons.overlay(base, cloud, x, y);
     }
 
     return base;

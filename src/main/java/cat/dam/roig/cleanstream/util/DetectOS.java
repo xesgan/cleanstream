@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.utils;
+package cat.dam.roig.cleanstream.util;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

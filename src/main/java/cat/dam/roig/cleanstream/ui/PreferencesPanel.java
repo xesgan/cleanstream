@@ -1,9 +1,9 @@
 package cat.dam.roig.cleanstream.ui;
 
-import cat.dam.roig.cleanstream.main.MainFrame;
-import cat.dam.roig.cleanstream.services.UserPreferences;
-import cat.dam.roig.cleanstream.services.PreferencesValidator;
-import cat.dam.roig.cleanstream.models.PreferencesData;
+import cat.dam.roig.cleanstream.ui.main.MainFrame;
+import cat.dam.roig.cleanstream.services.prefs.UserPreferences;
+import cat.dam.roig.cleanstream.services.prefs.PreferencesValidator;
+import cat.dam.roig.cleanstream.config.PreferencesData;
 import java.io.File;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;

@@ -1,7 +1,7 @@
-package cat.dam.roig.cleanstream.services;
+package cat.dam.roig.cleanstream.services.prefs;
 
 import java.util.prefs.Preferences;
-import cat.dam.roig.cleanstream.models.PreferencesData;
+import cat.dam.roig.cleanstream.config.PreferencesData;
 
 /**
  * Gestiona las rutas y ajustes persistentes de la aplicación.

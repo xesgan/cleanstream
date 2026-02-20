@@ -1,10 +1,10 @@
 package cat.dam.roig.cleanstream.controller;
 
-import cat.dam.roig.cleanstream.main.MainFrame;
-import cat.dam.roig.cleanstream.models.VideoQuality;
+import cat.dam.roig.cleanstream.ui.main.MainFrame;
+import cat.dam.roig.cleanstream.domain.VideoQuality;
 import cat.dam.roig.cleanstream.ui.PreferencesPanel;
-import cat.dam.roig.cleanstream.utils.CommandExecutor;
-import cat.dam.roig.cleanstream.utils.DetectOS;
+import cat.dam.roig.cleanstream.util.CommandExecutor;
+import cat.dam.roig.cleanstream.util.DetectOS;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.io.File;

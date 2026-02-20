@@ -1,6 +1,6 @@
-package cat.dam.roig.cleanstream.services;
+package cat.dam.roig.cleanstream.services.scan;
 
-import cat.dam.roig.cleanstream.models.ResourceDownloaded;
+import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;

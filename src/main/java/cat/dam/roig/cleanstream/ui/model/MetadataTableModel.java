@@ -1,5 +1,6 @@
-package cat.dam.roig.cleanstream.models;
+package cat.dam.roig.cleanstream.ui.model;
 
+import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
