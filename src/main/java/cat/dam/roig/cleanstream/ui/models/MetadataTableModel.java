@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.ui.model;
+package cat.dam.roig.cleanstream.ui.models;
 
 import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
 import java.util.ArrayList;

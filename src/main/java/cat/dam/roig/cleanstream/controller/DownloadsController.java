@@ -1,6 +1,6 @@
 package cat.dam.roig.cleanstream.controller;
 
-import cat.dam.roig.cleanstream.ui.model.MetadataTableModel;
+import cat.dam.roig.cleanstream.ui.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
 import cat.dam.roig.cleanstream.domain.ResourceState;
 import cat.dam.roig.cleanstream.services.scan.DownloadsScanner;

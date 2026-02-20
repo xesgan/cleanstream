@@ -1,7 +1,7 @@
 package cat.dam.roig.cleanstream.ui.main;
 
 import cat.dam.roig.cleanstream.controller.DownloadsController;
-import cat.dam.roig.cleanstream.ui.model.MetadataTableModel;
+import cat.dam.roig.cleanstream.ui.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
 import cat.dam.roig.cleanstream.domain.VideoQuality;
 import cat.dam.roig.cleanstream.services.auth.AuthManager;
@@ -72,7 +72,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         initUx();
         loadLogo();
-        
+
         // 3. Configura ventana
         initWindow();
 
@@ -875,6 +875,17 @@ public class MainFrame extends javax.swing.JFrame {
 
         // sensación "consola"
         ta.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    }
+
+    public boolean confirmLogout() {
+        int opt = javax.swing.JOptionPane.showConfirmDialog(
+                this,
+                "Do you really want to log out?",
+                "Confirm logout",
+                javax.swing.JOptionPane.YES_NO_OPTION,
+                javax.swing.JOptionPane.QUESTION_MESSAGE
+        );
+        return opt == javax.swing.JOptionPane.YES_OPTION;
     }
 
 

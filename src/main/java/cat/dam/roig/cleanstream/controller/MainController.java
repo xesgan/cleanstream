@@ -59,15 +59,7 @@ public class MainController {
     }
 
     public void doLogout() {
-        int opt = JOptionPane.showConfirmDialog(
-                mainFrame,
-                "Do you really want to log out?",
-                "Confirm logout",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-
-        if (opt != JOptionPane.YES_OPTION) {
+        if (!mainFrame.confirmLogout()) {
             return; // usuario canceló
         }
         if (authManager.isRememberEnabled()) {
@@ -77,7 +69,7 @@ public class MainController {
         }
         mediaComponent.setRunning(false);
         authManager.logout();
-        mainFrame.updateSessionUI(false); 
+        mainFrame.updateSessionUI(false);
         mainFrame.showLogin();
 
     }
