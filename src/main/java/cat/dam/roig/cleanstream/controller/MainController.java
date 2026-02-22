@@ -1,10 +1,10 @@
 package cat.dam.roig.cleanstream.controller;
 
-import cat.dam.roig.cleanstream.ui.main.MainFrame;
-import cat.dam.roig.cleanstream.services.auth.AuthManager;
-import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.nio.file.Path;
-import javax.swing.JOptionPane;
+
+import cat.dam.roig.cleanstream.services.auth.AuthManager;
+import cat.dam.roig.cleanstream.ui.main.MainFrame;
+import cat.dam.roig.cleanstream.services.polling.MediaPolling;
 
 /**
  *
@@ -14,13 +14,13 @@ public class MainController {
 
     private final MainFrame mainFrame;
     private final AuthManager authManager;
-    private final RoigMediaPollingComponent mediaComponent;
+    private final MediaPolling mediaPolling;
     private boolean mediaListenerRegistered = false;
 
-    public MainController(MainFrame mainFrame, AuthManager auth, RoigMediaPollingComponent mediaComponent) {
+    public MainController(MainFrame mainFrame, AuthManager auth, MediaPolling mediaPolling) {
         this.mainFrame = mainFrame;
         this.authManager = auth;
-        this.mediaComponent = mediaComponent;
+        this.mediaPolling = mediaPolling;
     }
 
     public void start() {
@@ -33,7 +33,7 @@ public class MainController {
         if (authManager.tryAutoLogin()) {
             startSession();
         } else {
-            mainFrame.updateSessionUI(false); // ✅ menú “capado”
+            mainFrame.updateSessionUI(false);
             mainFrame.showLogin();
         }
     }
@@ -44,18 +44,12 @@ public class MainController {
         mainFrame.showMainView();
 
         // Obtener ruta actual de preferencias
-        String ruta = mainFrame.getPnlPreferencesPanel()
-                .getTxtScanDownloadsFolder()
-                .getText()
-                .trim();
+        Path dir = mainFrame.getScanDownloadsFolderPathFromUI();
 
-        Path dir = ruta.isEmpty() ? null : Path.of(ruta);
-
-        // 👇 ahora usamos tu método nuevo
         mainFrame.getDownloadsController().appStart(dir, mainFrame);
 
         initMediaPollingListener();
-        mediaComponent.setRunning(true);
+        mediaPolling.setRunning(true);
     }
 
     public void doLogout() {
@@ -67,7 +61,7 @@ public class MainController {
         } else {
             authManager.clearRememberMe();
         }
-        mediaComponent.setRunning(false);
+        mediaPolling.setRunning(false);
         authManager.logout();
         mainFrame.updateSessionUI(false);
         mainFrame.showLogin();
@@ -79,9 +73,8 @@ public class MainController {
             return;
         }
 
-        mediaComponent.addMediaListener(evt -> {
-            System.out.println("[APP] New cloud media found: " + evt.getNewMedia().size());
-
+        mediaPolling.addMediaListener(event -> {
+            System.out.println("[APP] New cloud media found: " + event.getNewMediaCount());
             mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
         });
 

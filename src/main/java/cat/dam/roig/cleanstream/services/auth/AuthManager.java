@@ -1,5 +1,6 @@
 package cat.dam.roig.cleanstream.services.auth;
 
+import cat.dam.roig.cleanstream.services.polling.MediaPolling;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.util.Arrays;
@@ -21,16 +22,16 @@ public class AuthManager {
 
     // ---- Dependencias ----
     private LoginPanel loginPanel;
-    private final RoigMediaPollingComponent mediaComponent;
+    private final MediaPolling polling;
 
     // Callback cuando el login tiene éxito (para que el MainFrame cambie de panel)
     private Runnable onLoginSuccess;
 
-    public AuthManager(RoigMediaPollingComponent comp) {
+    public AuthManager(MediaPolling comp) {
         if (comp == null) {
-            throw new IllegalArgumentException("RoigMediaPollingComponent no puede ser null");
+            throw new IllegalArgumentException("MediaPolling cannot be null");
         }
-        this.mediaComponent = comp;
+        this.polling = comp;
         this.prefs = Preferences.userNodeForPackage(AuthManager.class);
     }
 
@@ -80,7 +81,7 @@ public class AuthManager {
     public void clearRememberMe() {
         prefs.remove(KEY_EMAIL);
         clearToken();
-        mediaComponent.setToken(null);
+        polling.setToken(null);
 
         if (loginPanel != null) {
             loginPanel.setTxtEmail("");
@@ -90,7 +91,7 @@ public class AuthManager {
 
     public void logoutButKeepEmail() {
         clearToken();
-        mediaComponent.setToken(null);
+        polling.setToken(null);
 
         if (loginPanel != null) {
             String email = prefs.get(KEY_EMAIL, "");
@@ -113,11 +114,11 @@ public class AuthManager {
             return false;
         }
 
-        mediaComponent.setToken(token);
+        polling.setToken(token);
 
         try {
             // Llamada mínima para validar token
-            mediaComponent.getAllMedia(); // o algún endpoint ligero si tienes otro
+            polling.validateToken();
 
             // Si llegamos aquí, el token funciona
             if (loginPanel != null) {
@@ -126,10 +127,10 @@ public class AuthManager {
             return true;
 
         } catch (Exception ex) {
-            // Token no válido: limpiamos todo
+            // Token no válido: limpiar
             ex.printStackTrace();
             clearRememberMe();
-            mediaComponent.setToken(null);
+            polling.setToken(null);
             return false;
         }
     }
@@ -160,11 +161,11 @@ public class AuthManager {
 
         try {
             // Obtener el jwt
-            mediaComponent.login(email, pass);
+            polling.login(email, pass);
 
             // Guardamos o limpiamos el Remember Me segun el estado del checkbox
             if (loginPanel.isRememberMeSelected()) {
-                saveRememberMe(email, mediaComponent.getToken());
+                saveRememberMe(email, polling.getToken());
                 setRememberEnabled(true);
             } else {
                 clearRememberMe();
@@ -190,7 +191,7 @@ public class AuthManager {
 
     public void logout() {
         clearToken();
-        mediaComponent.setToken(null);
+        polling.setToken(null);
         loginPanel.resetUiState();
 
         if (loginPanel != null) {

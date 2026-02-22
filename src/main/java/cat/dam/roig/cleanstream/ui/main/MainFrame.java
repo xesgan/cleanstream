@@ -12,6 +12,7 @@ import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.util.DetectOS;
 import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.MainController;
+import cat.dam.roig.cleanstream.services.polling.MediaPolling;
 import cat.dam.roig.cleanstream.services.prefs.UserPreferences;
 import cat.dam.roig.cleanstream.ui.AppTheme;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
@@ -38,10 +39,6 @@ import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 
-/**
- *
- * @author metku
- */
 public class MainFrame extends javax.swing.JFrame {
 
     // Dependencias Controller
@@ -53,7 +50,8 @@ public class MainFrame extends javax.swing.JFrame {
     private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
     private MetadataTableModel metaModel; // para la tabla de metadata
 
-    private final RoigMediaPollingComponent mediaComponent;
+//    private final RoigMediaPollingComponent mediaComponent;
+    private final MediaPolling polling;
     private final AuthManager authManager;
     private final LoginPanel loginPanel;
     private final DownloadExecutionController downloadExecutionController;
@@ -61,8 +59,11 @@ public class MainFrame extends javax.swing.JFrame {
 
     /**
      * Creates new form MainFrame
+     *
+     * @param polling
+     * @param authManager
      */
-    public MainFrame() {
+    public MainFrame(MediaPolling polling, AuthManager authManager) {
         // 1. Construye UI base (paneles, botones, menús...)
         initComponents();
 
@@ -76,9 +77,10 @@ public class MainFrame extends javax.swing.JFrame {
         // 3. Configura ventana
         initWindow();
 
-        this.mediaComponent = roigMediaPollingComponent;
-        this.authManager = new AuthManager(mediaComponent);
+        this.polling = polling;
+        this.authManager = authManager;
         this.loginPanel = new LoginPanel(authManager);
+
         authManager.setLoginPanel(loginPanel);
 
         initPreferencesPanel();
@@ -89,7 +91,7 @@ public class MainFrame extends javax.swing.JFrame {
         initMetadataTable();
         initFilters();
 
-        this.mainController = new MainController(this, authManager, mediaComponent);
+        this.mainController = new MainController(this, authManager, polling);
 
         downloadExecutionController = new DownloadExecutionController(
                 this,
@@ -886,6 +888,17 @@ public class MainFrame extends javax.swing.JFrame {
                 javax.swing.JOptionPane.QUESTION_MESSAGE
         );
         return opt == javax.swing.JOptionPane.YES_OPTION;
+    }
+
+    /**
+     * Returns the scan downloads folder path currently shown in preferences UI.
+     * This is used at startup to initialize the downloads scanner.
+     *
+     * @return scan folder path, or {@code null} if not set.
+     */
+    public Path getScanDownloadsFolderPathFromUI() {
+        String ruta = pnlPreferencesPanel.getTxtScanDownloadsFolder().getText().trim();
+        return ruta.isEmpty() ? null : Path.of(ruta);
     }
 
 
