@@ -2,7 +2,6 @@ package cat.dam.roig.cleanstream.services.auth;
 
 import cat.dam.roig.cleanstream.services.polling.MediaPolling;
 import cat.dam.roig.cleanstream.ui.LoginPanel;
-import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 import java.util.Arrays;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
@@ -32,7 +31,7 @@ public class AuthManager {
             throw new IllegalArgumentException("MediaPolling cannot be null");
         }
         this.polling = comp;
-        this.prefs = Preferences.userNodeForPackage(AuthManager.class);
+        this.prefs = Preferences.userRoot().node("cat/dam/roig/cleanstream/auth");
     }
 
     // Permite inyectar el loginPanel desde fuera
@@ -192,9 +191,9 @@ public class AuthManager {
     public void logout() {
         clearToken();
         polling.setToken(null);
-        loginPanel.resetUiState();
 
         if (loginPanel != null) {
+            loginPanel.resetUiState();
             loginPanel.getTxtPassword().setText("");
         }
     }
