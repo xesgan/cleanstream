@@ -6,6 +6,7 @@ import cat.dam.roig.cleanstream.domain.ResourceState;
 import cat.dam.roig.cleanstream.services.scan.DownloadsScanner;
 import cat.dam.roig.cleanstream.services.prefs.UserPreferences;
 import cat.dam.roig.cleanstream.services.cloud.UploaderResolver;
+import cat.dam.roig.cleanstream.services.polling.MediaPolling;
 import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
@@ -28,7 +29,7 @@ import java.util.Set;
 
 public class DownloadsController {
 
-    private final RoigMediaPollingComponent mediaComponent;
+    private final MediaPolling mediaPolling;
 
     private final DefaultListModel<ResourceDownloaded> downloadsModel;
     private final List<ResourceDownloaded> allResources;
@@ -79,7 +80,7 @@ public class DownloadsController {
             throw new IllegalArgumentException("mediaComponent no puede ser null");
         }
 
-        this.mediaComponent = mediaComponent;
+        this.mediaPolling = mediaComponent;
         this.downloadsModel = downloadsModel;
         this.allResources = allResources;
         this.cmbTipo = cmbTipo;
@@ -93,7 +94,7 @@ public class DownloadsController {
         this.pbDownload = pbDownload;
 
         uploaderResolver = new UploaderResolver(
-                userId -> this.mediaComponent.getNickName(userId)
+                userId -> this.mediaPolling.getNickName(userId)
         );
         initSelectionListener();
         initDoubleClickOpen();
@@ -391,7 +392,7 @@ public class DownloadsController {
 
             @Override
             protected Void doInBackground() throws Exception {
-                mediaComponent.download(media.id, dest);
+                mediaPolling.download(media.id, dest);
                 return null;
             }
 
@@ -449,7 +450,7 @@ public class DownloadsController {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                mediaComponent.uploadFileMultipart(file, fromUrl);
+                mediaPolling.uploadFileMultipart(file, fromUrl);
                 return null;
             }
 
@@ -897,13 +898,20 @@ public class DownloadsController {
         if (cloudLoading) {
             return;
         }
+
+        String token = mediaPolling.getToken(); // o mediaPolling.getToken()
+        if (token == null || token.isBlank()) {
+            System.out.println("[cloud] skip loadCloudMedia (no token)");
+            return;
+        }
+
         cloudLoading = true;
 
         SwingWorker<List<Media>, Void> worker = new SwingWorker<>() {
 
             @Override
             protected List<Media> doInBackground() throws Exception {
-                return mediaComponent.getAllMedia();
+                return mediaPolling.getAllMedia();
             }
 
             @Override
@@ -930,12 +938,18 @@ public class DownloadsController {
                     downloadsList.repaint();
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+                    System.err.println("[cloud] load failed: " + cause.getMessage());
+
+                    // Si quieres: mostrar diálogo solo si hay sesión activa
+                    JOptionPane.showMessageDialog(parentForDialog,
+                            "Cloud session expired or unauthorized (401). Please log in again.",
+                            "Cloud access",
+                            JOptionPane.WARNING_MESSAGE);
                 } finally {
                     cloudLoading = false;
                 }
             }
-
         };
 
         worker.execute();

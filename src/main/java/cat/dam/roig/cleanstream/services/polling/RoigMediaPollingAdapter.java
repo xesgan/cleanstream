@@ -1,6 +1,8 @@
 package cat.dam.roig.cleanstream.services.polling;
 
+import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.util.List;
 
 /**
  * Adapter that wraps {@link RoigMediaPollingComponent} into the
@@ -58,5 +60,10 @@ public class RoigMediaPollingAdapter implements MediaPolling {
             MediaUpdateEvent event = new MediaUpdateEvent(count);
             listener.onMediaUpdate(event);
         });
+    }
+    
+    @Override
+    public List<Media> getAllMedia() throws Exception {
+        return delegate.getAllMedia();
     }
 }

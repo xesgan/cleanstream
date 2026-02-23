@@ -1,5 +1,8 @@
 package cat.dam.roig.cleanstream.services.polling;
 
+import cat.dam.roig.roigmediapollingcomponent.Media;
+import java.util.List;
+
 /**
  * Minimal abstraction for the cloud media component used by CleanStream.
  *
@@ -21,6 +24,8 @@ public interface MediaPolling {
     void setToken(String token);
 
     String getToken();
+    
+    List<Media> getAllMedia() throws Exception;
 
     /**
      * Makes a lightweight authenticated call to confirm the current token is
