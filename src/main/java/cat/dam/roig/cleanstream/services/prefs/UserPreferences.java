@@ -10,7 +10,7 @@ public class UserPreferences {
 
     // Nodo de preferencias para toda la app
     private static final Preferences PREFS
-            = Preferences.userNodeForPackage(UserPreferences.class);
+        = Preferences.userRoot().node("cat/dam/roig/cleanstream/prefs");
 
     // Claves
     private static final String KEY_DOWNLOAD_DIR = "downloadDir";
