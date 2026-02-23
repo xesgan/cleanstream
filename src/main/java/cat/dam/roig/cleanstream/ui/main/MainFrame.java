@@ -195,7 +195,7 @@ public class MainFrame extends javax.swing.JFrame {
                 btnDeleteDownloadFileFolder,
                 btnFetchFromCloud,
                 btnUploadFromLocal,
-                getRoigMediaPollingComponent1(),
+                polling,
                 lblStatusScan,
                 pbDownload
         );

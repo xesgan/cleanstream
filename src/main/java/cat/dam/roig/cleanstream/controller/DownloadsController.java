@@ -72,15 +72,15 @@ public class DownloadsController {
             JButton btnDelete,
             JButton btnDownloadFromCloud,
             JButton btnUploadFromLocal,
-            RoigMediaPollingComponent mediaComponent,
+            MediaPolling mediaPolling,
             JLabel lblStatusScan,
             JProgressBar pbDownload
     ) {
-        if (mediaComponent == null) {
+        if (mediaPolling == null) {
             throw new IllegalArgumentException("mediaComponent no puede ser null");
         }
 
-        this.mediaPolling = mediaComponent;
+        this.mediaPolling = mediaPolling;
         this.downloadsModel = downloadsModel;
         this.allResources = allResources;
         this.cmbTipo = cmbTipo;

@@ -2,6 +2,7 @@ package cat.dam.roig.cleanstream.services.polling;
 
 import cat.dam.roig.roigmediapollingcomponent.Media;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -61,9 +62,24 @@ public class RoigMediaPollingAdapter implements MediaPolling {
             listener.onMediaUpdate(event);
         });
     }
-    
+
     @Override
     public List<Media> getAllMedia() throws Exception {
         return delegate.getAllMedia();
+    }
+
+    @Override
+    public String getNickName(int userId) throws Exception {
+        return delegate.getNickName(userId);
+    }
+
+    @Override
+    public void download(int mediaId, File destFile) throws Exception {
+        delegate.download(mediaId, destFile);
+    }
+
+    @Override
+    public String uploadFileMultipart(File f, String fromUrl) throws Exception {
+        return delegate.uploadFileMultipart(f, fromUrl);
     }
 }

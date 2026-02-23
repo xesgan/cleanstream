@@ -1,6 +1,7 @@
 package cat.dam.roig.cleanstream.services.polling;
 
 import cat.dam.roig.roigmediapollingcomponent.Media;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -25,7 +26,14 @@ public interface MediaPolling {
 
     String getToken();
     
+    String getNickName(int userId) throws Exception;
+    
     List<Media> getAllMedia() throws Exception;
+    
+    void download(int mediaId, File destFile) throws Exception;
+    
+    String uploadFileMultipart(File f, String fromUrl) throws Exception;
+    
 
     /**
      * Makes a lightweight authenticated call to confirm the current token is
