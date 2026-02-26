@@ -9,7 +9,7 @@ import cat.dam.roig.cleanstream.services.cloud.UploaderResolver;
 import cat.dam.roig.cleanstream.services.polling.MediaPolling;
 import cat.dam.roig.cleanstream.ui.renderers.ResourceDownloadedRenderer;
 import cat.dam.roig.roigmediapollingcomponent.Media;
-import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+
 import java.awt.Component;
 import java.awt.Container;
 import java.io.File;
@@ -17,51 +17,209 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import javax.swing.*;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+/**
+ * Controller that manages the "Downloads" screen: local scan, cloud listing,
+ * filtering, selection UX and cloud sync actions.
+ *
+ * <h2>Main responsibilities</h2>
+ * <ul>
+ * <li><b>Local library:</b> scans the configured downloads folder and builds a
+ * list of {@link ResourceDownloaded} items.</li>
+ * <li><b>Cloud library:</b> fetches remote media using
+ * {@link MediaPolling#getAllMedia()} and keeps an in-memory list of
+ * {@link Media}.</li>
+ * <li><b>State reconciliation:</b> computes a {@link ResourceState} per file
+ * name: LOCAL_ONLY, CLOUD_ONLY or BOTH.</li>
+ * <li><b>Filters:</b> applies UI filters (type + this week) and a view mode
+ * (LOCAL / CLOUD / ALL).</li>
+ * <li><b>UX:</b> keeps selection stable across refreshes, updates metadata
+ * table, enables/disables action buttons correctly, supports double-click
+ * open.</li>
+ * <li><b>Actions:</b> delete local file, download from cloud, upload to
+ * cloud.</li>
+ * </ul>
+ *
+ * <h2>Threading</h2>
+ * <ul>
+ * <li>Local scan and cloud loading run in background using
+ * {@link SwingWorker}.</li>
+ * <li>All Swing UI changes must occur on the EDT (most callbacks in SwingWorker
+ * already are).</li>
+ * </ul>
+ *
+ * <h2>Important data structures</h2>
+ * <ul>
+ * <li>{@code allResources}: master list of local resources (results of scanning
+ * disk).</li>
+ * <li>{@code cloudMedia}: master list of cloud resources (results of API
+ * call).</li>
+ * <li>{@code downloadsModel}: the visible list model after applying filters and
+ * view mode.</li>
+ * <li>{@code stateByFileName}: reconciliation map (normalized filename ->
+ * state).</li>
+ * </ul>
+ *
+ * <p>
+ * <b>Key normalization:</b> file names are normalized to lowercase and trimmed
+ * so that local and cloud entries can be matched reliably.
+ */
 public class DownloadsController {
 
+    /**
+     * API facade used to communicate with the remote cloud
+     * (list/download/upload).
+     */
     private final MediaPolling mediaPolling;
 
+    /**
+     * Visible list model bound to the JList.
+     */
     private final DefaultListModel<ResourceDownloaded> downloadsModel;
+
+    /**
+     * Master list of local resources (unfiltered).
+     */
     private final List<ResourceDownloaded> allResources;
+
+    /**
+     * Filter: type (Video / Audio / All).
+     */
     private final JComboBox<String> cmbTipo;
+
+    /**
+     * Filter: restrict to downloads made within the current week (Mon-Sun).
+     */
     private final JCheckBox chkSemana;
 
+    /**
+     * JList showing visible resources (after filtering).
+     */
     private final JList<ResourceDownloaded> downloadsList;
+
+    /**
+     * Map containing the computed state for each resource based on its presence
+     * in local list and/or cloud list.
+     *
+     * <p>
+     * Key is the normalized file name.</p>
+     */
     private final Map<String, ResourceState> stateByFileName = new HashMap<>();
+
+    /**
+     * Table model used to show metadata of the currently selected resource.
+     */
     private final MetadataTableModel metaModel;
+
+    /**
+     * Action buttons controlled by selection and state.
+     */
     private final JButton btnDelete;
     private final JButton btnDownloadFromCloud;
     private final JButton btnUploadFromLocal;
+
+    /**
+     * Status label used to display scan results and short messages.
+     */
     private JLabel lblStatusScan;
+
+    /**
+     * Progress bar used to show busy state during cloud upload/download.
+     */
     private final JProgressBar pbDownload;
 
+    /**
+     * Resolves uploader nicknames from uploader IDs with caching and async
+     * retrieval. It relies on {@link MediaPolling#getNickName(int)} to fetch
+     * nicknames.
+     */
     private UploaderResolver uploaderResolver;
 
+    /**
+     * Master list of media currently available in the cloud.
+     */
     private final List<Media> cloudMedia = new ArrayList<>();
+
+    /**
+     * Key set from the previous scan to compute delta messages (+added /
+     * -removed).
+     */
     private Set<String> lastScanKeys = new HashSet<>();
+
+    /**
+     * True after the first scan is completed, used to adapt scan status
+     * messages.
+     */
     private boolean hasScannedOnce = false;
 
+    /**
+     * Optional: key that should be selected after an async refresh completes.
+     */
     private String pendingSelectKey = null;
 
+    /**
+     * View mode defines which sources are shown in the list. LOCAL = show only
+     * local resources, CLOUD = show cloud resources, ALL = mixed view.
+     */
     enum ViewMode {
         LOCAL, CLOUD, ALL
     }
+
+    /**
+     * Current view mode (default: ALL).
+     */
     private ViewMode viewMode = ViewMode.ALL;
 
+    /**
+     * Local scan has completed at least once successfully.
+     */
     private boolean hasScanned = false;
+
+    /**
+     * Local scan is currently running.
+     */
     private boolean isScanning = false;
+
+    /**
+     * Cloud loading is currently running (prevents duplicate concurrent loads).
+     */
     private boolean cloudLoading = false;
 
+    /**
+     * Creates a DownloadsController and wires it with the UI components it
+     * controls.
+     *
+     * <p>
+     * This constructor also installs:
+     * <ul>
+     * <li>a selection listener to update metadata and enable/disable
+     * actions</li>
+     * <li>a double-click handler to open local files with the system
+     * player</li>
+     * <li>a cell renderer that visually indicates {@link ResourceState}</li>
+     * <li>hover support and progress bar styling</li>
+     * </ul>
+     *
+     * @param downloadsModel list model bound to the JList
+     * @param allResources master local resource list
+     * @param cmbTipo filter combo box (type)
+     * @param chkSemana filter checkbox (week)
+     * @param downloadsList list UI component
+     * @param metaModel table model showing metadata of selected resource
+     * @param btnDelete delete action button
+     * @param btnDownloadFromCloud cloud download action button
+     * @param btnUploadFromLocal cloud upload action button
+     * @param mediaPolling API facade used for cloud operations
+     * @param lblStatusScan status label
+     * @param pbDownload progress bar used to show busy state
+     * @throws IllegalArgumentException if {@code mediaPolling} is null
+     */
     public DownloadsController(
             DefaultListModel<ResourceDownloaded> downloadsModel,
             List<ResourceDownloaded> allResources,
@@ -96,14 +254,30 @@ public class DownloadsController {
         uploaderResolver = new UploaderResolver(
                 userId -> this.mediaPolling.getNickName(userId)
         );
+
         initSelectionListener();
         initDoubleClickOpen();
+
         downloadsList.setCellRenderer(new ResourceDownloadedRenderer(stateByFileName));
         cat.dam.roig.cleanstream.ui.util.ListHoverSupport.install(downloadsList);
         styleProgressBar();
-
     }
 
+    /**
+     * Initializes the downloads screen when the application starts.
+     *
+     * <p>
+     * Flow:
+     * <ol>
+     * <li>Loads cloud media (if there is an active token).</li>
+     * <li>If the local downloads directory is valid, scans it.</li>
+     * <li>If local directory is invalid, clears local state and refreshes the
+     * view.</li>
+     * </ol>
+     *
+     * @param downloadsDir local directory to scan (may be null)
+     * @param parentForDialog parent component used for modal dialogs
+     */
     public void appStart(Path downloadsDir, Component parentForDialog) {
 
         // 1) Cloud siempre
@@ -128,6 +302,25 @@ public class DownloadsController {
         }
     }
 
+    /**
+     * Installs a list selection listener.
+     *
+     * <p>
+     * When selection changes:
+     * <ul>
+     * <li>Updates the metadata table model</li>
+     * <li>Enables/disables action buttons according to
+     * {@link ResourceState}</li>
+     * </ul>
+     *
+     * <p>
+     * Rules:
+     * <ul>
+     * <li>Delete enabled only when a local route exists</li>
+     * <li>Download-from-cloud enabled only for CLOUD_ONLY items</li>
+     * <li>Upload enabled only for LOCAL_ONLY items that exist on disk</li>
+     * </ul>
+     */
     private void initSelectionListener() {
         btnDelete.setEnabled(false);
         btnDownloadFromCloud.setEnabled(false);
@@ -155,6 +348,13 @@ public class DownloadsController {
         });
     }
 
+    /**
+     * Installs a double-click handler on the list.
+     *
+     * <p>
+     * Double-click on a local item opens the file using the system default
+     * player. Cloud-only items (without route) are ignored.</p>
+     */
     private void initDoubleClickOpen() {
         downloadsList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -188,6 +388,12 @@ public class DownloadsController {
         });
     }
 
+    /**
+     * Opens a local file using {@link java.awt.Desktop#open(File)}. Shows an
+     * error dialog if the operation fails.
+     *
+     * @param path absolute path to the local file
+     */
     private void openWithSystemPlayer(String path) {
         try {
             java.awt.Desktop.getDesktop().open(new java.io.File(path));
@@ -201,6 +407,18 @@ public class DownloadsController {
         }
     }
 
+    /**
+     * Scans the local downloads directory in background.
+     *
+     * <p>
+     * Uses {@link DownloadsScanner} to build a list of
+     * {@link ResourceDownloaded}. After finishing, the controller updates
+     * internal state and refreshes the list view.</p>
+     *
+     * @param downloadsDir directory to scan
+     * @param btnScan optional scan button to disable while scanning (may be
+     * null)
+     */
     public void scanDownloads(Path downloadsDir, JButton btnScan) {
 
         if (btnScan != null) {
@@ -240,10 +458,23 @@ public class DownloadsController {
     }
 
     /**
-     * Elimina el recurso seleccionado en la lista (si existe) tanto del disco
-     * como del modelo de la JList.
+     * Deletes the currently selected local file from disk (if it exists).
      *
-     * @param parentForDialog
+     * <p>
+     * If the resource is local-only, it is removed from the visible model. If
+     * the resource exists in cloud too (BOTH), it remains visible as
+     * cloud-only.</p>
+     *
+     * <p>
+     * After deletion, the controller triggers:
+     * <ul>
+     * <li>a rescan of the local folder (if configured)</li>
+     * <li>a cloud reload to recompute states</li>
+     * <li>a selection restore to keep UX stable</li>
+     * </ul>
+     *
+     * @param parentForDialog parent component used for confirmation and info
+     * dialogs
      */
     public void deleteSelectedDownloadFile(java.awt.Component parentForDialog) {
         int idx = downloadsList.getSelectedIndex();
@@ -312,6 +543,20 @@ public class DownloadsController {
         }
     }
 
+    /**
+     * Restores selection after a delete operation.
+     *
+     * <p>
+     * Strategy:
+     * <ol>
+     * <li>If the same resource still exists (e.g., BOTH -> CLOUD_ONLY), keep it
+     * selected.</li>
+     * <li>Otherwise select the previous item (or nearest valid index).</li>
+     * </ol>
+     *
+     * @param key normalized key of the previously selected item
+     * @param oldIdx previous index before deletion
+     */
     private void restoreSelectionAfterDelete(String key, int oldIdx) {
         ListModel<ResourceDownloaded> m = downloadsList.getModel();
         int size = m.getSize();
@@ -349,6 +594,20 @@ public class DownloadsController {
         downloadsList.requestFocusInWindow();
     }
 
+    /**
+     * Downloads a cloud-only media item to the local downloads directory.
+     *
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Validates that selection exists and is CLOUD_ONLY</li>
+     * <li>Downloads the file in background via
+     * {@link MediaPolling#download(int, File)}</li>
+     * <li>Refreshes local scan to make the resource appear as local/both</li>
+     * </ul>
+     *
+     * @param parent parent component for dialogs
+     */
     public void downloadFromCloud(Component parent) {
 
         ResourceDownloaded sel = downloadsList.getSelectedValue();
@@ -422,6 +681,15 @@ public class DownloadsController {
         }.execute();
     }
 
+    /**
+     * Uploads a local-only item to the cloud.
+     *
+     * <p>
+     * Valid only when the selected resource exists on disk and is not already
+     * present in cloud.</p>
+     *
+     * @param parent parent component for dialogs
+     */
     public void uploadToCloud(Component parent) {
 
         ResourceDownloaded sel = downloadsList.getSelectedValue();
@@ -470,6 +738,20 @@ public class DownloadsController {
         }.execute();
     }
 
+    /**
+     * Checks if a resource is eligible to be uploaded to cloud.
+     *
+     * <p>
+     * A resource can be uploaded only if:
+     * <ul>
+     * <li>it has a valid local route</li>
+     * <li>the file exists on disk</li>
+     * <li>it is not already in cloud (not CLOUD_ONLY/BOTH)</li>
+     * </ul>
+     *
+     * @param r resource to check
+     * @return true if upload is allowed
+     */
     public boolean canUpload(ResourceDownloaded r) {
         if (r == null) {
             return false;
@@ -495,10 +777,11 @@ public class DownloadsController {
     }
 
     /**
-     * Muestra un diálogo de confirmación antes de eliminar el archivo.
+     * Shows a confirmation dialog before deleting a file.
      *
-     * @param file Ruta del archivo a eliminar.
-     * @return true si el usuario confirma, false en caso contrario.
+     * @param parent parent component for the dialog
+     * @param file file path to delete
+     * @return true if user confirms deletion
      */
     private boolean confirmDeletion(java.awt.Component parent, Path file) {
         int opt = JOptionPane.showConfirmDialog(
@@ -513,8 +796,12 @@ public class DownloadsController {
 
     // ------ FILTROS DE DESCARGAS ------
     /**
-     * Aplica los filtros de tipo y semana solo si ya se ha realizado al menos
-     * un escaneo y no hay uno en curso.
+     * Applies filters only when the data required for the current view mode is
+     * ready.
+     *
+     * <p>
+     * LOCAL view requires a completed local scan. CLOUD/ALL can refresh
+     * anytime.</p>
      */
     public void applyFiltersIfReady() {
         // Si el usuario está viendo cloud o all, siempre podemos refrescar
@@ -529,6 +816,13 @@ public class DownloadsController {
         }
     }
 
+    /**
+     * Applies current filters while preserving the user selection.
+     *
+     * <p>
+     * This method captures a stable selection key (normalized file name),
+     * rebuilds the model, and restores selection if possible.</p>
+     */
     private void applyFiltersPreservingSelection() {
         SelectionSnapshot snap = captureSelection();
         applyFilters();              // tu método actual (ya modificado con ViewMode)
@@ -536,7 +830,16 @@ public class DownloadsController {
     }
 
     /**
-     * Rellena el modelo de la JList en función de los filtros activos.
+     * Rebuilds the visible {@link DefaultListModel} according to:
+     * <ul>
+     * <li>{@link ViewMode} (LOCAL/CLOUD/ALL)</li>
+     * <li>type filter (audio/video)</li>
+     * <li>week filter</li>
+     * </ul>
+     *
+     * <p>
+     * Cloud-only items are converted into "virtual" {@link ResourceDownloaded}
+     * objects using {@link #toVirtualResource(Media)}.</p>
      */
     private void applyFilters() {
         downloadsModel.clear();
@@ -586,6 +889,17 @@ public class DownloadsController {
         resolveUploadersForCurrentModel();
     }
 
+    /**
+     * Resolves uploader nicknames asynchronously for currently visible items.
+     *
+     * <p>
+     * Uses {@link UploaderResolver} with caching:
+     * <ul>
+     * <li>If nickname is already present, no action is taken.</li>
+     * <li>If cached, it is applied immediately.</li>
+     * <li>If not cached, it fetches async and repaints the list when done.</li>
+     * </ul>
+     */
     private void resolveUploadersForCurrentModel() {
         for (int i = 0; i < downloadsModel.size(); i++) {
             ResourceDownloaded r = downloadsModel.get(i);
@@ -617,10 +931,34 @@ public class DownloadsController {
     }
 
     // ---- helpers de filtro ----
+    /**
+     * Normalizes a string for safe comparisons and filtering.
+     *
+     * <p>
+     * This helper avoids {@link NullPointerException} and ensures consistent
+     * matching by:
+     * <ul>
+     * <li>Converting {@code null} to an empty string</li>
+     * <li>Trimming surrounding whitespace</li>
+     * <li>Lowercasing using {@link java.util.Locale#ROOT} for
+     * locale-independent behavior</li>
+     * </ul>
+     *
+     * <p>
+     * It is mainly used to normalize MIME types, extensions and filter values
+     * coming from UI components or external sources.</p>
+     *
+     * @param s input string (may be null)
+     * @return a normalized string (never null)
+     */
     private static String norm(String s) {
         return (s == null) ? "" : s.toLowerCase(java.util.Locale.ROOT).trim();
     }
 
+    /**
+     * Callback invoked when local scan starts. Sets flags and updates the
+     * status label.
+     */
     public void onScanStarted() {
         isScanning = true;
         if (lblStatusScan != null) {
@@ -628,6 +966,16 @@ public class DownloadsController {
         }
     }
 
+    /**
+     * Callback invoked when local scan finishes successfully.
+     *
+     * <p>
+     * Updates master list, recomputes states, refreshes view and updates scan
+     * status message. Also computes a delta against previous scan (+added /
+     * -removed) to show a helpful message.</p>
+     *
+     * @param lista scanned local resources
+     */
     public void onScanFinished(List<ResourceDownloaded> lista) {
         // snapshot actual
         Set<String> nowKeys = new HashSet<>();
@@ -700,11 +1048,24 @@ public class DownloadsController {
         });
     }
 
+    /**
+     * Refreshes the scan status label with the last stored message. Useful if
+     * the status label is recreated or UI is refreshed.
+     */
     public void refreshScanStatusLabel() {
         setScanStatus(lastScanMessage);
     }
 
     // --------- HELPERS PROGRESS BAR----------
+    /**
+     * Sets busy mode for cloud transfers (download/upload).
+     *
+     * <p>
+     * Updates the progress bar and the scan status label with a short
+     * message.</p>
+     *
+     * @param msg message to show
+     */
     private void startBusy(String msg) {
         SwingUtilities.invokeLater(() -> {
             if (pbDownload != null) {
@@ -718,6 +1079,14 @@ public class DownloadsController {
         });
     }
 
+    /**
+     * Ends busy mode for cloud transfers.
+     *
+     * <p>
+     * Updates the progress bar to 100% and sets the status message.</p>
+     *
+     * @param msg message to show
+     */
     private void stopBusy(String msg) {
         SwingUtilities.invokeLater(() -> {
             if (pbDownload != null) {
@@ -732,6 +1101,10 @@ public class DownloadsController {
         });
     }
 
+    /**
+     * Applies consistent styling to the progress bar to match the application
+     * theme.
+     */
     private void styleProgressBar() {
         if (pbDownload == null) {
             return;
@@ -748,6 +1121,26 @@ public class DownloadsController {
     }
 
     // --------- HELPERS FOCO LISTA ----------
+    /**
+     * Normalizes a file name to be used as a stable comparison key.
+     *
+     * <p>
+     * The UI merges local resources and cloud media. File names may come with
+     * different casing or surrounding spaces, so we normalize them to ensure
+     * consistent matching.</p>
+     *
+     * <p>
+     * Normalization rules:
+     * <ul>
+     * <li>{@code null} stays {@code null}</li>
+     * <li>trim surrounding whitespace</li>
+     * <li>convert to lowercase</li>
+     * <li>empty string becomes {@code null}</li>
+     * </ul>
+     *
+     * @param name original file name
+     * @return normalized key or null if input is null/blank
+     */
     private String normalize(String name) {
         if (name == null) {
             return null;
@@ -756,6 +1149,17 @@ public class DownloadsController {
         return s.isEmpty() ? null : s.toLowerCase();
     }
 
+    /**
+     * Returns the stable key used to identify a {@link ResourceDownloaded}
+     * across list refreshes.
+     *
+     * <p>
+     * We use the normalized resource name as the stable identifier because
+     * indices change whenever filters are applied or the model is rebuilt.</p>
+     *
+     * @param r resource
+     * @return normalized name key or null if resource/name is null
+     */
     private String keyOf(ResourceDownloaded r) {
         if (r == null) {
             return null;
@@ -763,30 +1167,88 @@ public class DownloadsController {
         return normalize(r.getName());
     }
 
+    /**
+     * Snapshot representing the current selection in a stable way.
+     *
+     * <p>
+     * Selection is stored both:
+     * <ul>
+     * <li>by {@code key}: normalized file name (preferred, stable across
+     * refreshes)</li>
+     * <li>by {@code index}: current index (fallback if key cannot be
+     * found)</li>
+     * </ul>
+     *
+     * <p>
+     * This allows keeping selection consistent after:
+     * <ul>
+     * <li>applying filters</li>
+     * <li>rebuilding the list model</li>
+     * <li>syncing local/cloud state</li>
+     * </ul>
+     */
     private static class SelectionSnapshot {
 
-        final String key;   // nombre de archivo (estable)
-        final int index;    // índice actual (fallback)
+        /**
+         * Normalized file name key (preferred stable identifier).
+         */
+        final String key;
+        /**
+         * Previous selected index (fallback when key cannot be found).
+         */
+        final int index;
 
+        /**
+         * Creates a new selection snapshot.
+         *
+         * @param key normalized stable key (may be null)
+         * @param index selected index at snapshot time
+         */
         SelectionSnapshot(String key, int index) {
             this.key = key;
             this.index = index;
         }
     }
 
+    /**
+     * Captures the current list selection.
+     *
+     * <p>
+     * This is typically invoked before rebuilding the list model, so selection
+     * can be restored afterwards, improving UX (avoids losing focus after
+     * filtering/refresh).</p>
+     *
+     * @return selection snapshot (never null)
+     */
     private SelectionSnapshot captureSelection() {
         int idx = downloadsList.getSelectedIndex();
         ResourceDownloaded sel = downloadsList.getSelectedValue();
         return new SelectionSnapshot(keyOf(sel), idx);
     }
 
+    /**
+     * Restores selection after the list model has been rebuilt.
+     *
+     * <p>
+     * Restore strategy:
+     * <ol>
+     * <li>Try to locate the same element by normalized key (stable name).</li>
+     * <li>If not found, fall back to the previous index (clamped to current
+     * model size).</li>
+     * </ol>
+     *
+     * <p>
+     * If the model is empty, selection is cleared.</p>
+     *
+     * @param snap selection snapshot captured before refreshing the model
+     */
     private void restoreSelection(SelectionSnapshot snap) {
         if (snap == null || downloadsModel.isEmpty()) {
             downloadsList.clearSelection();
             return;
         }
 
-        // 1) Buscar por key
+        // 1) Find by stable key
         if (snap.key != null) {
             for (int i = 0; i < downloadsModel.size(); i++) {
                 ResourceDownloaded r = downloadsModel.getElementAt(i);
@@ -798,7 +1260,7 @@ public class DownloadsController {
             }
         }
 
-        // 2) Fallback por índice
+        // 2) Fallback by previous index (clamped)
         int i = snap.index;
         if (i < 0) {
             i = 0;
@@ -811,6 +1273,20 @@ public class DownloadsController {
         downloadsList.ensureIndexIsVisible(i);
     }
 
+    /**
+     * Selects the first list element whose normalized key matches the provided
+     * file name.
+     *
+     * <p>
+     * Useful after:
+     * <ul>
+     * <li>downloading from cloud</li>
+     * <li>finishing a local scan</li>
+     * <li>refreshing filters</li>
+     * </ul>
+     *
+     * @param key file name (or key) to select
+     */
     private void selectByKey(String key) {
         String k = normalize(key);
         if (k == null) {
@@ -826,19 +1302,49 @@ public class DownloadsController {
         }
     }
 
+    /**
+     * Callback invoked after a download finishes successfully (local or cloud).
+     *
+     * <p>
+     * Recomputes local/cloud states, refreshes the model and tries to keep the
+     * UX stable by selecting the item that has just been downloaded.</p>
+     *
+     * @param fileNameJustDownloaded file name (or path-derived name) to select
+     */
     public void onDownloadCompleted(String fileNameJustDownloaded) {
         recomputeStates();
         applyFilters(); // o applyFiltersPreservingSelection()
         selectByKey(fileNameJustDownloaded);
     }
 
-    // Extensiones conocidas de audio / vídeo para desambiguar cuando el mimeType no ayuda
+    /**
+     * Known audio extensions used as fallback when MIME type is missing or
+     * unreliable.
+     */
     private static final java.util.Set<String> AUDIO_EXTENSIONS
             = java.util.Set.of("mp3", "m4a", "aac", "wav", "flac", "ogg", "opus");
 
+    /**
+     * Known video extensions used as fallback when MIME type is missing or
+     * unreliable.
+     */
     private static final java.util.Set<String> VIDEO_EXTENSIONS
             = java.util.Set.of("mp4", "mkv", "avi", "mov", "webm", "flv");
 
+    /**
+     * Determines whether a resource should be treated as audio.
+     *
+     * <p>
+     * Decision order:
+     * <ol>
+     * <li>If MIME type starts with {@code audio/}, return true.</li>
+     * <li>If MIME type starts with {@code video/}, return false.</li>
+     * <li>Fallback to extension list.</li>
+     * </ol>
+     *
+     * @param r resource to check
+     * @return true if resource is considered audio
+     */
     private static boolean esAudio(ResourceDownloaded r) {
         String mt = norm(r.getMimeType());
         String ex = norm(r.getExtension()).replace(".", "");
@@ -852,6 +1358,20 @@ public class DownloadsController {
         return AUDIO_EXTENSIONS.contains(ex);
     }
 
+    /**
+     * Determines whether a resource should be treated as video.
+     *
+     * <p>
+     * Decision order:
+     * <ol>
+     * <li>If MIME type starts with {@code video/}, return true.</li>
+     * <li>If MIME type starts with {@code audio/}, return false.</li>
+     * <li>Fallback to extension list.</li>
+     * </ol>
+     *
+     * @param r resource to check
+     * @return true if resource is considered video
+     */
     private static boolean esVideo(ResourceDownloaded r) {
         String mt = norm(r.getMimeType());
         String ex = norm(r.getExtension()).replace(".", "");
@@ -865,6 +1385,16 @@ public class DownloadsController {
         return VIDEO_EXTENSIONS.contains(ex);
     }
 
+    /**
+     * Applies the "Type" filter (Audio/Video/All) to a given resource.
+     *
+     * <p>
+     * The selected filter value is read from the UI combo box
+     * {@code cmbTipo}.</p>
+     *
+     * @param r resource to test
+     * @return true if the resource matches the selected type filter
+     */
     private boolean matchTipo(ResourceDownloaded r) {
         String tipo = norm(String.valueOf(cmbTipo.getSelectedItem()));
 
@@ -874,9 +1404,20 @@ public class DownloadsController {
         if (tipo.contains("audio")) {
             return esAudio(r) && !esVideo(r);
         }
-        return true; // "Todo" / "Todos"
+        return true;
     }
 
+    /**
+     * Applies the "This week" filter to a given resource.
+     *
+     * <p>
+     * If {@code chkSemana} is not selected, all resources match. Otherwise the
+     * resource must have a download date within the current week, where the
+     * week is defined as Monday to Sunday.</p>
+     *
+     * @param r resource to test
+     * @return true if resource matches the week filter
+     */
     private boolean matchSemana(ResourceDownloaded r) {
         if (!chkSemana.isSelected()) {
             return true;
@@ -894,6 +1435,23 @@ public class DownloadsController {
     }
 
     // ========= CLOUD MEDIA METHODS ==========
+    /**
+     * Loads cloud media list in background (requires a valid token).
+     *
+     * <p>
+     * If there is no token, the method returns without doing anything. This
+     * prevents unauthorized calls before login.</p>
+     *
+     * <p>
+     * After loading:
+     * <ul>
+     * <li>{@code cloudMedia} list is replaced</li>
+     * <li>{@link #recomputeStates()} is executed</li>
+     * <li>filters are applied and list repainted</li>
+     * </ul>
+     *
+     * @param parentForDialog parent component for error dialogs
+     */
     public void loadCloudMedia(java.awt.Component parentForDialog) {
         if (cloudLoading) {
             return;
@@ -955,6 +1513,22 @@ public class DownloadsController {
         worker.execute();
     }
 
+    /**
+     * Recomputes {@link ResourceState} for every known file name based on local
+     * and cloud presence.
+     *
+     * <p>
+     * Algorithm:
+     * <ol>
+     * <li>Mark all local resources as LOCAL_ONLY.</li>
+     * <li>Iterate cloud media:
+     * <ul>
+     * <li>If not found locally -> CLOUD_ONLY</li>
+     * <li>If found locally -> BOTH</li>
+     * </ul>
+     * </li>
+     * </ol>
+     */
     private void recomputeStates() {
 
         stateByFileName.clear();
@@ -992,6 +1566,21 @@ public class DownloadsController {
         }
     }
 
+    /**
+     * Converts a cloud {@link Media} instance into a "virtual"
+     * {@link ResourceDownloaded} so it can be rendered in the JList.
+     *
+     * <p>
+     * Virtual resources have:
+     * <ul>
+     * <li>{@code route = null} (not present on disk yet)</li>
+     * <li>{@code downloadDate = null}</li>
+     * <li>mimeType and extension inferred from cloud metadata/file name</li>
+     * </ul>
+     *
+     * @param m cloud media
+     * @return a ResourceDownloaded representation usable by UI and filters
+     */
     private ResourceDownloaded toVirtualResource(Media m) {
         ResourceDownloaded r = new ResourceDownloaded();
         r.setName(m.mediaFileName);
