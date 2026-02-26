@@ -12,30 +12,94 @@ import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
+ * Preferences UI panel for configuring and persisting application settings.
+ *
+ * <p>
+ * This panel is responsible for:
+ * <ul>
+ * <li>Displaying the current configuration values stored in
+ * {@link UserPreferences}</li>
+ * <li>Allowing the user to edit paths and options (binaries, folders,
+ * toggles)</li>
+ * <li>Validating configuration before saving using
+ * {@link PreferencesValidator}</li>
+ * <li>Persisting configuration changes using {@link UserPreferences}</li>
+ * <li>Tracking unsaved changes using a "dirty" state</li>
+ * </ul>
+ *
+ * <p>
+ * Separation of responsibilities:
+ * <ul>
+ * <li><b>PreferencesPanel</b>: UI logic + user interaction</li>
+ * <li><b>UserPreferences</b>: persistence layer (java.util.prefs)</li>
+ * <li><b>PreferencesValidator</b>: validation rules / error messages</li>
+ * <li><b>PreferencesData</b>: DTO used to transfer settings between UI and
+ * storage</li>
+ * </ul>
+ *
+ * <p>
+ * NetBeans Designer note: {@link #initComponents()} is generated code. Custom
+ * behavior and listeners are configured in {@link #initCustoms()} to keep
+ * Designer regeneration safe.
+ *
+ * <p>
+ * Dirty state:
+ * <ul>
+ * <li>{@code loading}: prevents dirty tracking while values are being loaded
+ * into UI</li>
+ * <li>{@code dirty}: indicates there are unsaved changes (enables Save
+ * button)</li>
+ * </ul>
  *
  * @author metku
  */
 public class PreferencesPanel extends javax.swing.JPanel {
 
+    /**
+     * Reference to the main window used for navigation (e.g., back to main
+     * view).
+     */
     private MainFrame mainFrame;
+
+    /**
+     * When true, the panel is populating UI fields and should not mark dirty.
+     */
     private boolean loading = false;
+
+    /**
+     * Indicates whether there are unsaved changes. When true, Save button is
+     * enabled.
+     */
     private boolean dirty = false;
 
     /**
-     * Creates new form MainPanel
+     * Creates a new PreferencesPanel.
      *
-     * @param mainFrame
+     * <p>
+     * Initialization flow:
+     * <ol>
+     * <li>Stores {@link MainFrame} reference (used for navigation)</li>
+     * <li>Builds UI via {@link #initComponents()} (NetBeans)</li>
+     * <li>Installs listeners and custom behavior via
+     * {@link #initCustoms()}</li>
+     * </ol>
+     *
+     * @param mainFrame main window of the application
      */
     public PreferencesPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
-        UserPreferences.load();
+
+        // Initialize internal state (no pending changes at construction time)
         loading = false;
         dirty = false;
+
         initComponents();
         initCustoms();
     }
 
-    // ------- GETTERS --------
+    // ---------------------------------------------------------------------
+    // GETTERS (used by other parts of the UI / controller)
+    // ---------------------------------------------------------------------
     public JTextField getTxtYtDlpPath() {
         return txtYtDlpPath;
     }
@@ -88,8 +152,16 @@ public class PreferencesPanel extends javax.swing.JPanel {
         return btnSave;
     }
 
+    /**
+     * Returns a human-readable label for the current speed slider selection.
+     *
+     * <p>
+     * This is used only for display purposes (e.g., showing "512K", "1M",
+     * "2M").
+     *
+     * @return label representing the selected speed
+     */
     public String getSldLimitSpeed() {
-
         return switch (sldLimitSpeed.getValue()) {
             case 0 ->
                 "512K";
@@ -100,20 +172,46 @@ public class PreferencesPanel extends javax.swing.JPanel {
         };
     }
 
+    /**
+     * @return true if "Create .m3u" option is enabled
+     */
     public boolean getChkCreateM3u() {
         return chkCreateM3u.isSelected();
     }
 
-    // Helpers Reusable
+    // ---------------------------------------------------------------------
+    // File/folder browser helpers
+    // ---------------------------------------------------------------------
     /**
-     * Diálogo para elegir ARCHIVO ejecutable (yt-dlp, ffmpeg, ffprobe)
+     * Opens a file chooser and writes the selected file path into a text field.
+     *
+     * <p>
+     * Intended for selecting executable binaries such as:
+     * <ul>
+     * <li>yt-dlp</li>
+     * <li>ffmpeg</li>
+     * <li>ffprobe</li>
+     * </ul>
+     *
+     * <p>
+     * Behavior:
+     * <ul>
+     * <li>If a valid existing path exists in the field, the chooser opens
+     * there</li>
+     * <li>On Windows, it can optionally filter for .exe files</li>
+     * <li>After selection, warns if the file is not executable</li>
+     * </ul>
+     *
+     * @param target text field where the selected path will be written
+     * @param title chooser dialog title
+     * @param tryExeFilter true to apply executable filter on Windows
      */
     private void browseFileInto(JTextField target, String title, boolean tryExeFilter) {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle(title);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-        // Si hay valor previo, ábrelo ahí
+        // If there is a previous value, open chooser near it
         File current = pathToExistingFileOrDir(target.getText());
         if (current != null) {
             fc.setCurrentDirectory(current.isDirectory() ? current : current.getParentFile());
@@ -122,7 +220,7 @@ public class PreferencesPanel extends javax.swing.JPanel {
             }
         }
 
-        // En Windows puedes filtrar .exe; en Linux/Mac no tiene sentido
+        // On Windows, filtering by .exe is helpful; on Linux/macOS it is not.
         if (tryExeFilter && isWindows()) {
             fc.setAcceptAllFileFilterUsed(true);
             fc.setFileFilter(new FileNameExtensionFilter("Executables (*.exe)", "exe"));
@@ -132,17 +230,32 @@ public class PreferencesPanel extends javax.swing.JPanel {
         if (result == JFileChooser.APPROVE_OPTION) {
             File f = fc.getSelectedFile();
             target.setText(f.getAbsolutePath());
-            // (opcional) validación rápida
+
+            // Optional quick warning: file should be executable
             if (!f.canExecute()) {
                 JOptionPane.showMessageDialog(this,
                         "Warning: the selected file can not be executed.\n" + f,
                         "Warning", JOptionPane.WARNING_MESSAGE);
             }
+
+            markDirty();
         }
     }
 
     /**
-     * Diálogo para elegir CARPETA (descargas, temporales)
+     * Opens a directory chooser and writes the selected folder path into a text
+     * field.
+     *
+     * <p>
+     * Intended for selecting folders such as:
+     * <ul>
+     * <li>Downloads folder</li>
+     * <li>Temp folder</li>
+     * <li>Scan folder</li>
+     * </ul>
+     *
+     * @param target text field where the folder path will be written
+     * @param title chooser dialog title
      */
     private void browseDirectoryInto(JTextField target, String title) {
         JFileChooser fc = new JFileChooser();
@@ -162,14 +275,24 @@ public class PreferencesPanel extends javax.swing.JPanel {
         if (result == JFileChooser.APPROVE_OPTION) {
             File dir = fc.getSelectedFile();
             target.setText(dir.getAbsolutePath());
+            markDirty();
         }
     }
 
+    /**
+     * @return true if running on Windows
+     */
     private static boolean isWindows() {
         String os = System.getProperty("os.name", "").toLowerCase();
         return os.contains("win");
     }
 
+    /**
+     * Converts a text path into a File if it exists.
+     *
+     * @param path string path
+     * @return File instance if it exists; null otherwise
+     */
     private static File pathToExistingFileOrDir(String path) {
         if (path == null || path.isBlank()) {
             return null;
@@ -178,13 +301,35 @@ public class PreferencesPanel extends javax.swing.JPanel {
         return f.exists() ? f : null;
     }
 
+    // ---------------------------------------------------------------------
+    // Panel lifecycle
+    // ---------------------------------------------------------------------
     /**
-     * Dialogo de guardado
+     * Called when this panel becomes visible.
+     *
+     * <p>
+     * Loads the stored preferences into the UI fields. This ensures the panel
+     * always displays current values.
      */
     public void onShow() {
         loadUI();
     }
 
+    // ---------------------------------------------------------------------
+    // Save / Load logic
+    // ---------------------------------------------------------------------
+    /**
+     * Reads values from the UI, validates them and persists them.
+     *
+     * <p>
+     * Flow:
+     * <ol>
+     * <li>Read UI into {@link PreferencesData}</li>
+     * <li>Validate using {@link PreferencesValidator}</li>
+     * <li>If valid, save via {@link UserPreferences}</li>
+     * <li>Reset dirty flag and show success feedback</li>
+     * </ol>
+     */
     private void savePreferences() {
         PreferencesData data = readFromUI();
 
@@ -204,8 +349,16 @@ public class PreferencesPanel extends javax.swing.JPanel {
         showStatusMessage("[ Preferences saved ✓ ]");
     }
 
+    /**
+     * Loads persisted preferences and updates the UI fields.
+     *
+     * <p>
+     * Sets {@code loading=true} to avoid marking the panel dirty during the UI
+     * update.
+     */
     private void loadUI() {
         loading = true;
+
         PreferencesData d = UserPreferences.load();
 
         setBackground(AppTheme.BACKGROUND);
@@ -225,6 +378,11 @@ public class PreferencesPanel extends javax.swing.JPanel {
         loading = false;
     }
 
+    /**
+     * Reads current UI values into a {@link PreferencesData} DTO.
+     *
+     * @return populated PreferencesData with current form values
+     */
     private PreferencesData readFromUI() {
         PreferencesData d = new PreferencesData();
         d.setDownloadDir(txtDownloadsDir.getText());
@@ -235,15 +393,28 @@ public class PreferencesPanel extends javax.swing.JPanel {
         d.setLimitSpeedEnabled(chkLimitSpeed.isSelected());
         d.setSpeedKbps(sldLimitSpeed.getValue());
         d.setCreateM3u(chkCreateM3u.isSelected());
-
         return d;
     }
 
+    // ---------------------------------------------------------------------
+    // Dirty tracking
+    // ---------------------------------------------------------------------
+    /**
+     * Sets the dirty state.
+     *
+     * <p>
+     * When dirty is true, Save button is enabled.
+     *
+     * @param dirty true if there are unsaved changes
+     */
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
         btnSave.setEnabled(dirty);
     }
 
+    /**
+     * Marks the panel as dirty unless currently loading values.
+     */
     private void markDirty() {
         if (loading) {
             return;
@@ -251,24 +422,33 @@ public class PreferencesPanel extends javax.swing.JPanel {
         setDirty(true);
     }
 
-    // --------- LBL STATUS ----------
+    // ---------------------------------------------------------------------
+    // Status feedback
+    // ---------------------------------------------------------------------
+    /**
+     * Shows a short-lived status message (2 seconds) in the UI.
+     *
+     * <p>
+     * Used after saving preferences to provide user feedback.
+     *
+     * @param message message to show
+     */
     private void showStatusMessage(String message) {
-
         lblStatus.setText(message);
-        lblStatus.setForeground(new java.awt.Color(0, 128, 0)); // verde
+        lblStatus.setForeground(new java.awt.Color(0, 128, 0)); // green
 
-        javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
-            lblStatus.setText("");
-        });
-
+        javax.swing.Timer timer = new javax.swing.Timer(2000, e -> lblStatus.setText(""));
         timer.setRepeats(false);
         timer.start();
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * NetBeans Designer generated method.
+     *
+     * <p>
+     * Warning: Do NOT modify this method manually. It is regenerated by the
+     * Form Editor and changes will be lost.
+     * </p>
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -499,6 +679,9 @@ public class PreferencesPanel extends javax.swing.JPanel {
         lblStatus.setBounds(990, 250, 150, 20);
     }// </editor-fold>//GEN-END:initComponents
 
+    // ---------------------------------------------------------------------
+    // Event handlers (generated + small delegations)
+    // ---------------------------------------------------------------------
 
     private void btnYtDplBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnYtDplBrowseActionPerformed
         // TODO add your handling code here:
@@ -569,6 +752,15 @@ public class PreferencesPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_chkCreateM3uActionPerformed
 
+    // ---------------------------------------------------------------------
+    // Listener utilities
+    // ---------------------------------------------------------------------
+    /**
+     * Installs a DocumentListener that marks the panel dirty whenever the user
+     * edits a text field.
+     *
+     * @param tf text field to track
+     */
     private void hookDirty(javax.swing.JTextField tf) {
         tf.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
@@ -588,6 +780,13 @@ public class PreferencesPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Installs all custom listeners and non-designer behavior.
+     *
+     * <p>
+     * This is intentionally separated from {@link #initComponents()} so the
+     * NetBeans designer can regenerate UI code safely.
+     */
     private void initCustoms() {
         hookDirty(txtDownloadsDir);
         hookDirty(txtYtDlpPath);
