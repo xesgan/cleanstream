@@ -10,7 +10,9 @@
 
 ## 📸 Preview
 
-*(Añadir aquí una captura principal de la aplicación)*
+<p align="center">
+  <img src="src/main/resources/images/preview.png" width="800">
+</p>
 
 ---
 
