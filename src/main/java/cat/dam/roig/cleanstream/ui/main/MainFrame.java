@@ -1,21 +1,22 @@
 package cat.dam.roig.cleanstream.ui.main;
 
+import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
 import cat.dam.roig.cleanstream.controller.DownloadsController;
-import cat.dam.roig.cleanstream.ui.models.MetadataTableModel;
+import cat.dam.roig.cleanstream.controller.MainController;
 import cat.dam.roig.cleanstream.domain.ResourceDownloaded;
 import cat.dam.roig.cleanstream.domain.VideoQuality;
 import cat.dam.roig.cleanstream.services.auth.AuthManager;
-import cat.dam.roig.cleanstream.ui.AboutDialog;
-import cat.dam.roig.cleanstream.ui.LoginPanel;
-import cat.dam.roig.cleanstream.ui.UiColors;
-import cat.dam.roig.cleanstream.ui.PreferencesPanel;
-import cat.dam.roig.cleanstream.util.DetectOS;
-import cat.dam.roig.cleanstream.controller.DownloadExecutionController;
-import cat.dam.roig.cleanstream.controller.MainController;
 import cat.dam.roig.cleanstream.services.polling.MediaPolling;
 import cat.dam.roig.cleanstream.services.prefs.UserPreferences;
+import cat.dam.roig.cleanstream.ui.AboutDialog;
 import cat.dam.roig.cleanstream.ui.AppTheme;
+import cat.dam.roig.cleanstream.ui.LoginPanel;
+import cat.dam.roig.cleanstream.ui.PreferencesPanel;
+import cat.dam.roig.cleanstream.ui.UiColors;
+import cat.dam.roig.cleanstream.ui.models.MetadataTableModel;
+import cat.dam.roig.cleanstream.util.DetectOS;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -29,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -39,61 +41,162 @@ import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 
+/**
+ * Main application window for CleanStream.
+ *
+ * <p>
+ * This JFrame is the central UI container of the application. It hosts:
+ * <ul>
+ * <li>The main view (download actions + scan list + metadata table)</li>
+ * <li>The login view ({@link LoginPanel})</li>
+ * <li>The preferences view ({@link PreferencesPanel})</li>
+ * </ul>
+ *
+ * <p>
+ * Responsibilities (high-level):
+ * <ul>
+ * <li>Build the NetBeans-generated Swing UI ({@link #initComponents()})</li>
+ * <li>Initialize controllers and connect them to UI widgets</li>
+ * <li>Provide navigation between screens (login/main/preferences)</li>
+ * <li>Expose small helper methods used by controllers (e.g., confirm dialogs,
+ * selected quality)</li>
+ * </ul>
+ *
+ * <p>
+ * What this class should NOT do:
+ * <ul>
+ * <li>Implement business logic (download logic belongs to
+ * controllers/services)</li>
+ * <li>Handle persistence logic (goes to {@link UserPreferences})</li>
+ * </ul>
+ *
+ * <p>
+ * NetBeans Designer note: The method {@link #initComponents()} is generated and
+ * should not be edited manually. Custom behavior is implemented in dedicated
+ * init methods (e.g. {@link #initUx()},
+ * {@link #initPreferencesPanel()}, {@link #initFilters()}).
+ * </p>
+ *
+ * @author metku
+ */
 public class MainFrame extends javax.swing.JFrame {
 
-    // Dependencias Controller
+    // ---------------------------------------------------------------------
+    // Controllers and application dependencies
+    // ---------------------------------------------------------------------
+    /**
+     * Controller that manages local scan list, filters, metadata selection and
+     * cloud interactions (upload/fetch/delete).
+     */
     private DownloadsController downloadsController;
 
-    // --- Dependencias de UI ---
-    private PreferencesPanel pnlPreferencesPanel;
-    private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
-    private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
-    private MetadataTableModel metaModel; // para la tabla de metadata
-
-//    private final RoigMediaPollingComponent mediaComponent;
+    /**
+     * Abstraction of the cloud media component. This is passed into
+     * controllers/services that need network/cloud operations.
+     */
     private final MediaPolling polling;
+
+    /**
+     * Manages authentication and "remember me" behavior.
+     */
     private final AuthManager authManager;
-    private final LoginPanel loginPanel;
-    private final DownloadExecutionController downloadExecutionController;
+
+    /**
+     * Controller that orchestrates "start session / logout / autologin".
+     */
     private final MainController mainController;
 
     /**
-     * Creates new form MainFrame
+     * Controller that manages the download execution workflow (start/stop/open
+     * last), and writes to the log and progress bar.
+     */
+    private final DownloadExecutionController downloadExecutionController;
+
+    // ---------------------------------------------------------------------
+    // UI modules / panels
+    // ---------------------------------------------------------------------
+    /**
+     * Preferences screen panel.
+     */
+    private PreferencesPanel pnlPreferencesPanel;
+
+    /**
+     * Login screen panel.
+     */
+    private final LoginPanel loginPanel;
+
+    // ---------------------------------------------------------------------
+    // Data models used by UI widgets
+    // ---------------------------------------------------------------------
+    /**
+     * Swing list model backing the scanned downloads list UI.
+     */
+    private final DefaultListModel<ResourceDownloaded> downloadsModel = new DefaultListModel<>();
+
+    /**
+     * Internal backing list used by {@link DownloadsController} to store all
+     * scanned resources.
+     */
+    private final List<ResourceDownloaded> resourceDownloadeds = new ArrayList<>();
+
+    /**
+     * Table model for metadata view.
+     */
+    private MetadataTableModel metaModel;
+
+    /**
+     * Creates and initializes the MainFrame (UI + controllers).
      *
-     * @param polling
-     * @param authManager
+     * <p>
+     * Initialization order matters:
+     * <ol>
+     * <li>Build UI widgets with NetBeans-generated
+     * {@link #initComponents()}</li>
+     * <li>Apply theme and UX improvements (styles, logo, table formatting)</li>
+     * <li>Create and wire panels (login, preferences)</li>
+     * <li>Create and wire controllers (downloads controller, main controller,
+     * download execution)</li>
+     * </ol>
+     *
+     * @param polling cloud media abstraction used by the application
+     * @param authManager authentication manager (remember-me, login)
      */
     public MainFrame(MediaPolling polling, AuthManager authManager) {
-        // 1. Construye UI base (paneles, botones, menús...)
+        // 1) Build base UI (NetBeans Designer)
         initComponents();
 
-        lblStatusScan.setText(" ");                 // texto vacío pero no null
+        // Ensure status label always has stable size (prevents layout jumps)
+        lblStatusScan.setText(" ");
         lblStatusScan.setPreferredSize(new Dimension(250, 18));
         lblStatusScan.setMinimumSize(new Dimension(50, 18));
 
+        // 2) UX + theme
         initUx();
         loadLogo();
 
-        // 3. Configura ventana
+        // 3) Window settings
         initWindow();
 
+        // 4) Dependencies
         this.polling = polling;
         this.authManager = authManager;
-        this.loginPanel = new LoginPanel(authManager);
 
-        authManager.setLoginPanel(loginPanel);
+        // 5) Screens
+        this.loginPanel = new LoginPanel(authManager);
+        authManager.setLoginPanel(loginPanel); // ensure AuthManager can update login fields
 
         initPreferencesPanel();
-
         loadPreferencesToUi();
 
+        // 6) Main view widgets setup
         initDownloadsList();
         initMetadataTable();
         initFilters();
 
+        // 7) Controllers
         this.mainController = new MainController(this, authManager, polling);
 
-        downloadExecutionController = new DownloadExecutionController(
+        this.downloadExecutionController = new DownloadExecutionController(
                 this,
                 pnlPreferencesPanel,
                 txtUrl,
@@ -106,11 +209,19 @@ public class MainFrame extends javax.swing.JFrame {
         );
     }
 
+    /**
+     * @return preferences panel instance (useful for controllers/tests)
+     */
     public PreferencesPanel getPnlPreferencesPanel() {
         return pnlPreferencesPanel;
     }
 
-    // ------------------- INIT HELPERS -------------------
+    // ---------------------------------------------------------------------
+    // Initialization helpers
+    // ---------------------------------------------------------------------
+    /**
+     * Configures basic JFrame properties (title, size, location).
+     */
     private void initWindow() {
         setTitle("CleanStream");
         setMinimumSize(new java.awt.Dimension(1200, 700));
@@ -119,19 +230,28 @@ public class MainFrame extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Creates the preferences panel and hooks its Save action.
+     */
     private void initPreferencesPanel() {
         pnlPreferencesPanel = new PreferencesPanel(this);
         pnlPreferencesPanel.getBtnSave().addActionListener(e -> savePreferencesFromUi());
     }
 
+    /**
+     * Loads persisted preferences and writes them into the preferences UI
+     * fields.
+     *
+     * <p>
+     * Note: the source of truth is {@link UserPreferences}. The panel UI is
+     * just a view.
+     */
     private void loadPreferencesToUi() {
-        // Carpeta de descargas
         String downloadDir = UserPreferences.getDownloadDir();
         if (downloadDir != null) {
             pnlPreferencesPanel.getTxtDownloadsDir().setText(downloadDir);
         }
 
-        // Rutas de yt-dlp y ffmpeg SOLO si tienes esos campos en el panel
         String ytDlpPath = UserPreferences.getYtDlpPath();
         if (ytDlpPath != null) {
             pnlPreferencesPanel.getTxtYtDlpPath().setText(ytDlpPath);
@@ -148,6 +268,14 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
+    /**
+     * Reads preferences values from the preferences UI and persists them.
+     *
+     * <p>
+     * This is a "quick save" method (does not show validation here). Validation
+     * and richer UX is implemented inside
+     * {@link PreferencesPanel#savePreferences()}.
+     */
     private void savePreferencesFromUi() {
         String downloadDir = pnlPreferencesPanel.getTxtDownloadsDir().getText();
         String ytDlpPath = pnlPreferencesPanel.getTxtYtDlpPath().getText();
@@ -160,17 +288,26 @@ public class MainFrame extends javax.swing.JFrame {
         UserPreferences.setScanFolderPath(scanPath);
     }
 
+    /**
+     * Configures the downloads scanned list UI component.
+     */
     private void initDownloadsList() {
         lstDownloadScanList.setModel(downloadsModel);
         lstDownloadScanList.setFixedCellHeight(78);
+
         scpScanListPane.getViewport().setBackground(new Color(0x121212));
         scpScanListPane.setBorder(BorderFactory.createEmptyBorder());
+
         lstDownloadScanList.setBackground(new Color(0x121212));
         lstDownloadScanList.setForeground(new Color(0xE6E6E6));
         lstDownloadScanList.setSelectionBackground(new Color(0x2A2A2A));
         lstDownloadScanList.setSelectionForeground(Color.WHITE);
     }
 
+    /**
+     * Initializes the metadata table model and applies styling (header, zebra
+     * rows).
+     */
     private void initMetadataTable() {
         metaModel = new MetadataTableModel();
         tblMetaData.setModel(metaModel);
@@ -184,6 +321,9 @@ public class MainFrame extends javax.swing.JFrame {
         installZebra(tblMetaData);
     }
 
+    /**
+     * Creates the {@link DownloadsController} and wires filter controls to it.
+     */
     private void initFilters() {
         downloadsController = new DownloadsController(
                 downloadsModel,
@@ -205,21 +345,37 @@ public class MainFrame extends javax.swing.JFrame {
         cmbTipo.setSelectedItem("Todo");
     }
 
-    // ------------------- NAVIGATION -------------------
+    // ---------------------------------------------------------------------
+    // Navigation between views
+    // ---------------------------------------------------------------------
+    /**
+     * Shows the preferences panel inside the main content area.
+     */
     public void showPreferences() {
         pnlPreferencesPanel.onShow();
         showInContentPanel(pnlPreferencesPanel);
     }
 
+    /**
+     * Shows the main view and refreshes scan status label.
+     */
     public void showMain() {
         showMainView();
         downloadsController.refreshScanStatusLabel();
     }
 
+    /**
+     * Shows the login panel inside the main content area.
+     */
     public void showLogin() {
         showInContentPanel(loginPanel);
     }
 
+    /**
+     * Replaces the current content panel view with the provided component.
+     *
+     * @param comp new component to display
+     */
     private void showInContentPanel(java.awt.Component comp) {
         pnlContent.removeAll();
         pnlContent.setLayout(new java.awt.BorderLayout());
@@ -228,13 +384,20 @@ public class MainFrame extends javax.swing.JFrame {
         pnlContent.repaint();
     }
 
+    /**
+     * Shows the main app panel in the content area.
+     */
     public void showMainView() {
         pnlMainPanel.setBackground(AppTheme.BACKGROUND);
         pnlMainPanel.setOpaque(true);
         showInContentPanel(pnlMainPanel);
     }
 
-    // ------------------- NAVIGATION -------------------
+    /**
+     * Updates menu visibility according to authentication state.
+     *
+     * @param loggedIn true if user is logged in, false otherwise
+     */
     public void updateSessionUI(boolean loggedIn) {
         mniPreferences.setVisible(loggedIn);
         mniPreferences.setEnabled(loggedIn);
@@ -582,6 +745,10 @@ public class MainFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    // ---------------------------------------------------------------------
+    // UI event handlers (delegating to controllers where possible)
+    // ---------------------------------------------------------------------
+
     private void txtUrlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtUrlActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtUrlActionPerformed
@@ -651,6 +818,10 @@ public class MainFrame extends javax.swing.JFrame {
         downloadsController.downloadFromCloud(this);
     }//GEN-LAST:event_btnFetchFromCloudActionPerformed
 
+    /**
+     * Reads a URL from the system clipboard and pastes it into the URL input.
+     * Shows a warning message if clipboard does not contain text.
+     */
     private void btnPasteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPasteActionPerformed
         try {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -673,6 +844,16 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnPasteActionPerformed
 
+    /**
+     * Updates UI buttons when the user selects an item in the downloads list.
+     *
+     * <p>
+     * Current behavior:
+     * <ul>
+     * <li>When selection is stable (not adjusting), enable upload button only
+     * if it is allowed</li>
+     * </ul>
+     */
     private void lstDownloadScanListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstDownloadScanListValueChanged
         // TODO add your handling code here
         if (!evt.getValueIsAdjusting()) {
@@ -687,7 +868,15 @@ public class MainFrame extends javax.swing.JFrame {
         lstDownloadScanList.repaint();
     }//GEN-LAST:event_lstDownloadScanListComponentResized
 
-    // ----- GETTERS Y SETTERS ------
+    // ---------------------------------------------------------------------
+    // Public helpers used by controllers
+    // ---------------------------------------------------------------------
+    /**
+     * Determines the selected video quality from the quality radio buttons.
+     *
+     * @return selected {@link VideoQuality} (defaults to BEST_AVAILABLE if none
+     * matched)
+     */
     public VideoQuality getSelectedQuality() {
         if (jrb1080p.isSelected()) {
             return VideoQuality.P1080;
@@ -701,34 +890,50 @@ public class MainFrame extends javax.swing.JFrame {
         return VideoQuality.BEST_AVAILABLE;
     }
 
+    /**
+     * Exposes the embedded RoigMediaPollingComponent (NetBeans widget) if
+     * needed.
+     *
+     * <p>
+     * Note: In CleanStream, you should preferably depend on
+     * {@link MediaPolling} instead of direct component usage.
+     *
+     * @return embedded component instance
+     */
     public RoigMediaPollingComponent getRoigMediaPollingComponent1() {
         return roigMediaPollingComponent;
     }
 
+    /**
+     * @return app authentication manager
+     */
     public AuthManager getAuthManager() {
         return authManager;
     }
 
+    /**
+     * @return downloads controller used by the main view
+     */
     public DownloadsController getDownloadsController() {
         return downloadsController;
     }
 
+    /**
+     * Applies theme and UX tweaks: buttons styling, tooltips, log area style.
+     */
     private void initUx() {
         getContentPane().setBackground(AppTheme.BACKGROUND);
 
-        // Jerarquía visual
         styleButtons();
         styleTopButtons();
 
         btnDownload.setPreferredSize(new Dimension(140, 36));
 
-//        btnDeleteDownloadFileFolder.setBackground(UiColors.NEUTRAL);
         btnUploadFromLocal.setBackground(UiColors.PRIMARY);
         btnUploadFromLocal.setForeground(Color.WHITE);
         btnFetchFromCloud.setBackground(UiColors.PRIMARY);
         btnFetchFromCloud.setForeground(Color.WHITE);
 
-        // Tooltips
         btnScanDownloadFolder.setToolTipText("Scan local media library");
         btnDeleteDownloadFileFolder.setToolTipText("Delete selected local media");
         btnUploadFromLocal.setToolTipText("Upload selected item to cloud");
@@ -740,12 +945,12 @@ public class MainFrame extends javax.swing.JFrame {
         txaLogArea.setCaretPosition(txaLogArea.getDocument().getLength());
     }
 
+    /**
+     * Loads and scales the application logo into {@code lblLogo}.
+     */
     private void loadLogo() {
-        ImageIcon icon = new ImageIcon(
-                getClass().getResource("/images/logoCleanStream.png")
-        );
+        ImageIcon icon = new ImageIcon(getClass().getResource("/images/logoCleanStream.png"));
 
-        // Escalar si quieres que encaje perfecto
         Image img = icon.getImage().getScaledInstance(
                 lblLogo.getWidth(),
                 lblLogo.getHeight(),
@@ -755,6 +960,36 @@ public class MainFrame extends javax.swing.JFrame {
         lblLogo.setIcon(new ImageIcon(img));
     }
 
+    /**
+     * Shows a logout confirmation dialog.
+     *
+     * @return true if user confirmed logout; false otherwise
+     */
+    public boolean confirmLogout() {
+        int opt = javax.swing.JOptionPane.showConfirmDialog(
+                this,
+                "Do you really want to log out?",
+                "Confirm logout",
+                javax.swing.JOptionPane.YES_NO_OPTION,
+                javax.swing.JOptionPane.QUESTION_MESSAGE
+        );
+        return opt == javax.swing.JOptionPane.YES_OPTION;
+    }
+
+    /**
+     * Returns the scan downloads folder path currently shown in preferences UI.
+     * This is used at startup to initialize the downloads scanner.
+     *
+     * @return scan folder path, or {@code null} if not set/empty
+     */
+    public Path getScanDownloadsFolderPathFromUI() {
+        String ruta = pnlPreferencesPanel.getTxtScanDownloadsFolder().getText().trim();
+        return ruta.isEmpty() ? null : Path.of(ruta);
+    }
+
+    // ---------------------------------------------------------------------
+    // Styling helpers (FlatLaf + Swing table tweaks)
+    // ---------------------------------------------------------------------
     private void styleButtons() {
         stylePrimary(btnDownload);
         styleSecondary(btnStop);
@@ -762,19 +997,10 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void styleTopButtons() {
-
-        // Primario
         stylePrimary(btnScanDownloadFolder);
-
-        // Secundarios
         styleSecondary(btnUploadFromLocal);
         styleSecondary(btnFetchFromCloud);
-
-        // Danger
         styleDanger(btnDeleteDownloadFileFolder);
-
-        // Si tienes separadores o botones mini:
-        // styleGhost(btnPaste);
     }
 
     private void stylePrimary(JButton b) {
@@ -809,38 +1035,20 @@ public class MainFrame extends javax.swing.JFrame {
                 "background: #4A1F1F; foreground: #FFFFFF; arc: 10");
     }
 
-    private void styleGhost(JButton b) {
-        if (b == null) {
-            return;
-        }
-        b.putClientProperty("FlatLaf.style",
-                "background: #00000000; foreground: #E6E6E6; arc: 10");
-    }
-
     private void styleMetadataTable(JTable table) {
-
-        // Altura filas
         table.setRowHeight(28);
-
-        // Quitar grid clásico
         table.setShowHorizontalLines(false);
         table.setShowVerticalLines(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-
         table.setFillsViewportHeight(true);
 
-        // Header más alto
         JTableHeader header = table.getTableHeader();
         header.setReorderingAllowed(false);
-        header.setPreferredSize(
-                new Dimension(header.getPreferredSize().width, 34)
-        );
+        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 34));
     }
 
     private void installZebra(JTable table) {
-
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-
             @Override
             public Component getTableCellRendererComponent(
                     JTable t, Object value,
@@ -853,13 +1061,8 @@ public class MainFrame extends javax.swing.JFrame {
                 );
 
                 if (!isSelected) {
-                    if (row % 2 == 0) {
-                        c.setBackground(t.getBackground());
-                    } else {
-                        c.setBackground(new Color(0x161616));
-                    }
+                    c.setBackground(row % 2 == 0 ? t.getBackground() : new Color(0x161616));
                 }
-
                 return c;
             }
         });
@@ -871,34 +1074,10 @@ public class MainFrame extends javax.swing.JFrame {
         ta.setWrapStyleWord(true);
 
         ta.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        ta.setBackground(new Color(0x0F0F0F));   // un pelín más oscuro que el resto
+        ta.setBackground(new Color(0x0F0F0F));
         ta.setForeground(new Color(0xD0D0D0));
         ta.setCaretColor(new Color(0xD0D0D0));
-
-        // sensación "consola"
         ta.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    }
-
-    public boolean confirmLogout() {
-        int opt = javax.swing.JOptionPane.showConfirmDialog(
-                this,
-                "Do you really want to log out?",
-                "Confirm logout",
-                javax.swing.JOptionPane.YES_NO_OPTION,
-                javax.swing.JOptionPane.QUESTION_MESSAGE
-        );
-        return opt == javax.swing.JOptionPane.YES_OPTION;
-    }
-
-    /**
-     * Returns the scan downloads folder path currently shown in preferences UI.
-     * This is used at startup to initialize the downloads scanner.
-     *
-     * @return scan folder path, or {@code null} if not set.
-     */
-    public Path getScanDownloadsFolderPathFromUI() {
-        String ruta = pnlPreferencesPanel.getTxtScanDownloadsFolder().getText().trim();
-        return ruta.isEmpty() ? null : Path.of(ruta);
     }
 
 
