@@ -1,127 +1,188 @@
 # 🧩 CleanStream
 
+> Advanced Java Swing Multimedia Manager with Cloud Synchronization
+
 **Autor:** Elias Roig  
 **Módulo:** Desarrollo de Interfaces — FP DAM 2025-26  
-**Entregas:** `DI01` · `DI01_2` · `DI03` · `DI04`
+**Entregas:** DI01 · DI01_2 · DI03 · DI04 · DI06
 
 ---
 
-## 📋 Descripción del Proyecto
-**CleanStream** es una aplicación de escritorio desarrollada en **Java Swing** que actúa como interfaz gráfica avanzada para la gestión multimedia. El proyecto ha evolucionado desde un prototipo GUI básico hasta una aplicación modular, sincronizada con la nube y centrada en la experiencia de usuario.
+## 📸 Preview
 
-### Funcionalidades principales:
-* 🎬 **Descarga de medios:** Integración con `yt-dlp`.
-* ☁️ **Sincronización Cloud:** Conexión con la *DI Media NET API*.
-* 📚 **Gestión Local:** Biblioteca multimedia con filtros avanzados.
-* 🔄 **Componente JavaBean:** Integración de un componente personalizado para polling de datos.
-* 🎨 **UX/UI Optimizada:** Mejora completa de usabilidad bajo principios de diseño profesional.
+*(Añadir aquí una captura principal de la aplicación)*
 
 ---
 
-## 🛠️ Tecnologías utilizadas
-* **IDE:** NetBeans 27 / 28
-* **JDK:** 24
-* **Build Tool:** Maven
-* **GUI:** Java Swing (EDT, SwingWorker)
-* **Networking:** `java.net.http.HttpClient`
-* **JSON:** Jackson Databind 3.0.0
-* **CLI Tools:** `yt-dlp`, `ffmpeg`, `ffprobe`
+## 🚀 Descripción General
+
+**CleanStream** es una aplicación de escritorio desarrollada en **Java Swing (JDK 24)** que proporciona:
+
+- 🎬 Descarga de medios mediante `yt-dlp`
+- ☁ Sincronización con la **DI Media NET API**
+- 📚 Gestión avanzada de biblioteca local
+- 🔌 Componente JavaBean personalizado para polling automático
+- 🎨 Rediseño UX completo siguiendo principios profesionales
+
+El proyecto ha evolucionado desde un prototipo GUI básico hasta una aplicación modular sincronizada con la nube y optimizada en experiencia de usuario.
 
 ---
 
-## 📌 Evolución por Unidades
+## 🏗️ Arquitectura
 
-### ✔️ DI01 — Prototipo inicial
-* GUI creada con **NetBeans Designer** usando *Null layout*.
-* Invocación del reproductor del sistema y gestión de preferencias.
-* **Resolución de problemas:**
-    | Problema | Solución |
-    | :--- | :--- |
-    | Bloqueo de UI al descargar | Uso de `ProcessBuilder` + `SwingWorker` |
-    | Rutas inválidas | Validaciones previas y `JOptionPane` |
-    | Acceso a recursos Maven | Uso correcto de `src/main/resources` |
-
-### ✔️ DI01_2 — Gestión de Biblioteca
-* Implementación de `JList`, `JComboBox` y `JTable` (vía `AbstractTableModel`).
-* **Aprendizaje clave:** Gestión de eventos duplicados mediante `getValueIsAdjusting()`.
-
-### ✔️ DI03 — Integración Cloud + JavaBean
-* **Auth:** Login manual con persistencia de token JWT (72h) y "Remember Me".
-* **Media Polling Component:** Creación de un componente independiente (JPanel) con `javax.swing.Timer` y eventos personalizados.
-* **Arquitectura:** Eliminación de lógica de API del proyecto principal para delegarla en el componente.
-
-### ✔️ DI04 — Mejora de Usabilidad y UX
-Enfoque en los 5 pilares de diseño: *Colour & Style, Feedback, Affordance, Restricciones y Consistencia*.
-
----
-
-## 🎨 Sección UX (Obligatoria DI04)
-
-### 1️⃣ Aspecto, color e iconografía
-* **Cambios:** Paleta de colores oscura coherente, iconos consistentes y tooltips descriptivos.
-* **Justificación:** Aplicación de principios de **Consistencia** y **Mínima sorpresa** para reducir la carga cognitiva.
-
-### 2️⃣ Affordance y Feedback
-* **Implementación:** Botones deshabilitados contextualmente, barras de progreso reales, confirmación de Logout y spinners de carga.
-* **Justificación:** Mejora la **Visibility** del sistema y permite la **Recuperabilidad** ante acciones accidentales.
-
-### 3️⃣ Gestión de errores
-* Manejo de errores HTTP 401 (Token expirado).
-* Protección ante `NullPointerException` en el procesamiento de listas.
-* Logs estructurados para depuración rápida.
-
----
-
-## 🧱 Arquitectura del Proyecto
+CleanStream sigue una arquitectura modular en capas:
 
 ```text
 cleanstream
-├── app          # Punto de entrada
-├── controller   # Lógica de control y eventos
-├── models       # POJOs y Modelos de tablas
-├── services     # Lógica de negocio y yt-dlp
-├── ui           # Interfaz gráfica
-│   ├── panels   # Paneles modulares
-│   ├── dialogs  # Ventanas modales (About, etc)
-│   └── renderers # Renderizado personalizado de celdas
-└── utils        # Clases de apoyo y constantes
-🔌 Integración con DI Media NET API
-Endpoints principales consumidos por el componente JavaBean:
+├── app          → Punto de entrada de la aplicación
+├── controller   → Lógica de control y orquestación de eventos
+├── models       → POJOs y TableModels
+├── services     → Lógica de negocio (yt-dlp, escaneo, procesamiento)
+├── ui           → Componentes Swing
+│   ├── panels
+│   ├── dialogs
+│   └── renderers
+└── utils        → Clases auxiliares y constantes
+```
 
-POST /api/Auth/login
+### Decisiones Arquitectónicas
 
-GET /api/Users/me
+- Separación de la lógica de API en un **JavaBean independiente**
+- Instancia única del componente de polling
+- Uso de `SwingWorker` para evitar bloqueo de la EDT
+- Implementación de `AbstractTableModel` para mayor flexibilidad
 
-GET /api/Files/all
+---
 
-POST /api/Files/upload
+## ☁ Integración Cloud
 
-📚 Recursos externos utilizados
-Documentación: yt-dlp, Jackson Project.
+La aplicación se integra con la **DI Media NET REST API**:
 
-Comunidad: StackOverflow (Eventos JList, Custom Events en Swing).
+- `POST /api/Auth/login`
+- `GET /api/Files/all`
+- `POST /api/Files/upload`
+- `GET /api/Users/me`
 
-IA (ChatGPT): Utilizada para asistencia conceptual, revisión de arquitectura y optimización de diseño UX. Todo el código ha sido adaptado y comprendido íntegramente.
+Autenticación mediante **JWT (72h de validez)** con opción "Remember Me".
 
-🚀 Instalación y Uso
-Clonar el repositorio:
+---
 
-Bash
+## 🎨 Sección UX (DI04)
 
-git clone [https://github.com/xesgan/cleanstream.git](https://github.com/xesgan/cleanstream.git)
-Abrir el proyecto en NetBeans 27/28.
+Rediseño basado en principios de usabilidad:
 
-Asegurarse de tener configurado el JDK 24.
+### ✔ Consistencia
+Tema oscuro coherente, iconografía uniforme y espaciado consistente.
 
-Compilar con Maven para descargar las dependencias.
+### ✔ Feedback
+Barras de progreso reales, botones contextualmente habilitados y etiquetas de estado.
 
-🏁 Estado final
-[x] Cumple requisitos DI01, DI01_2, DI03 y DI04.
+### ✔ Restricciones
+Acciones bloqueadas cuando el estado no es válido.
 
-[x] Arquitectura modular y limpia.
+### ✔ Recuperabilidad
+Confirmación de Logout y manejo claro de errores.
 
-[x] Componente independiente funcional.
+### ✔ Mínima Sorpresa
+Identificación clara de estados: LOCAL / CLOUD / BOTH.
 
-[x] UX/UI profesional.
+---
 
-Licencia: Proyecto educativo para el módulo Desarrollo de Interfaces.
+## 🛠️ Tecnologías Utilizadas
+
+| Área | Tecnología |
+|------|------------|
+| Lenguaje | Java 24 |
+| UI | Swing |
+| Build | Maven |
+| JSON | Jackson Databind 3.0.0 |
+| HTTP | java.net.http.HttpClient |
+| CLI | yt-dlp, ffmpeg, ffprobe |
+| Concurrencia | SwingWorker |
+
+---
+
+## 📦 Instalación
+
+### 1️⃣ Clonar el repositorio
+
+```bash
+git clone https://github.com/xesgan/cleanstream.git
+```
+
+### 2️⃣ Requisitos
+
+- JDK 24
+- NetBeans 27/28
+- yt-dlp instalado en el sistema
+- ffmpeg y ffprobe instalados
+
+### 3️⃣ Compilar
+
+```bash
+mvn clean package
+```
+
+La documentación Javadoc se genera automáticamente en:
+
+```
+/doc
+```
+
+---
+
+## 📚 Documentación Técnica
+
+La documentación Javadoc se genera automáticamente mediante `maven-javadoc-plugin` y se encuentra en:
+
+```
+/doc/index.html
+```
+
+Incluye clases, métodos y propiedades relevantes del sistema.
+
+---
+
+## 🧠 Aprendizajes Clave
+
+- Gestión correcta de eventos Swing para evitar disparos duplicados.
+- Implementación de eventos personalizados sin `PropertyChangeSupport`.
+- Uso adecuado de hilos para mantener la UI fluida.
+- Importancia crítica del rediseño UX en aplicaciones desktop.
+
+---
+
+## 📌 Futuras Mejoras
+
+- Paginación en bibliotecas grandes
+- Búsqueda avanzada con expresiones regulares
+- Drag & Drop para subida de archivos
+- Métricas de rendimiento
+- Selector Dark / Light Theme
+
+---
+
+## 📚 Recursos Externos
+
+- Documentación oficial de yt-dlp
+- Documentación del proyecto Jackson
+- StackOverflow (eventos Swing y eventos personalizados)
+- IA (ChatGPT) para revisión arquitectónica y mejoras UX
+
+Todo el código ha sido adaptado, comprendido y documentado íntegramente.
+
+---
+
+## 🏁 Estado Actual
+
+- [x] Cumple requisitos DI01, DI01_2, DI03 y DI04
+- [x] Arquitectura modular limpia
+- [x] Componente independiente funcional
+- [x] Documentación Javadoc generada automáticamente
+- [x] Repositorio público y listo para revisión
+
+---
+
+## 📜 Licencia
+
+Proyecto educativo para el módulo Desarrollo de Interfaces — FP DAM.
