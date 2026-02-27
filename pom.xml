@@ -41,16 +41,12 @@
                 <configuration>
                     <reportOutputDirectory>${project.basedir}/doc</reportOutputDirectory>
 
-                    <!-- Tu proyecto es JDK 24, pero el plugin pide release o source -->
                     <release>24</release>
 
-                    <!-- Si algo del classpath / tags da guerra, no rompas la build -->
                     <failOnError>false</failOnError>
 
-                    <!-- Opcional: más limpio -->
                     <doclint>none</doclint>
 
-                    <!-- Si tu proyecto usa UTF-8 -->
                     <encoding>UTF-8</encoding>
                     <docencoding>UTF-8</docencoding>
                     <charset>UTF-8</charset>
