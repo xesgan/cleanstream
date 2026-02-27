@@ -1,0 +1,16 @@
+cat.dam.roig.cleanstream.app
+cat.dam.roig.cleanstream.config
+cat.dam.roig.cleanstream.controller
+cat.dam.roig.cleanstream.domain
+cat.dam.roig.cleanstream.services
+cat.dam.roig.cleanstream.services.auth
+cat.dam.roig.cleanstream.services.cloud
+cat.dam.roig.cleanstream.services.polling
+cat.dam.roig.cleanstream.services.prefs
+cat.dam.roig.cleanstream.services.scan
+cat.dam.roig.cleanstream.ui
+cat.dam.roig.cleanstream.ui.main
+cat.dam.roig.cleanstream.ui.models
+cat.dam.roig.cleanstream.ui.renderers
+cat.dam.roig.cleanstream.ui.util
+cat.dam.roig.cleanstream.util

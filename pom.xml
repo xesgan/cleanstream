@@ -31,4 +31,40 @@
             <version>3.7</version>
         </dependency> 
     </dependencies>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <reportOutputDirectory>${project.basedir}/doc</reportOutputDirectory>
+
+                    <!-- Tu proyecto es JDK 24, pero el plugin pide release o source -->
+                    <release>24</release>
+
+                    <!-- Si algo del classpath / tags da guerra, no rompas la build -->
+                    <failOnError>false</failOnError>
+
+                    <!-- Opcional: más limpio -->
+                    <doclint>none</doclint>
+
+                    <!-- Si tu proyecto usa UTF-8 -->
+                    <encoding>UTF-8</encoding>
+                    <docencoding>UTF-8</docencoding>
+                    <charset>UTF-8</charset>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-javadoc</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
