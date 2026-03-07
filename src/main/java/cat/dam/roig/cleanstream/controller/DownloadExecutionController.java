@@ -590,6 +590,11 @@ public class DownloadExecutionController {
             @Override
             protected void process(List<String> lines) {
                 for (String line : lines) {
+                    if (line == null) {
+                        continue;
+                    }
+
+                    String trimmed = line.trim();
                     logArea.append(line + "\n");
 
                     Integer p = parseProgressPercent(line);
@@ -599,29 +604,50 @@ public class DownloadExecutionController {
                         pbDownload.setString(p + "%");
                     }
 
-                    if (!line.isBlank() && new File(line.trim()).isAbsolute()) {
-                        String path = line.trim();
-                        detectedPaths.add(path);
-                        downloadedFiles.add(path);
+                    // 1) Captura directa del output final (por ejemplo after_move:filepath)
+                    if (!trimmed.isBlank() && new File(trimmed).isAbsolute()) {
+                        if (!detectedPaths.contains(trimmed)) {
+                            detectedPaths.add(trimmed);
+                        }
+                        if (!downloadedFiles.contains(trimmed)) {
+                            downloadedFiles.add(trimmed);
+                        }
                         continue;
                     }
 
+                    // 2) Fallback: ruta de destino inicial
                     if (line.contains("Destination:")) {
                         String path = line.substring(
                                 line.indexOf("Destination:") + "Destination:".length()
                         ).trim();
-                        detectedPaths.add(path);
-                        downloadedFiles.add(path);
+
+                        if (!path.isBlank()) {
+                            if (!detectedPaths.contains(path)) {
+                                detectedPaths.add(path);
+                            }
+                            if (!downloadedFiles.contains(path)) {
+                                downloadedFiles.add(path);
+                            }
+                        }
                         continue;
                     }
 
+                    // 3) Si hay merge, esta ruta suele ser mejor candidata a archivo final
                     if (line.contains("Merging formats into")) {
                         int q = line.indexOf('"');
                         int qq = line.lastIndexOf('"');
+
                         if (q >= 0 && qq > q) {
                             String path = line.substring(q + 1, qq).trim();
-                            detectedPaths.add(path);
-                            downloadedFiles.add(path);
+
+                            if (!path.isBlank()) {
+                                if (!detectedPaths.contains(path)) {
+                                    detectedPaths.add(path);
+                                }
+                                if (!downloadedFiles.contains(path)) {
+                                    downloadedFiles.add(path);
+                                }
+                            }
                         }
                     }
                 }
