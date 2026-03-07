@@ -102,6 +102,11 @@ public class DownloadExecutionController {
     private final JButton btnStop;
 
     /**
+     * Button that open last download.
+     */
+    private final JButton btnOpenLast;
+
+    /**
      * Radio button that switches to "audio-only" mode.
      */
     private final JRadioButton rbAudio;
@@ -128,6 +133,8 @@ public class DownloadExecutionController {
      * cancel the job when the user clicks Stop.
      */
     private SwingWorker<Integer, String> currentDownloadWorker;
+
+    final List<String> detectedPaths = new ArrayList<>();
 
     /**
      * Absolute path to the last detected downloaded file. Used to implement the
@@ -158,6 +165,7 @@ public class DownloadExecutionController {
             JTextArea logArea,
             JButton btnDownload,
             JButton btnStop,
+            JButton btnOpenLast,
             JRadioButton rbAudio,
             JProgressBar pbDownload,
             DownloadsController downloadsController) {
@@ -167,6 +175,7 @@ public class DownloadExecutionController {
         this.logArea = logArea;
         this.btnDownload = btnDownload;
         this.btnStop = btnStop;
+        this.btnOpenLast = btnOpenLast;
         this.rbAudio = rbAudio;
         this.pbDownload = pbDownload;
         this.downloadsController = downloadsController;
@@ -590,20 +599,19 @@ public class DownloadExecutionController {
                         pbDownload.setString(p + "%");
                     }
 
-                    // Captura directa del output de --print after_move:filepath
-                    if (!line.isBlank() && new File(line).isAbsolute()) {
-                        downloadedFiles.add(line);
-                        lastDownloadedFile = line.trim();
+                    if (!line.isBlank() && new File(line.trim()).isAbsolute()) {
+                        String path = line.trim();
+                        detectedPaths.add(path);
+                        downloadedFiles.add(path);
                         continue;
                     }
 
-                    // Detectar el archivo descargado (fallback)
                     if (line.contains("Destination:")) {
                         String path = line.substring(
                                 line.indexOf("Destination:") + "Destination:".length()
                         ).trim();
+                        detectedPaths.add(path);
                         downloadedFiles.add(path);
-                        lastDownloadedFile = path;
                         continue;
                     }
 
@@ -612,8 +620,8 @@ public class DownloadExecutionController {
                         int qq = line.lastIndexOf('"');
                         if (q >= 0 && qq > q) {
                             String path = line.substring(q + 1, qq).trim();
+                            detectedPaths.add(path);
                             downloadedFiles.add(path);
-                            lastDownloadedFile = path;
                         }
                     }
                 }
@@ -629,11 +637,14 @@ public class DownloadExecutionController {
                         exit = get();
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    System.getLogger(DownloadExecutionController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                    System.getLogger(DownloadExecutionController.class.getName())
+                            .log(System.Logger.Level.ERROR, (String) null, ex);
                 }
+
                 try {
                     if (isCancelled()) {
                         logArea.append("\n[STOP] Cancelled by user.\n");
+                        btnOpenLast.setEnabled(false);
                         return;
                     }
 
@@ -654,13 +665,49 @@ public class DownloadExecutionController {
                         logArea.append("\n[m3u] playlist updated\n");
                     }
 
+                    // Resolver el último archivo REAL descargado
+                    if (exit == 0) {
+                        String resolvedLast = null;
+
+                        // Recorremos al revés: la última ruta válida suele ser la final
+                        for (int i = detectedPaths.size() - 1; i >= 0; i--) {
+                            String candidate = detectedPaths.get(i);
+
+                            if (candidate == null || candidate.isBlank()) {
+                                continue;
+                            }
+
+                            File f = new File(candidate.trim());
+
+                            if (f.exists() && f.isFile()) {
+                                resolvedLast = f.getAbsolutePath();
+                                break;
+                            }
+                        }
+
+                        lastDownloadedFile = resolvedLast;
+                        logArea.append("\nResolved last file: " + lastDownloadedFile + "\n");
+
+                        // Activar/desactivar Open Last correctamente
+                        if (lastDownloadedFile != null) {
+                            File lastFile = new File(lastDownloadedFile);
+                            btnOpenLast.setEnabled(lastFile.exists() && lastFile.isFile());
+                        } else {
+                            btnOpenLast.setEnabled(false);
+                        }
+                    } else {
+                        lastDownloadedFile = null;
+                        btnOpenLast.setEnabled(false);
+                    }
+
                     if (exit == 0
                             && preferencesPanel.chkOpenWhenDone.isSelected()
                             && lastDownloadedFile != null) {
 
                         File file = new File(lastDownloadedFile);
-                        if (file.exists()) {
-                            logArea.append("Playing: " + file.getName() + "\n");
+
+                        if (file.exists() && file.isFile()) {
+                            logArea.append("Playing: " + file.getAbsolutePath() + "\n");
                             Desktop.getDesktop().open(file);
                         } else {
                             logArea.append("Couldn't find the downloaded file.\n");
@@ -668,20 +715,18 @@ public class DownloadExecutionController {
                     }
 
                     if (exit == 0) {
-                        // ✅ REFRESCAR LISTA LOCAL tras descarga OK
                         javax.swing.SwingUtilities.invokeLater(() -> {
-                            // 1) Lee el path que tengas en el preferences panel
                             String input = preferencesPanel.getTxtScanDownloadsFolder().getText();
                             String finalDirStr = DetectOS.resolveDownloadDir(input);
                             java.nio.file.Path downloads = java.nio.file.Paths.get(finalDirStr);
 
-                            // 2) Re-escanea usando tu controlador (sin btnScan)
                             downloadsController.scanDownloads(downloads, null);
                         });
                     }
 
                 } catch (CancellationException ce) {
                     logArea.append("\n[STOP] Cancelled by user.\n");
+                    btnOpenLast.setEnabled(false);
                 } catch (IOException ex) {
                     System.getLogger(MainFrame.class.getName())
                             .log(System.Logger.Level.ERROR, (String) null, ex);
@@ -691,6 +736,7 @@ public class DownloadExecutionController {
                     currentProcess = null;
                     currentDownloadWorker = null;
                     pbDownload.setIndeterminate(false);
+
                     if (!isCancelled() && exit == 0) {
                         pbDownload.setValue(100);
                         pbDownload.setString("Completed");

@@ -203,6 +203,7 @@ public class MainFrame extends javax.swing.JFrame {
                 txaLogArea,
                 btnDownload,
                 btnStop,
+                btnOpenLast,
                 rbAudio,
                 pbDownload,
                 downloadsController
