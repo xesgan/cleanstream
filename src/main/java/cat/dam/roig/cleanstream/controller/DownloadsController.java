@@ -338,8 +338,12 @@ public class DownloadsController {
                     return;
                 }
 
-                String name = sel.getName();
-                ResourceState state = stateByFileName.getOrDefault(name, ResourceState.LOCAL_ONLY);
+                String name = normalize(sel.getName());
+                ResourceState state = stateByFileName.get(name);
+                System.out.println("Selected raw=[" + sel.getName() + "] norm=[" + name + "] state=[" + state + "]");
+                if (state == null) {
+                    state = ResourceState.LOCAL_ONLY;
+                }
 
                 btnDelete.setEnabled(sel.getRoute() != null);               // solo si existe en disco
                 btnDownloadFromCloud.setEnabled(state == ResourceState.CLOUD_ONLY); // solo si es cloud-only
