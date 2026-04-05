@@ -1,4 +1,4 @@
-package cat.dam.roig.cleanstream.util;
+package cat.dam.roig.cleanstream.ui.util;
 
 import java.awt.Desktop;
 import java.io.File;

@@ -15,7 +15,7 @@ import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.ui.UiColors;
 import cat.dam.roig.cleanstream.ui.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.util.DetectOS;
-import cat.dam.roig.cleanstream.util.HelpFilesOpener;
+import cat.dam.roig.cleanstream.ui.util.HelpFilesOpener;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 
 import java.awt.Color;
