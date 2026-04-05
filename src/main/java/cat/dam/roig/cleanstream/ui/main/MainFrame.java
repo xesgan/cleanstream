@@ -15,6 +15,7 @@ import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.ui.UiColors;
 import cat.dam.roig.cleanstream.ui.models.MetadataTableModel;
 import cat.dam.roig.cleanstream.util.DetectOS;
+import cat.dam.roig.cleanstream.util.HelpFilesOpener;
 import cat.dam.roig.roigmediapollingcomponent.RoigMediaPollingComponent;
 
 import java.awt.Color;
@@ -460,6 +461,8 @@ public class MainFrame extends javax.swing.JFrame {
         mniPreferences = new javax.swing.JMenuItem();
         mnuHelp = new javax.swing.JMenu();
         mniAbout = new javax.swing.JMenuItem();
+        mniApiDocs = new javax.swing.JMenuItem();
+        mniUserManual = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -739,6 +742,22 @@ public class MainFrame extends javax.swing.JFrame {
         });
         mnuHelp.add(mniAbout);
 
+        mniApiDocs.setText("Api Docs");
+        mniApiDocs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mniApiDocsActionPerformed(evt);
+            }
+        });
+        mnuHelp.add(mniApiDocs);
+
+        mniUserManual.setText("User's Manual");
+        mniUserManual.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mniUserManualActionPerformed(evt);
+            }
+        });
+        mnuHelp.add(mniUserManual);
+
         mnbBar.add(mnuHelp);
 
         setJMenuBar(mnbBar);
@@ -868,6 +887,14 @@ public class MainFrame extends javax.swing.JFrame {
         lstDownloadScanList.revalidate();
         lstDownloadScanList.repaint();
     }//GEN-LAST:event_lstDownloadScanListComponentResized
+
+    private void mniApiDocsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniApiDocsActionPerformed
+        HelpFilesOpener.openApiDocs(this);
+    }//GEN-LAST:event_mniApiDocsActionPerformed
+
+    private void mniUserManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniUserManualActionPerformed
+        HelpFilesOpener.openUserManual(this);
+    }//GEN-LAST:event_mniUserManualActionPerformed
 
     // ---------------------------------------------------------------------
     // Public helpers used by controllers
@@ -1110,9 +1137,11 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JList<ResourceDownloaded> lstDownloadScanList;
     private javax.swing.JMenuBar mnbBar;
     private javax.swing.JMenuItem mniAbout;
+    private javax.swing.JMenuItem mniApiDocs;
     private javax.swing.JMenuItem mniExit;
     private javax.swing.JMenuItem mniLogout;
     private javax.swing.JMenuItem mniPreferences;
+    private javax.swing.JMenuItem mniUserManual;
     private javax.swing.JMenu mnuEdit;
     private javax.swing.JMenu mnuFile;
     private javax.swing.JMenu mnuHelp;
