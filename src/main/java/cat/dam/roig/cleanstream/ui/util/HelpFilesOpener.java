@@ -56,7 +56,7 @@ public final class HelpFilesOpener {
             }
         }
 
-        return new File("doc/index.html");
+        return new File("doc/apidocs/index.html");
     }
 
     private static File resolveUserManualFile() {
