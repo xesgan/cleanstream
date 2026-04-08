@@ -49,6 +49,7 @@ public final class HelpFilesOpener {
             File installedFile = new File(localAppData + File.separator
                     + "CleanStream" + File.separator
                     + "doc" + File.separator
+                    + "apidocs" + File.separator
                     + "index.html");
 
             if (installedFile.exists()) {
@@ -65,7 +66,7 @@ public final class HelpFilesOpener {
         if (localAppData != null && !localAppData.isBlank()) {
             File installedFile = new File(localAppData + File.separator
                     + "CleanStream" + File.separator
-                    + "manual" + File.separator
+                    + "doc" + File.separator
                     + "CleanStream_Manual.pdf");
 
             if (installedFile.exists()) {
