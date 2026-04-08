@@ -9,7 +9,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>24</maven.compiler.release>
         <!-- Tu clase principal -->
-        <exec.mainClass>cat.dam.roig.cleanstream.CleanStreamApp</exec.mainClass>
+        <exec.mainClass>cat.dam.roig.cleanstream.app.CleanStreamApp</exec.mainClass>
     </properties>
     
     <dependencies>

@@ -1,0 +1,58 @@
+CleanStream License Agreement
+=============================
+
+Copyright (c) 2026 Elias Roig
+
+This software, CleanStream, has been developed as part of the
+"Desarrollo de Interfaces" module within the Multiplatform Application
+Development (DAM) course.
+
+1. License Grant
+----------------
+This software is provided for educational purposes only. Permission is
+granted to install, use and evaluate the application for personal and
+academic use.
+
+2. Restrictions
+---------------
+You are NOT allowed to:
+- Modify, reverse engineer, decompile or disassemble the application.
+- Redistribute the application for commercial purposes.
+- Use the software in production or business environments.
+
+3. Third-Party Software
+-----------------------
+This application integrates third-party tools and libraries, including:
+
+- yt-dlp (https://github.com/yt-dlp/yt-dlp)
+- FlatLaf Look & Feel (https://www.formdev.com/flatlaf/)
+- Jackson Databind (https://github.com/FasterXML/jackson)
+
+All third-party components are subject to their respective licenses.
+
+4. Disclaimer of Warranty
+------------------------
+This software is provided "as is", without warranty of any kind, express
+or implied, including but not limited to the warranties of merchantability,
+fitness for a particular purpose and non-infringement.
+
+5. Limitation of Liability
+--------------------------
+In no event shall the author be liable for any claim, damages or other
+liability arising from the use of this software.
+
+6. Educational Context
+----------------------
+This project is part of an academic assignment and is not intended for
+commercial distribution or professional deployment.
+
+7. Acceptance
+-------------
+By installing or using this software, you agree to be bound by the terms
+of this license.
+
+------------------------------------------------------------
+Author: Elias Roig
+Course: Desarrollo de Interfaces (DI)
+Year: 2025-2026
+------------------------------------------------------------
