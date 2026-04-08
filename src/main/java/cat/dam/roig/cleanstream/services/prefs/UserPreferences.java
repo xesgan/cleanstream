@@ -2,6 +2,9 @@ package cat.dam.roig.cleanstream.services.prefs;
 
 import java.util.prefs.Preferences;
 import cat.dam.roig.cleanstream.config.PreferencesData;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Centralized manager for persistent user preferences.
@@ -225,6 +228,104 @@ public final class UserPreferences {
         setLimitSpeedEnabled(d.isLimitSpeedEnabled());
         setSpeedKbps(d.getSpeedKbps());
         setCreateM3u(d.isCreateM3u());
+    }
+
+    private static File resolveApplicationDirectory() {
+        try {
+            File codeSource = new File(
+                    UserPreferences.class
+                            .getProtectionDomain()
+                            .getCodeSource()
+                            .getLocation()
+                            .toURI()
+            );
+
+            if (codeSource.isFile()) {
+                return codeSource.getParentFile();
+            }
+
+            return codeSource;
+        } catch (Exception ex) {
+            return new File(System.getProperty("user.dir"));
+        }
+    }
+
+    /**
+     * Returns the effective yt-dlp path to be used by the application.
+     *
+     * <p>
+     * Resolution order:
+     * </p>
+     * <ol>
+     * <li>User-configured path stored in preferences</li>
+     * <li>Bundled executable installed with the application</li>
+     * </ol>
+     *
+     * <p>
+     * If no valid executable is found, this method returns {@code null}.
+     * </p>
+     *
+     * @return resolved yt-dlp executable path or null if none is available
+     */
+    public static String resolveYtDlpPath() {
+        String configuredPath = getYtDlpPath();
+
+        if (configuredPath != null && !configuredPath.isBlank()) {
+            File configuredFile = new File(configuredPath);
+            if (configuredFile.exists() && configuredFile.isFile()) {
+                return configuredFile.getAbsolutePath();
+            }
+        }
+
+        File appDir = resolveApplicationDirectory();
+        File bundledFile = new File(appDir, "tools" + File.separator + (isWindows() ? "yt-dlp.exe" : "yt-dlp"));
+
+        if (bundledFile.exists() && bundledFile.isFile()) {
+            return bundledFile.getAbsolutePath();
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the effective FFmpeg path to be used by the application.
+     *
+     * <p>
+     * Resolution order:
+     * </p>
+     * <ol>
+     * <li>User-configured path stored in preferences</li>
+     * <li>Bundled executable installed with the application</li>
+     * </ol>
+     *
+     * @return resolved ffmpeg executable path or null if none is available
+     */
+    public static String resolveFfmpegPath() {
+        String configuredPath = getFfmpegPath();
+
+        if (configuredPath != null && !configuredPath.isBlank()) {
+            File configuredFile = new File(configuredPath);
+            if (configuredFile.exists() && configuredFile.isFile()) {
+                return configuredFile.getAbsolutePath();
+            }
+        }
+
+        File appDir = resolveApplicationDirectory();
+        File bundledFile = new File(appDir, "tools" + File.separator + (isWindows() ? "ffmpeg.exe" : "ffmpeg"));
+
+        if (bundledFile.exists() && bundledFile.isFile()) {
+            return bundledFile.getAbsolutePath();
+        }
+
+        return null;
+    }
+
+    /**
+     * @return true if the current operating system is Windows
+     */
+    private static boolean isWindows() {
+        String os = System.getProperty("os.name");
+        return os != null && os.toLowerCase().contains("win");
     }
 
     /**

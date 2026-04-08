@@ -255,13 +255,25 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         String ytDlpPath = UserPreferences.getYtDlpPath();
-        if (ytDlpPath != null) {
+        if (ytDlpPath != null && !ytDlpPath.isBlank()) {
             pnlPreferencesPanel.getTxtYtDlpPath().setText(ytDlpPath);
+        } else {
+            String resolvedYtDlpPath = UserPreferences.resolveYtDlpPath();
+            if (resolvedYtDlpPath != null && !resolvedYtDlpPath.isBlank()) {
+                pnlPreferencesPanel.getTxtYtDlpPath().setText(resolvedYtDlpPath);
+                UserPreferences.setYtDlpPath(resolvedYtDlpPath);
+            }
         }
 
         String ffmpegPath = UserPreferences.getFfmpegPath();
-        if (ffmpegPath != null) {
+        if (ffmpegPath != null && !ffmpegPath.isBlank()) {
             pnlPreferencesPanel.getTxtFfpmegDir().setText(ffmpegPath);
+        } else {
+            String resolvedFfmpegPath = UserPreferences.resolveFfmpegPath();
+            if (resolvedFfmpegPath != null && !resolvedFfmpegPath.isBlank()) {
+                pnlPreferencesPanel.getTxtFfpmegDir().setText(resolvedFfmpegPath);
+                UserPreferences.setFfmpegPath(resolvedFfmpegPath);
+            }
         }
 
         String scanPath = UserPreferences.getScanFolderPath();

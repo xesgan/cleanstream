@@ -1,6 +1,7 @@
 package cat.dam.roig.cleanstream.controller;
 
 import cat.dam.roig.cleanstream.domain.VideoQuality;
+import cat.dam.roig.cleanstream.services.prefs.UserPreferences;
 import cat.dam.roig.cleanstream.ui.PreferencesPanel;
 import cat.dam.roig.cleanstream.ui.main.MainFrame;
 import cat.dam.roig.cleanstream.util.CommandExecutor;
@@ -356,11 +357,14 @@ public class DownloadExecutionController {
      * @return a valid {@link DownloadContext} or null if validation fails
      */
     private DownloadContext buildDownloadContext() {
-        String ytDlpPath = preferencesPanel.getSTxtYtDlpPath();
-        String ffmpegPath = preferencesPanel.getSTxtFfpmegDir();
+
+        String ytDlpPath = UserPreferences.resolveYtDlpPath();
+        String ffmpegPath = UserPreferences.resolveFfmpegPath();
+
         String downloadDir = DetectOS.resolveDownloadDir(
                 preferencesPanel.getSTxtDownloadsDir().trim()
         );
+
         String url = txtUrl.getText().trim();
 
         if (url.isBlank()) {
@@ -373,12 +377,13 @@ public class DownloadExecutionController {
             return null;
         }
 
-        if (ytDlpPath.isBlank()) {
+        // 🔥 NUEVA VALIDACIÓN (IMPORTANTE)
+        if (ytDlpPath == null || ytDlpPath.isBlank()) {
             JOptionPane.showMessageDialog(
                     mainFrame,
-                    "Yt-Dlp path is missing. Please configure it in Preferences.",
-                    "Warning",
-                    JOptionPane.WARNING_MESSAGE
+                    "yt-dlp not found.\nConfigure it in Preferences or reinstall the application.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
             );
             return null;
         }
@@ -387,7 +392,7 @@ public class DownloadExecutionController {
         if (!execFile.exists() || !execFile.canExecute()) {
             JOptionPane.showMessageDialog(
                     mainFrame,
-                    "yt-dlp executable not found or not accessible. \nCheck your Preferences path.",
+                    "yt-dlp executable not accessible.\nCheck installation or permissions.",
                     "Error",
                     JOptionPane.ERROR_MESSAGE
             );
@@ -396,6 +401,12 @@ public class DownloadExecutionController {
 
         boolean audio = rbAudio.isSelected();
         boolean isYouTube = url.contains("youtube.com") || url.contains("youtu.be");
+
+        System.out.println("Stored yt-dlp path: " + UserPreferences.getYtDlpPath());
+        System.out.println("Resolved yt-dlp path: " + UserPreferences.resolveYtDlpPath());
+        File testFile = new File(UserPreferences.resolveYtDlpPath() == null ? "" : UserPreferences.resolveYtDlpPath());
+        System.out.println("Exists: " + testFile.exists());
+        System.out.println("Can execute: " + testFile.canExecute());
 
         return new DownloadContext(ytDlpPath, ffmpegPath, downloadDir, url, audio);
     }
