@@ -1,0 +1,66 @@
+@options
+@packages
+-classpath
+'/home/metku/.m2/repository/tools/jackson/core/jackson-databind/3.0.0/jackson-databind-3.0.0.jar:/home/metku/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.20/jackson-annotations-2.20.jar:/home/metku/.m2/repository/tools/jackson/core/jackson-core/3.0.0/jackson-core-3.0.0.jar:/home/metku/.m2/repository/cat/dam/roig/RoigMediaPollingcomponent/1.0-SNAPSHOT/RoigMediaPollingcomponent-1.0-SNAPSHOT.jar:/home/metku/.m2/repository/com/formdev/flatlaf/3.7/flatlaf-3.7.jar'
+-encoding
+'UTF-8'
+-protected
+--release
+24
+-sourcepath
+'/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/src/main/java:/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs'
+-docencoding
+'UTF-8'
+-Xdoclint:none
+-doctitle
+'CleanStream 1.0-SNAPSHOT API'
+-use
+-version
+-windowtitle
+'CleanStream 1.0-SNAPSHOT API'
+cat.dam.roig.cleanstream.services.auth
+cat.dam.roig.cleanstream.services.scan
+cat.dam.roig.cleanstream.services.prefs
+cat.dam.roig.cleanstream.services.cloud
+cat.dam.roig.cleanstream.services
+cat.dam.roig.cleanstream.services.polling
+cat.dam.roig.cleanstream.ui
+cat.dam.roig.cleanstream.ui.renderers
+cat.dam.roig.cleanstream.ui.main
+cat.dam.roig.cleanstream.ui.util
+cat.dam.roig.cleanstream.ui.models
+cat.dam.roig.cleanstream.app
+cat.dam.roig.cleanstream.controller
+cat.dam.roig.cleanstream.domain
+cat.dam.roig.cleanstream.config
+cat.dam.roig.cleanstream.util
+/home/metku/.m2/repository/tools/jackson/core/jackson-databind/3.0.0/jackson-databind-3.0.0.jar = 1759534575000
+/home/metku/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.20/jackson-annotations-2.20.jar = 1756421461000
+/home/metku/.m2/repository/tools/jackson/core/jackson-core/3.0.0/jackson-core-3.0.0.jar = 1759531804000
+/home/metku/.m2/repository/cat/dam/roig/RoigMediaPollingcomponent/1.0-SNAPSHOT/RoigMediaPollingcomponent-1.0-SNAPSHOT.jar = 1765797813848
+/home/metku/.m2/repository/com/formdev/flatlaf/3.7/flatlaf-3.7.jar = 1764847528000
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/src/main/java = 1775631893035
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/target/generated-sources/annotations = 1775724313426
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/element-list = 1775724317802
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/constant-values.html = 1775724317842
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/serialized-form.html = 1775724317856
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/overview-tree.html = 1775724317909
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/index.html = 1775724317912
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/allclasses-index.html = 1775724317926
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/allpackages-index.html = 1775724317929
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/module-search-index.js = 1775724317929
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/package-search-index.js = 1775724317929
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/type-search-index.js = 1775724317929
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/member-search-index.js = 1775724317929
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/tag-search-index.js = 1775724317929
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/index-all.html = 1775724317952
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/search.html = 1775724317952
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/overview-summary.html = 1775724317956
+/home/metku/Documents/FPDAM_R/DI-R/DI-R01/CleanStream/doc/apidocs/help-doc.html = 1775724317956
