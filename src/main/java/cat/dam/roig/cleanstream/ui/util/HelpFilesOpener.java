@@ -44,37 +44,21 @@ public final class HelpFilesOpener {
 
     private static File resolveApiDocsFile() {
         String localAppData = System.getenv("LOCALAPPDATA");
-
-        if (localAppData != null && !localAppData.isBlank()) {
-            File installedFile = new File(localAppData + File.separator
-                    + "CleanStream" + File.separator
-                    + "doc" + File.separator
-                    + "apidocs" + File.separator
-                    + "index.html");
-
-            if (installedFile.exists()) {
-                return installedFile;
-            }
+        if (localAppData == null) {
+            localAppData = System.getProperty("user.home");
         }
 
-        return new File("doc/apidocs/index.html");
+        return new File(localAppData + "/CleanStream/doc/apidocs/index.html");
     }
 
     private static File resolveUserManualFile() {
         String localAppData = System.getenv("LOCALAPPDATA");
 
-        if (localAppData != null && !localAppData.isBlank()) {
-            File installedFile = new File(localAppData + File.separator
-                    + "CleanStream" + File.separator
-                    + "doc" + File.separator
-                    + "CleanStream_Manual.pdf");
-
-            if (installedFile.exists()) {
-                return installedFile;
-            }
+        if (localAppData == null) {
+            localAppData = System.getProperty("user.home");
         }
 
-        return new File("manual/CleanStream_Manual.pdf");
+        return new File(localAppData + "/CleanStream/doc/CleanStream_Manual.pdf");
     }
 
     private static void openFile(java.awt.Component parent, File file) {
