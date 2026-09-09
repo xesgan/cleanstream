@@ -1,0 +1,25 @@
+# Maven build output
+target/
+
+# Generated documentation
+doc/
+
+# Generated Maven artifacts
+dependency-reduced-pom.xml
+
+# NetBeans user-specific files
+nbproject/private/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
