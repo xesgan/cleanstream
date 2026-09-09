@@ -17,6 +17,23 @@ nbproject/private/
 # VS Code
 .vscode/
 
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+local.properties
+secrets.properties
+credentials.json
+secrets.json
+
+# Private keys, certificates and keystores
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
 # Logs
 *.log
 
