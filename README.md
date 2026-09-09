@@ -1,190 +1,155 @@
-# 🧩 CleanStream
+# CleanStream
 
-> Advanced Java Swing Multimedia Manager with Cloud Synchronization
-
-**Autor:** Elias Roig  
-**Módulo:** Desarrollo de Interfaces — FP DAM 2025-26  
-**Entregas:** DI01 · DI01_2 · DI03 · DI04 · DI06
-
----
-
-## 📸 Preview
+Desktop media manager built with Java Swing, focused on local media downloads, library management and synchronization with a remote media API.
 
 <p align="center">
-  <img src="src/main/resources/images/preview.png" width="800">
+  <img src="src/main/resources/images/preview.png" width="850" alt="CleanStream application preview">
 </p>
 
----
+## Overview
 
-## 🚀 Descripción General
+CleanStream is a Java desktop application that combines local media management with remote synchronization.
 
-**CleanStream** es una aplicación de escritorio desarrollada en **Java Swing (JDK 24)** que proporciona:
+The application can download and process media through `yt-dlp` and FFmpeg, manage a local library, authenticate against a REST API and synchronize media information with a remote service.
 
-- 🎬 Descarga de medios mediante `yt-dlp`
-- ☁ Sincronización con la **DI Media NET API**
-- 📚 Gestión avanzada de biblioteca local
-- 🔌 Componente JavaBean personalizado para polling automático
-- 🎨 Rediseño UX completo siguiendo principios profesionales
+The project was built with an emphasis on separating UI, application logic and external integrations rather than keeping the entire Swing application inside a single window class.
 
-El proyecto ha evolucionado desde un prototipo GUI básico hasta una aplicación modular sincronizada con la nube y optimizada en experiencia de usuario.
+## Features
 
----
+- Download media using `yt-dlp`
+- Audio and video processing through FFmpeg / ffprobe
+- Local media library management
+- REST API integration
+- JWT-based authentication
+- Optional remembered session and automatic login
+- Upload and synchronization with remote media storage
+- Background operations without blocking the Swing Event Dispatch Thread
+- Configurable application preferences
+- Automatic polling for remote media updates
+- Dark desktop interface built with Swing and FlatLaf
 
-## 🏗️ Arquitectura
+## Architecture
 
-CleanStream sigue una arquitectura modular en capas:
+The project is organized into several application layers:
+
+```text
+src/main/java/cat/dam/roig/cleanstream
+├── app          Application entry point
+├── config       Application configuration
+├── controller   UI orchestration and application flow
+├── domain       Domain models and application state
+├── services
+│   ├── auth     Authentication and session management
+│   ├── cloud    Remote media integration
+│   ├── polling  Remote update polling and events
+│   ├── prefs    User preferences
+│   └── scan     Local media scanning
+├── ui           Swing panels, dialogs and renderers
+└── util         Shared utilities
+```
+
+The goal of this structure is to keep UI responsibilities separated from application logic and external-service communication.
+
+## Technical Highlights
+
+### Asynchronous UI operations
+
+Potentially slow operations are executed outside the Swing Event Dispatch Thread so that downloads, scans and network operations do not freeze the interface.
+
+### Authentication and session persistence
+
+Authentication logic is isolated in a dedicated service responsible for:
+
+- API login
+- JWT token handling
+- session persistence using Java Preferences
+- optional remembered email
+- automatic session restoration
+- logout and authentication-state cleanup
+
+### Remote media polling
+
+CleanStream uses an event-based polling abstraction to detect remote media updates and propagate them to the application without tightly coupling the remote API component to the UI.
+
+### External tool integration
+
+Media operations are delegated to established command-line tools:
+
+- `yt-dlp`
+- `ffmpeg`
+- `ffprobe`
+
+The application coordinates these processes from Java and integrates their results into the desktop workflow.
+
+## Tech Stack
+
+| Area | Technology |
+|---|---|
+| Language | Java 24 |
+| Desktop UI | Java Swing |
+| UI theme | FlatLaf |
+| Build tool | Maven |
+| HTTP | `java.net.http.HttpClient` |
+| JSON | Jackson |
+| Authentication | JWT |
+| Persistence | Java Preferences |
+| Media download | yt-dlp |
+| Media processing | FFmpeg / ffprobe |
+| Concurrency | SwingWorker / Swing event model |
+
+## Project Structure
 
 ```text
 cleanstream
-├── app          → Punto de entrada de la aplicación
-├── controller   → Lógica de control y orquestación de eventos
-├── models       → POJOs y TableModels
-├── services     → Lógica de negocio (yt-dlp, escaneo, procesamiento)
-├── ui           → Componentes Swing
-│   ├── panels
-│   ├── dialogs
-│   └── renderers
-└── utils        → Clases auxiliares y constantes
+├── src/
+│   └── main/
+│       ├── java/
+│       └── resources/
+├── installer-assets/
+├── manual/
+├── pom.xml
+├── .gitignore
+└── README.md
 ```
 
-### Decisiones Arquitectónicas
-
-- Separación de la lógica de API en un **JavaBean independiente**
-- Instancia única del componente de polling
-- Uso de `SwingWorker` para evitar bloqueo de la EDT
-- Implementación de `AbstractTableModel` para mayor flexibilidad
-
----
-
-## ☁ Integración Cloud
-
-La aplicación se integra con la **DI Media NET REST API**:
-
-- `POST /api/Auth/login`
-- `GET /api/Files/all`
-- `POST /api/Files/upload`
-- `GET /api/Users/me`
-
-Autenticación mediante **JWT (72h de validez)** con opción "Remember Me".
-
----
-
-## 🎨 Sección UX (DI04)
-
-Rediseño basado en principios de usabilidad:
-
-### ✔ Consistencia
-Tema oscuro coherente, iconografía uniforme y espaciado consistente.
-
-### ✔ Feedback
-Barras de progreso reales, botones contextualmente habilitados y etiquetas de estado.
-
-### ✔ Restricciones
-Acciones bloqueadas cuando el estado no es válido.
-
-### ✔ Recuperabilidad
-Confirmación de Logout y manejo claro de errores.
-
-### ✔ Mínima Sorpresa
-Identificación clara de estados: LOCAL / CLOUD / BOTH.
-
----
-
-## 🛠️ Tecnologías Utilizadas
-
-| Área | Tecnología |
-|------|------------|
-| Lenguaje | Java 24 |
-| UI | Swing |
-| Build | Maven |
-| JSON | Jackson Databind 3.0.0 |
-| HTTP | java.net.http.HttpClient |
-| CLI | yt-dlp, ffmpeg, ffprobe |
-| Concurrencia | SwingWorker |
-
----
-
-## 📦 Instalación
-
-### 1️⃣ Clonar el repositorio
-
-```bash
-git clone https://github.com/xesgan/cleanstream.git
-```
-
-### 2️⃣ Requisitos
+## Requirements
 
 - JDK 24
-- NetBeans 27/28
-- yt-dlp instalado en el sistema
-- ffmpeg y ffprobe instalados
+- Maven
+- yt-dlp
+- FFmpeg / ffprobe
+- MediaPolling component used by CleanStream
 
-### 3️⃣ Compilar
+> A reproducible clean-build setup is still being reviewed because the MediaPolling dependency is currently managed as a separate local Maven project.
 
-```bash
-mvn clean package
-```
+## Current Status
 
-La documentación Javadoc se genera automáticamente en:
+The core desktop application is functional and includes local media handling, authentication, remote synchronization and polling.
 
-```
-/doc
-```
+Some usability improvements remain open, including automatic discovery of the `yt-dlp` executable and improvements to the preferences workflow.
 
----
+See the repository Issues section for the current backlog.
 
-## 📚 Documentación Técnica
+## What I Learned
 
-La documentación Javadoc se genera automáticamente mediante `maven-javadoc-plugin` y se encuentra en:
+This project gave me practical experience with:
 
-```
-/doc/index.html
-```
+- structuring a medium-sized Java application
+- separating controllers, services, domain objects and UI
+- consuming REST APIs from Java
+- managing JWT-based sessions
+- asynchronous work in Swing applications
+- integrating Java applications with external CLI processes
+- designing event-based communication between components
+- managing a Maven-based project with Git and GitHub
 
-Incluye clases, métodos y propiedades relevantes del sistema.
+## Background
 
----
+CleanStream originated as a project developed during the **Higher Vocational Training in Multiplatform Application Development (DAM)**.
 
-## 🧠 Aprendizajes Clave
-
-- Gestión correcta de eventos Swing para evitar disparos duplicados.
-- Implementación de eventos personalizados sin `PropertyChangeSupport`.
-- Uso adecuado de hilos para mantener la UI fluida.
-- Importancia crítica del rediseño UX en aplicaciones desktop.
+It was progressively expanded across several course assignments into a larger desktop application, with additional work on architecture, API integration, concurrency and user experience.
 
 ---
 
-## 📌 Futuras Mejoras
-
-- Paginación en bibliotecas grandes
-- Búsqueda avanzada con expresiones regulares
-- Drag & Drop para subida de archivos
-- Métricas de rendimiento
-- Selector Dark / Light Theme
-
----
-
-## 📚 Recursos Externos
-
-- Documentación oficial de yt-dlp
-- Documentación del proyecto Jackson
-- StackOverflow (eventos Swing y eventos personalizados)
-- IA (ChatGPT) para revisión arquitectónica y mejoras UX
-
-Todo el código ha sido adaptado, comprendido y documentado íntegramente.
-
----
-
-## 🏁 Estado Actual
-
-- [x] Cumple requisitos DI01, DI01_2, DI03 y DI04
-- [x] Arquitectura modular limpia
-- [x] Componente independiente funcional
-- [x] Documentación Javadoc generada automáticamente
-- [x] Repositorio público y listo para revisión
-
----
-
-## 📜 Licencia
-
-Proyecto educativo para el módulo Desarrollo de Interfaces — FP DAM.
+**Elias Roig**  
+Junior Java Developer · Backend-focused
