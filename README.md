@@ -10,14 +10,14 @@ Desktop media manager built with Java Swing, focused on local media downloads, l
 
 CleanStream is a Java desktop application that combines local media management with remote synchronization.
 
-The application can download and process media through `yt-dlp` and FFmpeg, manage a local library, authenticate against a REST API and synchronize media information with a remote service.
+The application can download media through `yt-dlp`, manage a local library, authenticate against a REST API and synchronize media information with a remote service. When available, an FFmpeg installation can also be supplied to `yt-dlp` for operations that require it.
 
 The project was built with an emphasis on separating UI, application logic and external integrations rather than keeping the entire Swing application inside a single window class.
 
 ## Features
 
 - Download media using `yt-dlp`
-- Audio and video processing through FFmpeg / ffprobe
+- Optional FFmpeg integration through `yt-dlp`
 - Local media library management
 - REST API integration
 - JWT-based authentication
@@ -73,13 +73,7 @@ CleanStream uses an event-based polling abstraction to detect remote media updat
 
 ### External tool integration
 
-Media operations are delegated to established command-line tools:
-
-- `yt-dlp`
-- `ffmpeg`
-- `ffprobe`
-
-The application coordinates these processes from Java and integrates their results into the desktop workflow.
+CleanStream executes `yt-dlp` as an external process and integrates its output into the desktop workflow. If an FFmpeg path is configured and available, it is passed to `yt-dlp` through `--ffmpeg-location` for operations that depend on FFmpeg.
 
 ## Tech Stack
 
@@ -94,7 +88,7 @@ The application coordinates these processes from Java and integrates their resul
 | Authentication | JWT |
 | Persistence | Java Preferences |
 | Media download | yt-dlp |
-| Media processing | FFmpeg / ffprobe |
+| Optional media tooling | FFmpeg via yt-dlp |
 | Concurrency | SwingWorker / Swing event model |
 
 ## Project Structure
@@ -117,8 +111,8 @@ cleanstream
 - JDK 24
 - Maven
 - yt-dlp
-- FFmpeg / ffprobe
 - MediaPolling component used by CleanStream
+- FFmpeg is optional and only used indirectly through `yt-dlp` when configured
 
 > A reproducible clean-build setup is still being reviewed because the MediaPolling dependency is currently managed as a separate local Maven project.
 
