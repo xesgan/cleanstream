@@ -152,8 +152,6 @@ public class AuthManager {
         prefs.put(KEY_EMAIL, email);
         saveToken(token);
 
-        // Debug output
-        System.out.println("SAVE remember: email=" + prefs.get(KEY_EMAIL, "<null>"));
     }
 
     /**
@@ -216,7 +214,6 @@ public class AuthManager {
 
         if (loginPanel != null) {
             String email = prefs.get(KEY_EMAIL, "");
-            System.out.println("LOGOUT keep: email=" + prefs.get(KEY_EMAIL, "<null>"));
             loginPanel.setTxtEmail(email);
             loginPanel.getTxtPassword().setText("");
         }
@@ -258,7 +255,8 @@ public class AuthManager {
 
         } catch (Exception ex) {
             // Token invalid or request failed: clean up local state
-            ex.printStackTrace();
+            System.getLogger(AuthManager.class.getName())
+                    .log(System.Logger.Level.DEBUG, "Automatic login failed; clearing stored session.", ex);
             clearRememberMe();
             polling.setToken(null);
             return false;
@@ -325,7 +323,8 @@ public class AuthManager {
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            System.getLogger(AuthManager.class.getName())
+                    .log(System.Logger.Level.WARNING, "Login failed.", ex);
             JOptionPane.showMessageDialog(
                     loginPanel,
                     "Password or Email are not valid!",

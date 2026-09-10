@@ -150,8 +150,6 @@ public class CommandExecutor {
                 formatSelector = "bv*+ba/b";
         }
 
-        System.out.println(">>> USING FORMAT SELECTOR: " + formatSelector);
-
         cmd.add("-f");
 
         // Compose final format string for yt-dlp

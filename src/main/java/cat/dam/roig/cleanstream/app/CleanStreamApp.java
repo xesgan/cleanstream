@@ -58,7 +58,8 @@ public class CleanStreamApp {
         try {
             FlatDarkLaf.setup();
         } catch (Exception ex) {
-            System.err.println("Failed to initialize FlatLaf");
+            System.getLogger(CleanStreamApp.class.getName())
+                    .log(System.Logger.Level.WARNING, "Failed to initialize FlatLaf. Using default Swing look and feel.", ex);
         }
 
         // Always create Swing UI on the EDT to avoid random UI bugs.

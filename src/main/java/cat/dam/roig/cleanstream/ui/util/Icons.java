@@ -86,11 +86,8 @@ public final class Icons {
         URL url = Icons.class.getResource(path);
 
         if (url == null) {
-            System.out.println("[Icons] NOT FOUND: " + path);
             return UIManager.getIcon("FileView.fileIcon");
         }
-
-        System.out.println("[Icons] OK: " + path + " -> " + url);
 
         ImageIcon src = new ImageIcon(url);
         Image img = src.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);

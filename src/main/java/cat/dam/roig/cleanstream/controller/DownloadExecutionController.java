@@ -402,12 +402,6 @@ public class DownloadExecutionController {
         boolean audio = rbAudio.isSelected();
         boolean isYouTube = url.contains("youtube.com") || url.contains("youtu.be");
 
-        System.out.println("Stored yt-dlp path: " + UserPreferences.getYtDlpPath());
-        System.out.println("Resolved yt-dlp path: " + UserPreferences.resolveYtDlpPath());
-        File testFile = new File(UserPreferences.resolveYtDlpPath() == null ? "" : UserPreferences.resolveYtDlpPath());
-        System.out.println("Exists: " + testFile.exists());
-        System.out.println("Can execute: " + testFile.canExecute());
-
         return new DownloadContext(ytDlpPath, ffmpegPath, downloadDir, url, audio);
     }
 
@@ -444,7 +438,6 @@ public class DownloadExecutionController {
             command.add(audioFormat);
         } else {
             VideoQuality q = mainFrame.getSelectedQuality();
-            System.out.println(">>> VIDEO QUALITY EN COMBO: " + q);
             CommandExecutor.appendQualityArgs(command, q);
         }
 
@@ -492,10 +485,6 @@ public class DownloadExecutionController {
 
         // URL al final
         command.add(ctx.url.trim());
-
-        // debbuging
-        System.out.println(">>> YT-DLP PATH EN CONTEXTO: " + ctx.ytDlpPath);
-        System.out.println("CMD: " + String.join(" ", command));
 
         return command;
     }
@@ -591,7 +580,8 @@ public class DownloadExecutionController {
                 } catch (Exception e) {
                     String msg = (e.getMessage() != null) ? e.getMessage() : e.toString();
                     publish("ERROR: " + msg);
-                    e.printStackTrace();
+                    System.getLogger(DownloadExecutionController.class.getName())
+                            .log(System.Logger.Level.ERROR, "yt-dlp execution failed.", e);
                     return -1;
                 } finally {
                     currentProcess = null;

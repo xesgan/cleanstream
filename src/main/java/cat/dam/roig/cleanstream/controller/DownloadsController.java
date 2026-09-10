@@ -340,7 +340,6 @@ public class DownloadsController {
 
                 String name = normalize(sel.getName());
                 ResourceState state = stateByFileName.get(name);
-                System.out.println("Selected raw=[" + sel.getName() + "] norm=[" + name + "] state=[" + state + "]");
                 if (state == null) {
                     state = ResourceState.LOCAL_ONLY;
                 }
@@ -438,7 +437,8 @@ public class DownloadsController {
                     DownloadsScanner scanner = new DownloadsScanner();
                     return scanner.scan(downloadsDir, false);
                 } catch (IOException e) {
-                    System.err.println("Scan error: " + e.getMessage());
+                    System.getLogger(DownloadsController.class.getName())
+                            .log(System.Logger.Level.ERROR, "Failed to scan downloads directory.", e);
                     return List.of();
                 }
             }
@@ -449,7 +449,8 @@ public class DownloadsController {
                     List<ResourceDownloaded> lista = get();
                     onScanFinished(lista);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.getLogger(DownloadsController.class.getName())
+                            .log(System.Logger.Level.ERROR, "Failed to finish downloads scan.", e);
                 } finally {
                     if (btnScan != null) {
                         btnScan.setEnabled(true);
@@ -537,7 +538,8 @@ public class DownloadsController {
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            System.getLogger(DownloadsController.class.getName())
+                    .log(System.Logger.Level.ERROR, "Failed to delete resource.", ex);
             JOptionPane.showMessageDialog(
                     parentForDialog,
                     "Error al eliminar:\n" + ex.getMessage(),
@@ -672,7 +674,8 @@ public class DownloadsController {
                     pendingSelectKey = key;
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    System.getLogger(DownloadsController.class.getName())
+                            .log(System.Logger.Level.ERROR, "Failed to download resource from cloud.", ex);
                     stopBusy("Descarga fallida ✖");
                     JOptionPane.showMessageDialog(parent, "Download failed.", "Fetch", JOptionPane.ERROR_MESSAGE);
 
@@ -734,7 +737,8 @@ public class DownloadsController {
                     loadCloudMedia(parent); // refresca nube/estados
                     btnUploadFromLocal.setEnabled(true);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    System.getLogger(DownloadsController.class.getName())
+                            .log(System.Logger.Level.ERROR, "Failed to upload local resource.", ex);
                     stopBusy("Upload fallido ✖");
                     JOptionPane.showMessageDialog(parent, "Upload failed.", "Upload", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1463,7 +1467,6 @@ public class DownloadsController {
 
         String token = mediaPolling.getToken(); // o mediaPolling.getToken()
         if (token == null || token.isBlank()) {
-            System.out.println("[cloud] skip loadCloudMedia (no token)");
             return;
         }
 
@@ -1481,12 +1484,6 @@ public class DownloadsController {
                 try {
                     List<Media> remote = get();
 
-                    System.out.println("[cloud] remoteSize=" + remote.size()
-                            + " viewMode=" + viewMode
-                            + " hasScanned=" + hasScanned
-                            + " modelBefore=" + downloadsModel.size()
-                            + " cloudMediaBefore=" + cloudMedia.size());
-
                     cloudMedia.clear();
                     cloudMedia.addAll(remote);
 
@@ -1494,14 +1491,12 @@ public class DownloadsController {
 
                     applyFiltersPreservingSelection(); // o applyFiltersIfReady() si lo tienes bien
 
-                    System.out.println("[cloud] modelAfter=" + downloadsModel.size()
-                            + " cloudMediaAfter=" + cloudMedia.size());
-
                     downloadsList.repaint();
 
                 } catch (Exception ex) {
                     Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-                    System.err.println("[cloud] load failed: " + cause.getMessage());
+                    System.getLogger(DownloadsController.class.getName())
+                            .log(System.Logger.Level.ERROR, "Failed to load cloud media.", cause);
 
                     // Si quieres: mostrar diálogo solo si hay sesión activa
                     JOptionPane.showMessageDialog(parentForDialog,

@@ -209,8 +209,6 @@ public class MainController {
         }
 
         mediaPolling.addMediaListener(event -> {
-            System.out.println("[APP] New cloud media found: "
-                    + event.getNewMediaCount());
             mainFrame.getDownloadsController().loadCloudMedia(mainFrame);
         });
 
