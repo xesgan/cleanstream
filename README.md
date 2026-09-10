@@ -114,13 +114,31 @@ cleanstream
 - MediaPolling component used by CleanStream
 - FFmpeg is optional and only used indirectly through `yt-dlp` when configured
 
-> A reproducible clean-build setup is still being reviewed because the MediaPolling dependency is currently managed as a separate local Maven project.
+## Build
+
+CleanStream uses MediaPolling as a separate local Maven dependency.
+
+First, clone and install MediaPolling:
+
+```bash
+git clone https://github.com/xesgan/MediaPolling.git
+cd MediaPolling/RoigMediaPollingComponent
+mvn clean install
+```
+
+Then build CleanStream:
+
+```bash
+git clone https://github.com/xesgan/cleanstream.git
+cd cleanstream
+mvn clean package
+```
 
 ## Current Status
 
 The core desktop application is functional and includes local media handling, authentication, remote synchronization and polling.
 
-Some usability improvements remain open, including automatic discovery of the `yt-dlp` executable and improvements to the preferences workflow.
+Some usability improvements remain open, including improvements to the preferences workflow.
 
 See the repository Issues section for the current backlog.
 
